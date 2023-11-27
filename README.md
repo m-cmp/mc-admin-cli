@@ -1,7 +1,8 @@
 # M-CMP ADMIN CLI (mcc)
-This repository provides a Multi-Cloud ADMIN CLI. 
-The name of this tool is mcc(Multi-Cloud admin CLI).
-A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to deploy and manage Multi-Cloud Infrastructures. 
+This repository provides a Multi-Cloud ADMIN CLI.    
+The name of this tool is mcc(Multi-Cloud admin CLI).    
+A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to deploy and manage Multi-Cloud Infrastructures.    
+
 
 ```
 [NOTE]
