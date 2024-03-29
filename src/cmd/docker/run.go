@@ -1,9 +1,10 @@
-package cmd
+package docker
 
 import (
 	"fmt"
 	"strings"
 
+	root "github.com/mc-admin-cli/mcc/src/cmd"
 	"github.com/mc-admin-cli/mcc/src/common"
 	"github.com/spf13/cobra"
 )
@@ -29,7 +30,7 @@ var runCmd = &cobra.Command{
 				//fmt.Println(cmdStr)
 				common.SysCall(cmdStr)
 			case common.ModeKubernetes:
-				if k8sprovider == common.NotDefined {
+				if root.K8sprovider == common.NotDefined {
 					fmt.Print(`--k8sprovider argument is required but not provided.
 					e.g.
 					--k8sprovider=gke
@@ -56,12 +57,12 @@ var runCmd = &cobra.Command{
 				// //fmt.Println(cmdStr)
 				// common.SysCall(cmdStr)
 
-				if strings.ToLower(k8sprovider) == "gke" || strings.ToLower(k8sprovider) == "eks" || strings.ToLower(k8sprovider) == "aks" {
+				if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "eks" || strings.ToLower(root.K8sprovider) == "aks" {
 					cmdStr = fmt.Sprintf("helm install --namespace %s %s -f %s ../helm-chart --debug", common.K8sNamespace, common.HelmReleaseName, common.FileStr)
 					cmdStr += " --set cb-restapigw.service.type=LoadBalancer"
 					cmdStr += " --set cb-webtool.service.type=LoadBalancer"
 
-					if strings.ToLower(k8sprovider) == "gke" || strings.ToLower(k8sprovider) == "aks" {
+					if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "aks" {
 						cmdStr += " --set metricServer.enabled=false"
 					}
 
@@ -80,11 +81,11 @@ var runCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(runCmd)
+	dockerCmd.AddCommand(runCmd)
 
 	pf := runCmd.PersistentFlags()
 	pf.StringVarP(&common.FileStr, "file", "f", common.NotDefined, "User-defined configuration file")
-	pf.StringVarP(&k8sprovider, "k8sprovider", "", common.NotDefined, "Kind of Managed K8s services")
+	pf.StringVarP(&root.K8sprovider, "k8sprovider", "", common.NotDefined, "Kind of Managed K8s services")
 	// runCmd.MarkPersistentFlagRequired("k8sprovider")
 
 	//	cobra.MarkFlagRequired(pf, "file")

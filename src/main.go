@@ -21,6 +21,7 @@ import (
 	"os"
 
 	"github.com/mc-admin-cli/mcc/src/cmd"
+	_ "github.com/mc-admin-cli/mcc/src/cmd/docker"
 	"github.com/mc-admin-cli/mcc/src/common"
 )
 
@@ -71,7 +72,7 @@ func readMode() string {
 		errCheck(err)
 
 		common.MccMode = string(data)
-		fmt.Println("OPERATOR_MODE: " + common.MccMode)
+		//fmt.Println("OPERATOR_MODE: " + common.MccMode)
 
 		//if common.MccMode == common.DockerCompose || common.MccMode == common.Kubernetes {
 		return common.MccMode
