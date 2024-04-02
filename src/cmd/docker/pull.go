@@ -1,4 +1,4 @@
-package cmd
+package docker
 
 import (
 	"fmt"
@@ -32,7 +32,7 @@ var pullCmd = &cobra.Command{
 }
 
 func init() {
-	rootCmd.AddCommand(pullCmd)
+	dockerCmd.AddCommand(pullCmd)
 
 	pf := pullCmd.PersistentFlags()
 	pf.StringVarP(&common.FileStr, "file", "f", common.NotDefined, "User-defined configuration file")

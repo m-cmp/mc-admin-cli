@@ -1,9 +1,10 @@
-package cmd
+package k8s
 
 import (
 	"fmt"
 	"strings"
 
+	root "github.com/mc-admin-cli/mcc/src/cmd"
 	"github.com/mc-admin-cli/mcc/src/common"
 	"github.com/spf13/cobra"
 )
@@ -25,7 +26,7 @@ var installWeaveScopeCmd = &cobra.Command{
 			fmt.Println("mcc Docker Compose mode does not support 'weave-scope install' subcommand.")
 
 		case common.ModeKubernetes:
-			if k8sprovider == common.NotDefined {
+			if root.K8sprovider == common.NotDefined {
 				fmt.Print(`--k8sprovider argument is required but not provided.
 					e.g.
 					--k8sprovider=gke
@@ -40,12 +41,12 @@ var installWeaveScopeCmd = &cobra.Command{
 			}
 
 			// If your cluster is on GKE, first you need to grant permissions for the installation.
-			if strings.ToLower(k8sprovider) == "gke" {
+			if strings.ToLower(root.K8sprovider) == "gke" {
 				cmdStr = `kubectl create clusterrolebinding "cluster-admin-$(whoami)" --clusterrole=cluster-admin --user="$(gcloud config get-value core/account)"`
 				common.SysCall(cmdStr)
 			}
 
-			if strings.ToLower(k8sprovider) == "gke" || strings.ToLower(k8sprovider) == "eks" || strings.ToLower(k8sprovider) == "aks" {
+			if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "eks" || strings.ToLower(root.K8sprovider) == "aks" {
 
 				// Install Weave Scope on your Kubernetes cluster.
 				cmdStr = `kubectl apply -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')&k8s-service-type=LoadBalancer"`
