@@ -1,4 +1,4 @@
-package cmd
+package docker
 
 import (
 	"fmt"
@@ -70,7 +70,7 @@ var volFlag bool
 var imgFlag bool
 
 func init() {
-	rootCmd.AddCommand(removeCmd)
+	dockerCmd.AddCommand(removeCmd)
 
 	pf := removeCmd.PersistentFlags()
 	pf.StringVarP(&common.FileStr, "file", "f", common.NotDefined, "User-defined configuration file")
