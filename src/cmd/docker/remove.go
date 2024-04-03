@@ -22,45 +22,59 @@ var removeCmd = &cobra.Command{
 		} else {
 			common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
 			var cmdStr string
-			switch common.MccMode {
-			case common.ModeKubernetes:
-				cmdStr = fmt.Sprintf("helm uninstall --namespace %s %s", common.K8sNamespace, common.HelmReleaseName)
-				common.SysCall(cmdStr)
-
-				cmdStr = fmt.Sprintf("kubectl delete pvc cb-spider -n %s", common.K8sNamespace)
-				common.SysCall(cmdStr)
-
-				cmdStr = fmt.Sprintf("kubectl delete pvc cb-tumblebug -n %s", common.K8sNamespace)
-				common.SysCall(cmdStr)
-
-				cmdStr = fmt.Sprintf("kubectl delete pvc cb-ladybug -n %s", common.K8sNamespace)
-				common.SysCall(cmdStr)
-
-				cmdStr = fmt.Sprintf("kubectl delete pvc cb-dragonfly -n %s", common.K8sNamespace)
-				common.SysCall(cmdStr)
-
-				cmdStr = fmt.Sprintf("kubectl delete pvc data-mcc-etcd-0 -n %s", common.K8sNamespace)
-				common.SysCall(cmdStr)
-
-				//fallthrough
-			case common.ModeDockerCompose:
-				if volFlag && imgFlag {
-					cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v --rmi all", common.ComposeProjectName, common.FileStr)
-				} else if volFlag {
-					cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v", common.ComposeProjectName, common.FileStr)
-				} else if imgFlag {
-					cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down --rmi all", common.ComposeProjectName, common.FileStr)
-				} else {
-					cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down", common.ComposeProjectName, common.FileStr)
-				}
-
-				//fmt.Println(cmdStr)
-				common.SysCall(cmdStr)
-
-				common.SysCallDockerComposePs()
-			default:
-
+			if volFlag && imgFlag {
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v --rmi all", common.ComposeProjectName, common.FileStr)
+			} else if volFlag {
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v", common.ComposeProjectName, common.FileStr)
+			} else if imgFlag {
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down --rmi all", common.ComposeProjectName, common.FileStr)
+			} else {
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down", common.ComposeProjectName, common.FileStr)
 			}
+
+			//fmt.Println(cmdStr)
+			common.SysCall(cmdStr)
+
+			common.SysCallDockerComposePs()
+			// switch common.MccMode {
+			// case common.ModeKubernetes:
+			// 	cmdStr = fmt.Sprintf("helm uninstall --namespace %s %s", common.K8sNamespace, common.HelmReleaseName)
+			// 	common.SysCall(cmdStr)
+
+			// 	cmdStr = fmt.Sprintf("kubectl delete pvc cb-spider -n %s", common.K8sNamespace)
+			// 	common.SysCall(cmdStr)
+
+			// 	cmdStr = fmt.Sprintf("kubectl delete pvc cb-tumblebug -n %s", common.K8sNamespace)
+			// 	common.SysCall(cmdStr)
+
+			// 	cmdStr = fmt.Sprintf("kubectl delete pvc cb-ladybug -n %s", common.K8sNamespace)
+			// 	common.SysCall(cmdStr)
+
+			// 	cmdStr = fmt.Sprintf("kubectl delete pvc cb-dragonfly -n %s", common.K8sNamespace)
+			// 	common.SysCall(cmdStr)
+
+			// 	cmdStr = fmt.Sprintf("kubectl delete pvc data-mcc-etcd-0 -n %s", common.K8sNamespace)
+			// 	common.SysCall(cmdStr)
+
+			// 	//fallthrough
+			// case common.ModeDockerCompose:
+			// 	if volFlag && imgFlag {
+			// 		cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v --rmi all", common.ComposeProjectName, common.FileStr)
+			// 	} else if volFlag {
+			// 		cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v", common.ComposeProjectName, common.FileStr)
+			// 	} else if imgFlag {
+			// 		cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down --rmi all", common.ComposeProjectName, common.FileStr)
+			// 	} else {
+			// 		cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down", common.ComposeProjectName, common.FileStr)
+			// 	}
+
+			// 	//fmt.Println(cmdStr)
+			// 	common.SysCall(cmdStr)
+
+			// 	common.SysCallDockerComposePs()
+			// default:
+
+			// }
 		}
 
 	},

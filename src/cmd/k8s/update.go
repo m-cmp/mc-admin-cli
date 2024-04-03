@@ -25,20 +25,20 @@ var updateCmd = &cobra.Command{
 			common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
 
 			var cmdStr string
-			switch common.MccMode {
-			case common.ModeDockerCompose:
-				fmt.Println("mcc Docker Compose mode does not support 'update/apply' subcommand.")
+			// switch common.MccMode {
+			// case common.ModeDockerCompose:
+			// 	fmt.Println("mcc Docker Compose mode does not support 'update/apply' subcommand.")
 
-			case common.ModeKubernetes:
-				cmdStr = fmt.Sprintf("helm upgrade --namespace %s --install %s -f %s ../helm-chart", common.K8sNamespace, common.HelmReleaseName, common.FileStr)
-				if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "aks" {
-					cmdStr += " --set metricServer.enabled=false"
-				}
-				//fmt.Println(cmdStr)
-				common.SysCall(cmdStr)
-			default:
-
+			// case common.ModeKubernetes:
+			cmdStr = fmt.Sprintf("helm upgrade --namespace %s --install %s -f %s ../helm-chart", common.K8sNamespace, common.HelmReleaseName, common.FileStr)
+			if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "aks" {
+				cmdStr += " --set metricServer.enabled=false"
 			}
+			//fmt.Println(cmdStr)
+			common.SysCall(cmdStr)
+			// default:
+
+			// }
 
 		}
 

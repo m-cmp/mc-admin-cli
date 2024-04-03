@@ -15,22 +15,22 @@ var weaveScopeCmd = &cobra.Command{
 	Long:  `Subcommand for managing Weave Scope`,
 	Run: func(cmd *cobra.Command, args []string) {
 
-		switch common.MccMode {
-		case common.ModeDockerCompose:
-			fmt.Println("mcc Docker Compose mode does not support 'uninstall-weave-scope' subcommand.")
+		// switch common.MccMode {
+		// case common.ModeDockerCompose:
+		// 	fmt.Println("mcc Docker Compose mode does not support 'uninstall-weave-scope' subcommand.")
 
-		case common.ModeKubernetes:
+		// case common.ModeKubernetes:
 
-			fmt.Println("")
-			fmt.Println("'./mcc weave-scope' subcommand provides these subsubcommands:")
-			fmt.Println("")
-			fmt.Println("'./mcc weave-scope install': Install and expose Weave Scope on your K8s cluster.")
-			fmt.Println("'./mcc weave-scope uninstall': Uninstall Weave Scope on your K8s cluster.")
-			fmt.Println("")
+		fmt.Println("")
+		fmt.Println("'./mcc weave-scope' subcommand provides these subsubcommands:")
+		fmt.Println("")
+		fmt.Println("'./mcc weave-scope install': Install and expose Weave Scope on your K8s cluster.")
+		fmt.Println("'./mcc weave-scope uninstall': Uninstall Weave Scope on your K8s cluster.")
+		fmt.Println("")
 
-		default:
+		// default:
 
-		}
+		// }
 	},
 }
 

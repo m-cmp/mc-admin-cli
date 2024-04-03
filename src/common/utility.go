@@ -16,6 +16,12 @@ var FileStr string
 // MccMode is a variable that holds current mcc's mode.
 var MccMode string
 
+// DockerFilePath is a variable that holds path to the docker-compose.yaml.
+var DockerFilePath string
+
+// K8sFilePath is a variable that holds path to the helm-chart's values.yaml.
+var K8sFilePath string
+
 const (
 	// ModeDockerCompose is a variable that holds string indicating Docker Compose mode.
 	ModeDockerCompose = "DockerCompose"
