@@ -3,7 +3,6 @@ package k8s
 import (
 	"fmt"
 
-	root "github.com/mc-admin-cli/mcc/src/cmd"
 	"github.com/mc-admin-cli/mcc/src/common"
 	"github.com/spf13/cobra"
 )
@@ -39,7 +38,7 @@ func init() {
 
 	pf := weaveScopeCmd.PersistentFlags()
 	// pf.StringVarP(&common.FileStr, "file", "f", common.NotDefined, "User-defined configuration file")
-	pf.StringVarP(&root.K8sprovider, "k8sprovider", "", common.NotDefined, "Kind of Managed K8s services")
+	pf.StringVarP(&K8sprovider, "k8sprovider", "", common.NotDefined, "Kind of Managed K8s services")
 
 	/*
 		switch common.MccMode {

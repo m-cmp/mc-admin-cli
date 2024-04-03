@@ -17,24 +17,24 @@ var removeCmd = &cobra.Command{
 		fmt.Println("\n[Remove M-CMP]")
 		fmt.Println()
 
-		if common.DockerFilePath == "" {
+		if DockerFilePath == "" {
 			fmt.Println("file is required")
 		} else {
 			var cmdStr string
 			if volFlag && imgFlag {
-				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v --rmi all", common.ComposeProjectName, common.DockerFilePath)
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v --rmi all", ComposeProjectName, DockerFilePath)
 			} else if volFlag {
-				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v", common.ComposeProjectName, common.DockerFilePath)
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v", ComposeProjectName, DockerFilePath)
 			} else if imgFlag {
-				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down --rmi all", common.ComposeProjectName, common.DockerFilePath)
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down --rmi all", ComposeProjectName, DockerFilePath)
 			} else {
-				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down", common.ComposeProjectName, common.DockerFilePath)
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down", ComposeProjectName, DockerFilePath)
 			}
 
 			//fmt.Println(cmdStr)
 			common.SysCall(cmdStr)
 
-			common.SysCallDockerComposePs()
+			SysCallDockerComposePs()
 		}
 
 	},
@@ -47,7 +47,7 @@ func init() {
 	dockerCmd.AddCommand(removeCmd)
 
 	pf := removeCmd.PersistentFlags()
-	pf.StringVarP(&common.DockerFilePath, "file", "f", common.DefaultDockerComposeConfig, "User-defined configuration file")
+	pf.StringVarP(&DockerFilePath, "file", "f", DefaultDockerComposeConfig, "User-defined configuration file")
 	//	cobra.MarkFlagRequired(pf, "file")
 
 	pf.BoolVarP(&volFlag, "volumes", "v", false, "Remove named volumes declared in the volumes section of the Compose file")

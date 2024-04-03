@@ -7,30 +7,11 @@ import (
 	"os/exec"
 )
 
-// DockerFilePath is a variable that holds path to the docker-compose.yaml.
-var DockerFilePath string
-
 // K8sFilePath is a variable that holds path to the helm-chart's values.yaml.
-var K8sFilePath string
 
 const (
-	// DefaultDockerComposeConfig is a variable that holds path to docker-compose.yaml
-	DefaultDockerComposeConfig = "../docker-compose-mode-files/docker-compose.yaml"
-
-	// DefaultKubernetesConfig is a variable that holds path to helm-chart/values.yaml
-	DefaultKubernetesConfig string = "../helm-chart/values.yaml"
-
 	// NotDefined is a variable that holds the string "Not_Defined"
 	NotDefined string = "Not_Defined"
-
-	// ComposeProjectName is a variable that holds the default COMPOSE_PROJECT_NAME that CM-Mayfly will use.
-	ComposeProjectName string = "mcc"
-
-	// K8sNamespace is a variable that holds the K8s namespace that CM-Mayfly will use.
-	K8sNamespace string = "mcc"
-
-	// HelmReleaseName is a variable that holds the K8s Helm release name that CM-Mayfly will use.
-	HelmReleaseName string = "mcc"
 )
 
 // SysCall executes user-passed command via system call.
@@ -58,12 +39,4 @@ func SysCall(cmdStr string) {
 		//os.Exit(1)
 	}
 
-}
-
-// SysCallDockerComposePs executes `docker-compose ps` command via system call.
-func SysCallDockerComposePs() {
-	fmt.Println("\n[v]Status of M-CMP runtimes")
-	//cmdStr := "COMPOSE_PROJECT_NAME=mcc docker-compose -f " + FileStr + " ps"
-	cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s ps", ComposeProjectName, DockerFilePath)
-	SysCall(cmdStr)
 }

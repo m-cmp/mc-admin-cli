@@ -10,6 +10,7 @@ import (
 )
 
 var K8sprovider string
+var K8sFilePath string
 
 // restCmd represents the rest command
 var k8sCmd = &cobra.Command{

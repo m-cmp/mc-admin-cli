@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	root "github.com/mc-admin-cli/mcc/src/cmd"
 	"github.com/mc-admin-cli/mcc/src/common"
 	"github.com/spf13/cobra"
 )
@@ -19,7 +18,7 @@ var updateCmd = &cobra.Command{
 		fmt.Println("\n[Update M-CMP]")
 		fmt.Println()
 
-		if common.K8sFilePath == "" {
+		if K8sFilePath == "" {
 			fmt.Println("file is required")
 		} else {
 
@@ -29,8 +28,8 @@ var updateCmd = &cobra.Command{
 			// 	fmt.Println("mcc Docker Compose mode does not support 'update/apply' subcommand.")
 
 			// case common.ModeKubernetes:
-			cmdStr = fmt.Sprintf("helm upgrade --namespace %s --install %s -f %s ../helm-chart", common.K8sNamespace, common.HelmReleaseName, common.K8sFilePath)
-			if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "aks" {
+			cmdStr = fmt.Sprintf("helm upgrade --namespace %s --install %s -f %s ../helm-chart", K8sNamespace, HelmReleaseName, K8sFilePath)
+			if strings.ToLower(K8sprovider) == "gke" || strings.ToLower(K8sprovider) == "aks" {
 				cmdStr += " --set metricServer.enabled=false"
 			}
 			//fmt.Println(cmdStr)
@@ -48,8 +47,8 @@ func init() {
 	k8sCmd.AddCommand(updateCmd)
 
 	pf := updateCmd.PersistentFlags()
-	pf.StringVarP(&common.K8sFilePath, "file", "f", common.DefaultKubernetesConfig, "User-defined configuration file")
-	pf.StringVarP(&root.K8sprovider, "k8sprovider", "", common.NotDefined, "Kind of Managed K8s services")
+	pf.StringVarP(&K8sFilePath, "file", "f", DefaultKubernetesConfig, "User-defined configuration file")
+	pf.StringVarP(&K8sprovider, "k8sprovider", "", common.NotDefined, "Kind of Managed K8s services")
 
 	//	cobra.MarkFlagRequired(pf, "file")
 

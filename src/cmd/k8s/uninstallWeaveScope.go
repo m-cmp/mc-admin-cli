@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"strings"
 
-	root "github.com/mc-admin-cli/mcc/src/cmd"
 	"github.com/mc-admin-cli/mcc/src/common"
 	"github.com/spf13/cobra"
 )
@@ -25,12 +24,12 @@ var uninstallWeaveScopeCmd = &cobra.Command{
 
 		// case common.ModeKubernetes:
 		// If your cluster is on GKE, first you need to grant permissions for the uninstallation.
-		if strings.ToLower(root.K8sprovider) == "gke" {
+		if strings.ToLower(K8sprovider) == "gke" {
 			cmdStr = `kubectl delete clusterrolebinding "cluster-admin-$(whoami)"`
 			common.SysCall(cmdStr)
 		}
 
-		if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "eks" || strings.ToLower(root.K8sprovider) == "aks" {
+		if strings.ToLower(K8sprovider) == "gke" || strings.ToLower(K8sprovider) == "eks" || strings.ToLower(K8sprovider) == "aks" {
 
 			// Uninstall Weave Scope on your Kubernetes cluster.
 			cmdStr = `kubectl delete -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')&k8s-service-type=LoadBalancer"`
