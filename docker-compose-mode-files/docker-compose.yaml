@@ -1,4 +1,5 @@
 version: "3.3"
+
 services:
 # The priority used by Compose to choose which env var value to use:
 # 1. Compose file

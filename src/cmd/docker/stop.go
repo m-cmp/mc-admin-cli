@@ -19,21 +19,26 @@ var stopCmd = &cobra.Command{
 		if common.FileStr == "" {
 			fmt.Println("file is required")
 		} else {
-			common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
+			//	common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
 			var cmdStr string
-			switch common.MccMode {
-			case common.ModeDockerCompose:
-				cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s stop", common.ComposeProjectName, common.FileStr)
-				//fmt.Println(cmdStr)
-				common.SysCall(cmdStr)
+			cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s stop", common.ComposeProjectName, common.FileStr)
+			// 	//fmt.Println(cmdStr)
+			common.SysCall(cmdStr)
 
-				common.SysCallDockerComposePs()
-			case common.ModeKubernetes:
-				cmdStr = fmt.Sprintf("helm uninstall --namespace %s %s", common.K8sNamespace, common.HelmReleaseName)
-				common.SysCall(cmdStr)
-			default:
+			common.SysCallDockerComposePs()
+			// switch common.MccMode {
+			// case common.ModeDockerCompose:
+			// 	cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s stop", common.ComposeProjectName, common.FileStr)
+			// 	//fmt.Println(cmdStr)
+			// 	common.SysCall(cmdStr)
 
-			}
+			// 	common.SysCallDockerComposePs()
+			// case common.ModeKubernetes:
+			// 	cmdStr = fmt.Sprintf("helm uninstall --namespace %s %s", common.K8sNamespace, common.HelmReleaseName)
+			// 	common.SysCall(cmdStr)
+			// default:
+
+			// }
 		}
 
 	},

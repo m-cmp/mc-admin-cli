@@ -21,13 +21,13 @@ var installWeaveScopeCmd = &cobra.Command{
 		common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
 
 		var cmdStr string
-		switch common.MccMode {
-		case common.ModeDockerCompose:
-			fmt.Println("mcc Docker Compose mode does not support 'weave-scope install' subcommand.")
+		// switch common.MccMode {
+		// case common.ModeDockerCompose:
+		// 	fmt.Println("mcc Docker Compose mode does not support 'weave-scope install' subcommand.")
 
-		case common.ModeKubernetes:
-			if root.K8sprovider == common.NotDefined {
-				fmt.Print(`--k8sprovider argument is required but not provided.
+		// case common.ModeKubernetes:
+		if root.K8sprovider == common.NotDefined {
+			fmt.Print(`--k8sprovider argument is required but not provided.
 					e.g.
 					--k8sprovider=gke
 					--k8sprovider=eks
@@ -37,42 +37,42 @@ var installWeaveScopeCmd = &cobra.Command{
 					--k8sprovider=kubeadm
 					`)
 
-				break
-			}
+			// break
+		}
 
-			// If your cluster is on GKE, first you need to grant permissions for the installation.
-			if strings.ToLower(root.K8sprovider) == "gke" {
-				cmdStr = `kubectl create clusterrolebinding "cluster-admin-$(whoami)" --clusterrole=cluster-admin --user="$(gcloud config get-value core/account)"`
-				common.SysCall(cmdStr)
-			}
+		// If your cluster is on GKE, first you need to grant permissions for the installation.
+		if strings.ToLower(root.K8sprovider) == "gke" {
+			cmdStr = `kubectl create clusterrolebinding "cluster-admin-$(whoami)" --clusterrole=cluster-admin --user="$(gcloud config get-value core/account)"`
+			common.SysCall(cmdStr)
+		}
 
-			if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "eks" || strings.ToLower(root.K8sprovider) == "aks" {
+		if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "eks" || strings.ToLower(root.K8sprovider) == "aks" {
 
-				// Install Weave Scope on your Kubernetes cluster.
-				cmdStr = `kubectl apply -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')&k8s-service-type=LoadBalancer"`
-				common.SysCall(cmdStr)
+			// Install Weave Scope on your Kubernetes cluster.
+			cmdStr = `kubectl apply -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')&k8s-service-type=LoadBalancer"`
+			common.SysCall(cmdStr)
 
-				fmt.Print(`Weave Scope installed successfully.
+			fmt.Print(`Weave Scope installed successfully.
 					To access Weave Scope UI, follow these steps:
 						1. Run 'kubectl get svc -n weave'.
 						2. Check EXTERNAL-IP. If EXTERNAL-IP is <pending>, then wait for seconds and run 'kubectl get svc -n weave' again.
 						3. In your web browser, access to http://<EXTERNAL-IP>:80`)
 
-			} else {
-				// Install Weave Scope on your Kubernetes cluster.
-				cmdStr = `kubectl apply -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')&k8s-service-type=NodePort"`
-				common.SysCall(cmdStr)
+		} else {
+			// Install Weave Scope on your Kubernetes cluster.
+			cmdStr = `kubectl apply -f "https://cloud.weave.works/k8s/scope.yaml?k8s-version=$(kubectl version | base64 | tr -d '\n')&k8s-service-type=NodePort"`
+			common.SysCall(cmdStr)
 
-				fmt.Print(`Weave Scope installed successfully.
+			fmt.Print(`Weave Scope installed successfully.
 					To access Weave Scope UI, follow these steps:
 						1. Run 'kubectl get svc -n weave'.
 						2. Check the NodePort port number. (30000-32768)
 						3. In your web browser, access to http://<Node-IP>:<Weave-Scope-Port>`)
-			}
-
-		default:
-
 		}
+
+		// default:
+
+		// }
 
 	},
 }

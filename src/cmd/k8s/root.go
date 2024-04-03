@@ -9,6 +9,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var K8sprovider string
+
 // restCmd represents the rest command
 var k8sCmd = &cobra.Command{
 	Use: "k8s",
