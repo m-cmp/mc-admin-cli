@@ -3,7 +3,6 @@ package docker
 import (
 	"fmt"
 
-	root "github.com/mc-admin-cli/mcc/src/cmd"
 	"github.com/mc-admin-cli/mcc/src/common"
 	"github.com/spf13/cobra"
 )
@@ -17,67 +16,13 @@ var runCmd = &cobra.Command{
 		fmt.Println("\n[Setup and Run M-CMP]")
 		fmt.Println()
 
-		if common.FileStr == "" {
+		if common.DockerFilePath == "" {
 			fmt.Println("--file (-f) argument is required but not provided.")
 		} else {
-			common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
-
 			var cmdStr string
-			cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s up", common.ComposeProjectName, common.FileStr)
+			cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s up", common.ComposeProjectName, common.DockerFilePath)
 			//fmt.Println(cmdStr)
 			common.SysCall(cmdStr)
-
-			// switch common.MccMode {
-			// case common.ModeDockerCompose:
-			// 	cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s up", common.ComposeProjectName, common.FileStr)
-			// 	//fmt.Println(cmdStr)
-			// 	common.SysCall(cmdStr)
-			// case common.ModeKubernetes:
-			// 	if root.K8sprovider == common.NotDefined {
-			// 		fmt.Print(`--k8sprovider argument is required but not provided.
-			// 		e.g.
-			// 		--k8sprovider=gke
-			// 		--k8sprovider=eks
-			// 		--k8sprovider=aks
-			// 		--k8sprovider=mcks
-			// 		--k8sprovider=minikube
-			// 		--k8sprovider=kubeadm
-			// 		`)
-
-			// 		break
-			// 	}
-
-			// 	// For Kubernetes 1.19 and above
-			// 	cmdStr = fmt.Sprintf("kubectl create ns %s --dry-run=client -o yaml | kubectl apply -f -", common.K8sNamespace)
-			// 	// For Kubernetes 1.18 and below
-			// 	//cmdStr = fmt.Sprintf("kubectl create ns %s --dry-run -o yaml | kubectl apply -f -", common.K8sNamespace)
-			// 	common.SysCall(cmdStr)
-
-			// 	// cmdStr = fmt.Sprintf("helm install --namespace %s %s -f %s ../helm-chart --debug", common.K8sNamespace, common.HelmReleaseName, common.FileStr)
-			// 	// if strings.ToLower(k8sprovider) == "gke" {
-			// 	// 	cmdStr += " --set metricServer.enabled=false"
-			// 	// }
-			// 	// //fmt.Println(cmdStr)
-			// 	// common.SysCall(cmdStr)
-
-			// 	if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "eks" || strings.ToLower(root.K8sprovider) == "aks" {
-			// 		cmdStr = fmt.Sprintf("helm install --namespace %s %s -f %s ../helm-chart --debug", common.K8sNamespace, common.HelmReleaseName, common.FileStr)
-			// 		cmdStr += " --set cb-restapigw.service.type=LoadBalancer"
-			// 		cmdStr += " --set cb-webtool.service.type=LoadBalancer"
-
-			// 		if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "aks" {
-			// 			cmdStr += " --set metricServer.enabled=false"
-			// 		}
-
-			// 		common.SysCall(cmdStr)
-			// 	} else {
-			// 		cmdStr = fmt.Sprintf("helm install --namespace %s %s -f %s ../helm-chart --debug", common.K8sNamespace, common.HelmReleaseName, common.FileStr)
-			// 		common.SysCall(cmdStr)
-			// 	}
-			// default:
-
-			// }
-
 		}
 
 	},
@@ -87,9 +32,8 @@ func init() {
 	dockerCmd.AddCommand(runCmd)
 
 	pf := runCmd.PersistentFlags()
-	pf.StringVarP(&common.FileStr, "file", "f", common.NotDefined, "User-defined configuration file")
-	pf.StringVarP(&root.K8sprovider, "k8sprovider", "", common.NotDefined, "Kind of Managed K8s services")
-	// runCmd.MarkPersistentFlagRequired("k8sprovider")
+	pf.StringVarP(&common.DockerFilePath, "file", "f", common.DefaultDockerComposeConfig, "User-defined configuration file")
+	// pf.StringVarP(&root.K8sprovider, "k8sprovider", "", common.NotDefined, "Kind of Managed K8s services")
 
 	//	cobra.MarkFlagRequired(pf, "file")
 

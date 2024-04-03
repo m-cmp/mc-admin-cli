@@ -19,10 +19,9 @@ var updateCmd = &cobra.Command{
 		fmt.Println("\n[Update M-CMP]")
 		fmt.Println()
 
-		if common.FileStr == "" {
+		if common.K8sFilePath == "" {
 			fmt.Println("file is required")
 		} else {
-			common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
 
 			var cmdStr string
 			// switch common.MccMode {
@@ -30,7 +29,7 @@ var updateCmd = &cobra.Command{
 			// 	fmt.Println("mcc Docker Compose mode does not support 'update/apply' subcommand.")
 
 			// case common.ModeKubernetes:
-			cmdStr = fmt.Sprintf("helm upgrade --namespace %s --install %s -f %s ../helm-chart", common.K8sNamespace, common.HelmReleaseName, common.FileStr)
+			cmdStr = fmt.Sprintf("helm upgrade --namespace %s --install %s -f %s ../helm-chart", common.K8sNamespace, common.HelmReleaseName, common.K8sFilePath)
 			if strings.ToLower(root.K8sprovider) == "gke" || strings.ToLower(root.K8sprovider) == "aks" {
 				cmdStr += " --set metricServer.enabled=false"
 			}
@@ -49,7 +48,7 @@ func init() {
 	k8sCmd.AddCommand(updateCmd)
 
 	pf := updateCmd.PersistentFlags()
-	pf.StringVarP(&common.FileStr, "file", "f", common.NotDefined, "User-defined configuration file")
+	pf.StringVarP(&common.K8sFilePath, "file", "f", common.DefaultKubernetesConfig, "User-defined configuration file")
 	pf.StringVarP(&root.K8sprovider, "k8sprovider", "", common.NotDefined, "Kind of Managed K8s services")
 
 	//	cobra.MarkFlagRequired(pf, "file")

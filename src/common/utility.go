@@ -7,15 +7,6 @@ import (
 	"os/exec"
 )
 
-// FileStr is a variable that holds path to the docker-compose.yaml.
-var FileStr string
-
-//var CommandStr string
-//var TargetStr string
-
-// MccMode is a variable that holds current mcc's mode.
-var MccMode string
-
 // DockerFilePath is a variable that holds path to the docker-compose.yaml.
 var DockerFilePath string
 
@@ -23,12 +14,6 @@ var DockerFilePath string
 var K8sFilePath string
 
 const (
-	// ModeDockerCompose is a variable that holds string indicating Docker Compose mode.
-	ModeDockerCompose = "DockerCompose"
-
-	// ModeKubernetes is a variable that holds string indicating Kubernetes mode.
-	ModeKubernetes = "Kubernetes"
-
 	// DefaultDockerComposeConfig is a variable that holds path to docker-compose.yaml
 	DefaultDockerComposeConfig = "../docker-compose-mode-files/docker-compose.yaml"
 
@@ -79,26 +64,6 @@ func SysCall(cmdStr string) {
 func SysCallDockerComposePs() {
 	fmt.Println("\n[v]Status of M-CMP runtimes")
 	//cmdStr := "COMPOSE_PROJECT_NAME=mcc docker-compose -f " + FileStr + " ps"
-	cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s ps", ComposeProjectName, FileStr)
+	cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s ps", ComposeProjectName, DockerFilePath)
 	SysCall(cmdStr)
-}
-
-// GenConfigPath receives path-to-config-file and mcc-mode, and returns path-to-config-file.
-func GenConfigPath(fileStr string, mode string) string {
-	returnStr := fileStr
-	switch mode {
-	case ModeDockerCompose:
-		if fileStr == NotDefined {
-			returnStr = DefaultDockerComposeConfig
-		}
-	case ModeKubernetes:
-		if fileStr == NotDefined {
-			returnStr = DefaultKubernetesConfig
-		}
-	default:
-
-	}
-	fmt.Println("[Config path] " + returnStr)
-	fmt.Println()
-	return returnStr
 }

@@ -18,8 +18,6 @@ var uninstallWeaveScopeCmd = &cobra.Command{
 		fmt.Println("\n[Uninstall Weave Scope]")
 		fmt.Println()
 
-		common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
-
 		var cmdStr string
 		// switch common.MccMode {
 		// case common.ModeDockerCompose:

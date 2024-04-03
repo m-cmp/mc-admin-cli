@@ -18,8 +18,6 @@ var installWeaveScopeCmd = &cobra.Command{
 		fmt.Println("\n[Install Weave Scope]")
 		fmt.Println()
 
-		common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
-
 		var cmdStr string
 		// switch common.MccMode {
 		// case common.ModeDockerCompose:

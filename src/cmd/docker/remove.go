@@ -17,64 +17,24 @@ var removeCmd = &cobra.Command{
 		fmt.Println("\n[Remove M-CMP]")
 		fmt.Println()
 
-		if common.FileStr == "" {
+		if common.DockerFilePath == "" {
 			fmt.Println("file is required")
 		} else {
-			common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
 			var cmdStr string
 			if volFlag && imgFlag {
-				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v --rmi all", common.ComposeProjectName, common.FileStr)
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v --rmi all", common.ComposeProjectName, common.DockerFilePath)
 			} else if volFlag {
-				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v", common.ComposeProjectName, common.FileStr)
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v", common.ComposeProjectName, common.DockerFilePath)
 			} else if imgFlag {
-				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down --rmi all", common.ComposeProjectName, common.FileStr)
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down --rmi all", common.ComposeProjectName, common.DockerFilePath)
 			} else {
-				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down", common.ComposeProjectName, common.FileStr)
+				cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down", common.ComposeProjectName, common.DockerFilePath)
 			}
 
 			//fmt.Println(cmdStr)
 			common.SysCall(cmdStr)
 
 			common.SysCallDockerComposePs()
-			// switch common.MccMode {
-			// case common.ModeKubernetes:
-			// 	cmdStr = fmt.Sprintf("helm uninstall --namespace %s %s", common.K8sNamespace, common.HelmReleaseName)
-			// 	common.SysCall(cmdStr)
-
-			// 	cmdStr = fmt.Sprintf("kubectl delete pvc cb-spider -n %s", common.K8sNamespace)
-			// 	common.SysCall(cmdStr)
-
-			// 	cmdStr = fmt.Sprintf("kubectl delete pvc cb-tumblebug -n %s", common.K8sNamespace)
-			// 	common.SysCall(cmdStr)
-
-			// 	cmdStr = fmt.Sprintf("kubectl delete pvc cb-ladybug -n %s", common.K8sNamespace)
-			// 	common.SysCall(cmdStr)
-
-			// 	cmdStr = fmt.Sprintf("kubectl delete pvc cb-dragonfly -n %s", common.K8sNamespace)
-			// 	common.SysCall(cmdStr)
-
-			// 	cmdStr = fmt.Sprintf("kubectl delete pvc data-mcc-etcd-0 -n %s", common.K8sNamespace)
-			// 	common.SysCall(cmdStr)
-
-			// 	//fallthrough
-			// case common.ModeDockerCompose:
-			// 	if volFlag && imgFlag {
-			// 		cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v --rmi all", common.ComposeProjectName, common.FileStr)
-			// 	} else if volFlag {
-			// 		cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down -v", common.ComposeProjectName, common.FileStr)
-			// 	} else if imgFlag {
-			// 		cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down --rmi all", common.ComposeProjectName, common.FileStr)
-			// 	} else {
-			// 		cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s down", common.ComposeProjectName, common.FileStr)
-			// 	}
-
-			// 	//fmt.Println(cmdStr)
-			// 	common.SysCall(cmdStr)
-
-			// 	common.SysCallDockerComposePs()
-			// default:
-
-			// }
 		}
 
 	},
@@ -87,7 +47,7 @@ func init() {
 	dockerCmd.AddCommand(removeCmd)
 
 	pf := removeCmd.PersistentFlags()
-	pf.StringVarP(&common.FileStr, "file", "f", common.NotDefined, "User-defined configuration file")
+	pf.StringVarP(&common.DockerFilePath, "file", "f", common.DefaultDockerComposeConfig, "User-defined configuration file")
 	//	cobra.MarkFlagRequired(pf, "file")
 
 	pf.BoolVarP(&volFlag, "volumes", "v", false, "Remove named volumes declared in the volumes section of the Compose file")
