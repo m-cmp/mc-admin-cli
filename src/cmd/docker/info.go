@@ -16,45 +16,15 @@ var infoCmd = &cobra.Command{
 		fmt.Println("\n[Get info for M-CMP runtimes]")
 		fmt.Println()
 
-		if common.FileStr == "" {
+		if common.DockerFilePath == "" {
 			fmt.Println("file is required")
 		} else {
-			common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
 			var cmdStr string
 			common.SysCallDockerComposePs()
 			fmt.Println("")
 			fmt.Println("[v]Status of M-CMP runtime images")
-			cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s images", common.ComposeProjectName, common.FileStr)
+			cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s images", common.ComposeProjectName, common.DockerFilePath)
 			common.SysCall(cmdStr)
-			// common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
-			// var cmdStr string
-			// switch common.MccMode {
-			// case common.ModeDockerCompose:
-			// 	common.SysCallDockerComposePs()
-
-			// 	fmt.Println("")
-			// 	fmt.Println("[v]Status of M-CMP runtime images")
-			// 	cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s images", common.ComposeProjectName, common.FileStr)
-			// 	//fmt.Println(cmdStr)
-			// 	common.SysCall(cmdStr)
-			// case common.ModeKubernetes:
-			// 	fmt.Println("[v]Status of M-CMP Helm release")
-			// 	cmdStr = fmt.Sprintf("helm status --namespace %s %s", common.K8sNamespace, common.HelmReleaseName)
-			// 	common.SysCall(cmdStr)
-			// 	fmt.Println()
-			// 	fmt.Println("[v]Status of M-CMP pods")
-			// 	cmdStr = fmt.Sprintf("kubectl get pods -n %s", common.K8sNamespace)
-			// 	common.SysCall(cmdStr)
-			// 	fmt.Println()
-			// 	fmt.Println("[v]Status of M-CMP container images")
-			// 	cmdStr = `kubectl get pods -n ` + common.K8sNamespace + ` -o jsonpath="{..image}" |\
-			// 	tr -s '[[:space:]]' '\n' |\
-			// 	sort |\
-			// 	uniq`
-			// 	common.SysCall(cmdStr)
-			// default:
-
-			// }
 		}
 	},
 }
@@ -63,7 +33,7 @@ func init() {
 	dockerCmd.AddCommand(infoCmd)
 
 	pf := infoCmd.PersistentFlags()
-	pf.StringVarP(&common.FileStr, "file", "f", common.NotDefined, "User-defined configuration file")
+	pf.StringVarP(&common.DockerFilePath, "file", "f", common.DefaultDockerComposeConfig, "User-defined configuration file")
 	// Here you will define your flags and configuration settings.
 
 	// Cobra supports Persistent Flags which will work for this command
