@@ -16,11 +16,11 @@ var runCmd = &cobra.Command{
 		fmt.Println("\n[Setup and Run M-CMP]")
 		fmt.Println()
 
-		if common.DockerFilePath == "" {
+		if DockerFilePath == "" {
 			fmt.Println("--file (-f) argument is required but not provided.")
 		} else {
 			var cmdStr string
-			cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s up", common.ComposeProjectName, common.DockerFilePath)
+			cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s up", ComposeProjectName, DockerFilePath)
 			//fmt.Println(cmdStr)
 			common.SysCall(cmdStr)
 		}
@@ -32,7 +32,7 @@ func init() {
 	dockerCmd.AddCommand(runCmd)
 
 	pf := runCmd.PersistentFlags()
-	pf.StringVarP(&common.DockerFilePath, "file", "f", common.DefaultDockerComposeConfig, "User-defined configuration file")
+	pf.StringVarP(&DockerFilePath, "file", "f", DefaultDockerComposeConfig, "User-defined configuration file")
 	// pf.StringVarP(&root.K8sprovider, "k8sprovider", "", common.NotDefined, "Kind of Managed K8s services")
 
 	//	cobra.MarkFlagRequired(pf, "file")

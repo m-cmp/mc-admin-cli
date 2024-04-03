@@ -31,7 +31,7 @@ var runCmd = &cobra.Command{
 		fmt.Println("\n[Setup and Run Cloud-Migrator]")
 		fmt.Println()
 
-		if common.K8sFilePath == "" {
+		if K8sFilePath == "" {
 			fmt.Println("--file (-f) argument is required but not provided.")
 		} else {
 			var cmdStr string
@@ -50,7 +50,7 @@ var runCmd = &cobra.Command{
 			}
 
 			// For Kubernetes 1.19 and above
-			cmdStr = fmt.Sprintf("kubectl create ns %s --dry-run=client -o yaml | kubectl apply -f -", common.K8sNamespace)
+			cmdStr = fmt.Sprintf("kubectl create ns %s --dry-run=client -o yaml | kubectl apply -f -", K8sNamespace)
 			// For Kubernetes 1.18 and below
 			//cmdStr = fmt.Sprintf("kubectl create ns %s --dry-run -o yaml | kubectl apply -f -", common.CMK8sNamespace)
 			common.SysCall(cmdStr)
@@ -63,7 +63,7 @@ var runCmd = &cobra.Command{
 			// common.SysCall(cmdStr)
 
 			if strings.ToLower(K8sprovider) == "gke" || strings.ToLower(K8sprovider) == "eks" || strings.ToLower(K8sprovider) == "aks" {
-				cmdStr = fmt.Sprintf("helm install --namespace %s %s -f %s ../helm-chart --debug", common.K8sNamespace, common.HelmReleaseName, common.K8sFilePath)
+				cmdStr = fmt.Sprintf("helm install --namespace %s %s -f %s ../helm-chart --debug", K8sNamespace, HelmReleaseName, K8sFilePath)
 				cmdStr += " --set cb-restapigw.service.type=LoadBalancer"
 				cmdStr += " --set cb-webtool.service.type=LoadBalancer"
 
@@ -73,7 +73,7 @@ var runCmd = &cobra.Command{
 
 				common.SysCall(cmdStr)
 			} else {
-				cmdStr = fmt.Sprintf("helm install --namespace %s %s -f %s ../helm-chart --debug", common.K8sNamespace, common.HelmReleaseName, common.K8sFilePath)
+				cmdStr = fmt.Sprintf("helm install --namespace %s %s -f %s ../helm-chart --debug", K8sNamespace, HelmReleaseName, K8sFilePath)
 				common.SysCall(cmdStr)
 			}
 
@@ -86,7 +86,7 @@ func init() {
 	k8sCmd.AddCommand(runCmd)
 
 	pf := runCmd.PersistentFlags()
-	pf.StringVarP(&common.K8sFilePath, "file", "f", common.DefaultKubernetesConfig, "User-defined configuration file")
+	pf.StringVarP(&K8sFilePath, "file", "f", DefaultKubernetesConfig, "User-defined configuration file")
 	//pf.StringVarP(&K8sprovider, "k8sprovider", "", common.NotDefined, "Kind of Managed K8s services") //@todo
 
 	// runCmd.MarkPersistentFlagRequired("k8sprovider")
