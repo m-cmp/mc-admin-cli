@@ -1,5 +1,7 @@
 package k8s
 
+var K8sFilePath string
+
 const (
 	// DefaultKubernetesConfig is a variable that holds path to helm-chart/values.yaml
 	DefaultKubernetesConfig string = "../helm-chart/values.yaml"

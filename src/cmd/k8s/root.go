@@ -6,11 +6,11 @@ package k8s
 import (
 	"fmt"
 
+	"github.com/mc-admin-cli/mcc/src/cmd"
 	"github.com/spf13/cobra"
 )
 
 var K8sprovider string
-var K8sFilePath string
 
 // restCmd represents the rest command
 var k8sCmd = &cobra.Command{
@@ -21,11 +21,11 @@ var k8sCmd = &cobra.Command{
 	Long: `The mayfly is a tool to operate Cloud-Migrator system.
 For example, you can setup and run, stop, and ... Cloud-Migrator runtimes.
 
-- ./mayfly pull [-f ../docker-compose-mode-files/docker-compose.yaml]
-- ./mayfly run [-f ../docker-compose-mode-files/docker-compose.yaml]
-- ./mayfly info
-- ./mayfly stop [-f ../docker-compose-mode-files/docker-compose.yaml]
-- ./mayfly remove [-f ../docker-compose-mode-files/docker-compose.yaml] -v -i
+- ./mcc k8s pull [-f ../docker-compose-mode-files/docker-compose.yaml]
+- ./mcc k8s run [-f ../docker-compose-mode-files/docker-compose.yaml]
+- ./mcc k8s info
+- ./mcc k8s stop [-f ../docker-compose-mode-files/docker-compose.yaml]
+- ./mcc k8s remove [-f ../docker-compose-mode-files/docker-compose.yaml] -v -i
 
 	     `,
 	Run: func(cmd *cobra.Command, args []string) {
@@ -35,7 +35,7 @@ For example, you can setup and run, stop, and ... Cloud-Migrator runtimes.
 }
 
 func init() {
-	k8sCmd.AddCommand(k8sCmd)
+	cmd.RootCmd.AddCommand(k8sCmd)
 
 	// Here you will define your flags and configuration settings.
 
