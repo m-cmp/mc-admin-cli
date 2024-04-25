@@ -74,8 +74,8 @@ Use the -h option at the end of the sub-command requiring assistance, or executi
 
 
 Usage:
-  mayfly docker [flags]
-  mayfly docker [command]
+  mcc docker [flags]
+  mcc docker [command]
 
 Available Commands:
   info        Get information of M-CMP System
