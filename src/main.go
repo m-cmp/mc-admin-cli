@@ -17,6 +17,7 @@ package main
 
 import (
 	"github.com/mc-admin-cli/mcc/src/cmd"
+	_ "github.com/mc-admin-cli/mcc/src/cmd/apicall"
 	_ "github.com/mc-admin-cli/mcc/src/cmd/docker"
 	_ "github.com/mc-admin-cli/mcc/src/cmd/k8s"
 	_ "github.com/mc-admin-cli/mcc/src/cmd/rest"

@@ -25,10 +25,10 @@ import (
 // stopCmd represents the stop command
 var stopCmd = &cobra.Command{
 	Use:   "stop",
-	Short: "Stop Cloud-Migrator System",
-	Long:  `Stop Cloud-Migrator System`,
+	Short: "Stop M-CMP System",
+	Long:  `Stop M-CMP System`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("\n[Stop Cloud-Migrator]")
+		fmt.Println("\n[Stop M-CMP]")
 		fmt.Println()
 
 		if K8sFilePath == "" {

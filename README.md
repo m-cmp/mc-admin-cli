@@ -35,75 +35,114 @@ mc-admin-cli/src$ go get -u
 mc-admin-cli/src$ go build -o mcc
 ```
 
-# Commands to use the mcc
+# How to use the mcc
 
-## Help
 ```
-mc-admin-cli/src$ ./mcc 
+mc-admin-cli/bin$ ./mcc -h
 
 The mcc is a tool to operate Cloud-Barista system. 
   
-  For example, you can setup and run, stop, and ... Cloud-Barista runtimes.
-  
-  - ./mcc pull [-f ../docker-compose-mode-files/docker-compose.yaml]
-  - ./mcc run [-f ../docker-compose-mode-files/docker-compose.yaml]
-  - ./mcc info
-  - ./mcc stop [-f ../docker-compose-mode-files/docker-compose.yaml]
-  - ./mcc remove [-f ../docker-compose-mode-files/docker-compose.yaml] -v -i
-
 Usage:
   mcc [command]
 
 Available Commands:
+  api         Open API calls to the M-CMP system
+  docker      A tool to operate M-CMP system
   help        Help about any command
-  info        Get information of Cloud-Barista System
-  pull        Pull images of Cloud-Barista System containers
-  remove      Stop and Remove Cloud-Barista System
-  run         Setup and Run Cloud-Barista System
-  stop        Stop Cloud-Barista System
+  k8s         A tool to operate M-CMP system
+  rest        rest api call
 
 Flags:
-      --config string   config file (default is $HOME/.mcc.yaml)
-  -h, --help            help for mcc
-  -t, --toggle          Help message for toggle
+  -h, --help   help for mcc
 
 Use "mcc [command] --help" for more information about a command.
 ```
 
-## Run
-```
-mc-admin-cli/src$ ./mcc run -h
 
-Setup and Run Cloud-Barista System
+## docker-compose.yaml
+```
+The necessary service information for the M-CMP System configuration is defined in the cm-admin-cli/docker-compose-mode-files/docker-compose.yaml file.(By default, it is set to build the desired configuration and data volume in the docker-compose-mode-files folder.)
+
+If you want to change the information for each container you want to deploy, modify the cm-admin-cli/docker-compose-mode-files/docker-compose.yaml file or use the -f option.
+```
+
+## docker subcommand
+```
+For now, it supports docker's run/stop/info/pull/remove commands.
+
+Use the -h option at the end of the sub-command requiring assistance, or executing 'mcc' without any options will display the help manual.
+
 
 Usage:
-  mcc run [flags]
+  mayfly docker [flags]
+  mayfly docker [command]
+
+Available Commands:
+  info        Get information of M-CMP System
+  pull        Pull images of M-CMP System containers
+  remove      Stop and Remove M-CMP System
+  run         Setup and Run M-CMP System
+  stop        Stop M-CMP System
 
 Flags:
-  -f, --file string   Path to Cloud-Barista Docker-compose file (default "*.yaml")
-  -h, --help          help for run
+  -h, --help   help for docker
 
-Global Flags:
-      --config string   config file (default is $HOME/.mcc.yaml)
+Use "mcc docker [command] --help" for more information about a command.
+
+
+## docker subcommand examples
+Simple usage examples for docker subcommand
 ```
+ ./mcc docker pull [-f ../docker-compose-mode-files/docker-compose.yaml]   
+ ./mcc docker run [-f ../docker-compose-mode-files/docker-compose.yaml]   
+ ./mcc docker info   
+ ./mcc docker stop [-f ../docker-compose-mode-files/docker-compose.yaml]   
+ ./mcc docker remove [-f ../docker-compose-mode-files/docker-compose.yaml] -v -i   
 
-## Stop
 ```
-mc-admin-cli/src$ ./mcc stop -h
+## k8s subcommand
+K8S is not currently supported and will be supported in the near future.
 
-Stop Cloud-Barista System
+## rest subcommand
+The rest subcommands are developed around the basic features of REST to make it easy to use the open APIs of M-CMP-related frameworks from the CLI.
+For now, it supports get/post/delete/put/patch commands.
+
+```
+rest api call
 
 Usage:
-  mcc stop [flags]
+  mcc rest [flags]
+  mcc rest [command]
+
+Available Commands:
+  delete      REST API calls with DELETE methods
+  get         REST API calls with GET methods
+  patch       REST API calls with PATCH methods
+  post        REST API calls with POST methods
+  put         REST API calls with PUT methods
 
 Flags:
-  -f, --file string   Path to Cloud-Barista Docker-compose file (default "*.yaml")
-  -h, --help          help for stop
+      --authScheme string   sets the auth scheme type in the HTTP request.(Exam. OAuth)(The default auth scheme is Bearer)
+      --authToken string    sets the auth token of the 'Authorization' header for all HTTP requests.(The default auth scheme is 'Bearer')
+  -d, --data string         Data to send to the server
+  -f, --file string         Data to send to the server from file
+  -I, --head                Show response headers only
+  -H, --header strings      Pass custom header(s) to server
+  -h, --help                help for rest
+  -p, --password string     Password for basic authentication
+  -u, --user string         Username for basic authentication
+  -v, --verbose             Show more detail information
 
-Global Flags:
-      --config string   config file (default is $HOME/.mccvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvvv.yaml)
+Use "mcc rest [command] --help" for more information about a command.
 ```
 
+## rest command examples
+Simple usage examples for rest commands
 
-## How to Contribute
-- Issues/Discussions/Ideas: Utilize issue of mc-admin-cli
+```
+./mcc rest get -u default -p default http://localhost:1323/tumblebug/health
+./mcc rest post https://reqres.in/api/users -d '{
+                "name": "morpheus",
+                "job": "leader"
+        }'
+```
