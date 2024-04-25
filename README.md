@@ -88,7 +88,7 @@ Flags:
   -h, --help   help for docker
 
 Use "mcc docker [command] --help" for more information about a command.
-
+```
 
 ## docker subcommand examples
 Simple usage examples for docker subcommand
