@@ -25,10 +25,10 @@ import (
 
 var runCmd = &cobra.Command{
 	Use:   "run",
-	Short: "Setup and Run Cloud-Migrator System",
-	Long:  `Setup and Run Cloud-Migrator System`,
+	Short: "Setup and Run M-CMP System",
+	Long:  `Setup and Run M-CMP System`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("\n[Setup and Run Cloud-Migrator]")
+		fmt.Println("\n[Setup and Run M-CMP]")
 		fmt.Println()
 
 		if K8sFilePath == "" {

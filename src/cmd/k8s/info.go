@@ -10,10 +10,10 @@ import (
 // info.goCmd represents the info.go command
 var infoCmd = &cobra.Command{
 	Use:   "info",
-	Short: "Get information of Cloud-Migrator System",
-	Long:  `Get information of Cloud-Migrator System. Information about containers and container images`,
+	Short: "Get information of M-CMP System",
+	Long:  `Get information of M-CMP System. Information about containers and container images`,
 	Run: func(cmd *cobra.Command, args []string) {
-		fmt.Println("\n[Get info for Cloud-Migrator runtimes]")
+		fmt.Println("\n[Get info for M-CMP runtimes]")
 		fmt.Println()
 
 		if K8sFilePath == "" {
@@ -21,15 +21,15 @@ var infoCmd = &cobra.Command{
 		} else {
 			var cmdStr string
 
-			fmt.Println("[v]Status of Cloud-Migrator Helm release")
+			fmt.Println("[v]Status of M-CMP Helm release")
 			cmdStr = fmt.Sprintf("helm status --namespace %s %s", K8sNamespace, HelmReleaseName)
 			common.SysCall(cmdStr)
 			fmt.Println()
-			fmt.Println("[v]Status of Cloud-Migrator pods")
+			fmt.Println("[v]Status of M-CMP pods")
 			cmdStr = fmt.Sprintf("kubectl get pods -n %s", K8sNamespace)
 			common.SysCall(cmdStr)
 			fmt.Println()
-			fmt.Println("[v]Status of Cloud-Migrator container images")
+			fmt.Println("[v]Status of M-CMP container images")
 			cmdStr = `kubectl get pods -n ` + K8sNamespace + ` -o jsonpath="{..image}" |\
 				tr -s '[[:space:]]' '\n' |\
 				sort |\

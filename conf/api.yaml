@@ -1,0 +1,94 @@
+cliSpecVersion: v1
+# Service Definitions (Framework Server Basic informations)
+services:
+  mc-infra-connector: #service name
+    baseurl: http://localhost:1024/spider  # baseurl is Scheme + Host + Base Path
+    auth: #If you need an authentication method, describe the type and username and password in the sub
+      type: basic
+      username: default
+      password: default
+  
+  mc-infra-manager:
+    baseurl: http://localhost:1323/tumblebug
+    auth: 
+      type: basic
+      username: default
+      password: default
+  
+  sample:
+    baseurl: http://localhost:1323/test
+    auth: #none
+
+
+# Define rest api actions for each of the services defined above.
+# specify the DATA to use for the API in the CLI.
+serviceActions:
+  sample: #for sample
+    #cb-spider CCIM v0.6.0
+    NormalGetAction:
+      method: get
+      resourcePath: /sample
+      description: #Use when necessary for user understanding
+    PathParamGetAction:
+      method: get
+      resourcePath: /sample/{param_name}
+  spider: #service name
+    ListCloudOS:
+      method: get
+      resourcePath: /cloudos
+    RegisterCloudDriver:
+      method: post
+      resourcePath: /driver
+    ListCloudDriver:
+      method: get
+      resourcePath: /driver
+    GetCloudDriver:
+      method: get
+      resourcePath: /driver/{driver_name}
+    UnregisterCloudDriver:
+      method: delete
+      resourcePath: /driver/{driver_name} 
+    RegisterCloudCredential:
+      method: post
+      resourcePath: /credential
+    ListCloudCredential:
+      method: get
+      resourcePath: /credential
+    GetCloudCredential:
+      method: get
+      resourcePath: /credential/{credential_name}
+    UnregisterCloudCredential:
+      method: delete
+      resourcePath: /credential/{credential_name}
+    RegisterCloudRegion:
+      method: post
+      resourcePath: /region
+    ListCloudRegion:
+      method: get
+      resourcePath: /region
+    GetCloudRegion:
+      method: get
+      resourcePath: /region/{region_name}
+    UnregisterCloudRegion:
+      method: delete
+      resourcePath: /region/{region_name}
+    CreateCloudConnectionConfiguration:
+      method: post
+      resourcePath: /connectionconfig
+    ListCloudConnectionConfiguration:
+      method: get
+      resourcePath: /connectionconfig
+    GetCloudConnectionConfiguration:
+      method: get
+      resourcePath: /connectionconfig/{config_name}
+    DeleteCloudConnectionConfiguration:
+      method: delete
+      resourcePath: /connectionconfig/{config_name}
+
+    #cb-spider CCTM v0.8.9
+  
+  tumblebug:
+    HealthInfo:
+      method: get
+      resourcePath: /health
+  
