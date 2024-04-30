@@ -337,47 +337,7 @@ serviceActions:
       resourcePath: /cspresourceinfo/{vm_id}
     AnyCall:
       method: post
-      resourcePath: /anycall
-
-
-
-
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
-  
+      resourcePath: /anycall  
   tumblebug:
     HealthInfo:
       method: get
