@@ -1,4 +1,5 @@
 version: "3.3"
+
 services:
 # The priority used by Compose to choose which env var value to use:
 # 1. Compose file
@@ -9,8 +10,8 @@ services:
 
   # CB-Spider
   cb-spider:
-    image: cloudbaristaorg/cb-spider:0.7.2
-    container_name: cb-spider
+    image: cloudbaristaorg/cb-spider:0.8.10
+    container_name: mc-infra-connector #cb-spider
     ports:
       - "0.0.0.0:1024:1024"
       - "0.0.0.0:2048:2048"
@@ -30,8 +31,8 @@ services:
 
   # CB-Tumblebug
   cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.7.2
-    container_name: cb-tumblebug
+    image: cloudbaristaorg/cb-tumblebug:0.8.4
+    container_name: mc-infra-manager #cb-tumblebug
     ports:
       - "0.0.0.0:1323:1323"
       - "0.0.0.0:50252:50252"
