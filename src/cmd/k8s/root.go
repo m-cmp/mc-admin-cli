@@ -6,7 +6,6 @@ package k8s
 import (
 	"fmt"
 
-	"github.com/mc-admin-cli/mcc/src/cmd"
 	"github.com/spf13/cobra"
 )
 
@@ -35,7 +34,7 @@ For example, you can setup and run, stop, and ... M-CMP runtimes.
 }
 
 func init() {
-	cmd.RootCmd.AddCommand(k8sCmd)
+	// cmd.RootCmd.AddCommand(k8sCmd)
 
 	// Here you will define your flags and configuration settings.
 
