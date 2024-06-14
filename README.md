@@ -14,7 +14,7 @@ If you have any difficulties in using mcc, please let us know.
 ```
 
 ## mcc 개요
-- M-CMP 시스템의 설치, 실행, 상태정보 제공, 종료, API 호출 등을 지원하는 관리 도구 입니다.
+- M-CMP 시스템의 설치, 실행, 상태정보 제공, 종료, API 호출 등을 지원하는 관리 도구입니다.
 - 현재는 Docker Compose 모드 방식만 제공합니다.
   - [Docker Compose 모드](docs/mcc-docker-compose-mode.md)
 
@@ -46,10 +46,8 @@ Usage:
   mcc [command]
 
 Available Commands:
-  api         Open API calls to the M-CMP system
   docker      A tool to operate M-CMP system
   help        Help about any command
-  k8s         A tool to operate M-CMP system
   rest        rest api call
 
 Flags:
@@ -61,12 +59,14 @@ Use "mcc [command] --help" for more information about a command.
 
 ## docker-compose.yaml
 ```
-The necessary service information for the M-CMP System configuration is defined in the cm-admin-cli/docker-compose-mode-files/docker-compose.yaml file.(By default, it is set to build the desired configuration and data volume in the docker-compose-mode-files folder.)
+The necessary service information for the M-CMP System configuration is defined in the mc-admin-cli/docker-compose-mode-files/docker-compose.yaml file.(By default, it is set to build the desired configuration and data volume in the docker-compose-mode-files folder.)
 
-If you want to change the information for each container you want to deploy, modify the cm-admin-cli/docker-compose-mode-files/docker-compose.yaml file or use the -f option.
+If you want to change the information for each container you want to deploy, modify the mc-admin-cli/docker-compose-mode-files/docker-compose.yaml file or use the -f option.
 ```
 
 ## docker subcommand
+For more information, check out [the docker subcommand document.](./docs/mc-admin-cli-docker-compose-mode.md)
+
 ```
 For now, it supports docker's run/stop/info/pull/remove commands.
 
@@ -106,6 +106,8 @@ K8S is not currently supported and will be supported in the near future.
 ## rest subcommand
 The rest subcommands are developed around the basic features of REST to make it easy to use the open APIs of M-CMP-related frameworks from the CLI.
 For now, it supports get/post/delete/put/patch commands.
+
+For more information, check out [the rest subcommand document.](./docs/mc-admin-cli-rest.md)
 
 ```
 rest api call
