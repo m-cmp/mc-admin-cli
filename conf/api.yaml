@@ -1,0 +1,345 @@
+cliSpecVersion: v1
+# Service Definitions (Framework Server Basic informations)
+services:
+  mc-infra-connector: #service name
+    baseurl: http://localhost:1024/spider  # baseurl is Scheme + Host + Base Path
+    auth: #If you need an authentication method, describe the type and username and password in the sub
+      type: basic
+      username: default
+      password: default
+  
+  mc-infra-manager:
+    baseurl: http://localhost:1323/tumblebug
+    auth: 
+      type: basic
+      username: default
+      password: default
+  
+  sample:
+    baseurl: http://localhost:1323/test
+    auth: #none
+
+
+# Define rest api actions for each of the services defined above.
+# specify the DATA to use for the API in the CLI.
+serviceActions:
+  sample: #for sample
+    #cb-spider CCIM v0.6.0
+    NormalGetAction:
+      method: get
+      resourcePath: /sample
+      description: #Use when necessary for user understanding
+    PathParamGetAction:
+      method: get
+      resourcePath: /sample/{param_name}
+  spider: #service name
+    ListCloudOS:
+      method: get
+      resourcePath: /cloudos
+    RegisterCloudDriver:
+      method: post
+      resourcePath: /driver
+    ListCloudDriver:
+      method: get
+      resourcePath: /driver
+    GetCloudDriver:
+      method: get
+      resourcePath: /driver/{driver_name}
+    UnregisterCloudDriver:
+      method: delete
+      resourcePath: /driver/{driver_name} 
+    RegisterCloudCredential:
+      method: post
+      resourcePath: /credential
+    ListCloudCredential:
+      method: get
+      resourcePath: /credential
+    GetCloudCredential:
+      method: get
+      resourcePath: /credential/{credential_name}
+    UnregisterCloudCredential:
+      method: delete
+      resourcePath: /credential/{credential_name}
+    RegisterCloudRegion:
+      method: post
+      resourcePath: /region
+    ListCloudRegion:
+      method: get
+      resourcePath: /region
+    GetCloudRegion:
+      method: get
+      resourcePath: /region/{region_name}
+    UnregisterCloudRegion:
+      method: delete
+      resourcePath: /region/{region_name}
+    CreateCloudConnectionConfiguration:
+      method: post
+      resourcePath: /connectionconfig
+    ListCloudConnectionConfiguration:
+      method: get
+      resourcePath: /connectionconfig
+    GetCloudConnectionConfiguration:
+      method: get
+      resourcePath: /connectionconfig/{config_name}
+    DeleteCloudConnectionConfiguration:
+      method: delete
+      resourcePath: /connectionconfig/{config_name}
+
+    #cb-spider CCTM v0.8.9
+    ListRegionZonePreConfig:
+      method: get
+      resourcePath: /preconfig/regionzone
+    GetRegionZonePreConfig:
+      method: get
+      resourcePath: /preconfig/regionzone/{regionzone_name}  
+    ListOrgRegionPreConfig :
+      method: get
+      resourcePath: /preconfig/orgregion
+    ListRegionZone:
+      method: get
+      resourcePath: /regionzone
+    GetRegionZone:
+      method: get
+      resourcePath: /regionzone/{regionzone_name}
+    ListOrgRegion:
+      method: get  
+      resourcePath: /orgregion
+    ListOrgZone:
+      method: get
+      resourcePath: /orgzone
+    ListProductFamily:
+      method: get
+      resourcePath: /productfamily/{region_name}
+    GetPriceInfo:
+      method: post
+      resourcePath: /priceinfo/{product_family}/{region_name}
+    ListImage:
+      method: get
+      resourcePath: /vmimage
+    GetImage:
+      method: get
+      resourcePath: /vmimage/{image_name}
+    ListVMSpec:
+      method: get
+      resourcePath: /vmspec
+    GetVMSpec:
+      method: get
+      resourcePath: /vmspec/{vm_spec_name}
+    ListOrgVMSpec:
+      method: get
+      resourcePath: /vmorgspec
+    GetOrgVMSpec:
+      method: get
+      resourcePath: /vmorgspec/{vm_spec_name}  
+    RegisterVPC:
+      method: post
+      resourcePath: /regvpc
+    UnregisterVPC:
+      method: delete
+      resourcePath: /regvpc/{vpc_name}
+    CreateVPC:
+      method: post
+      resourcePath: /vpc
+    AddSubnet:
+      method: post
+      resourcePath: /vpc/{vac_name}/subnet
+    RemoveSubnet:
+      method: delete
+      resourcePath: /vpc/{vac_name}/subnet/{subnet_name}
+    ListVPC:
+      method: get
+      resourcePath: /vpc
+    GetVPC:
+      method: get
+      resourcePath: /vpc/{vpc_name}
+    DeleteVPC:
+      method: delete  
+      resourcePath: /vpc/{vpc_name}
+    RegisterSecurity:
+      method: post
+      resourcePath: /regsecuritygroup
+    UnregisterSecurity:
+      method: delete 
+      resourcePath: /regsecuritygroup/{security_group_name}
+    CreateSecurity:
+      method: post
+      resourcePath: /securitygroup
+    AddRules:
+      method: post
+      resourcePath: /securitygroup/{security_group_name}/rules  
+    RemoveRules:
+      method: delete
+      resourcePath: /securitygroup/{security_group_name}/rules
+    ListSecurity:
+      method: get
+      resourcePath: /securitygroup
+    GetSecurity:
+      method: get
+      resourcePath: /securitygroup/{security_group_name}
+    DeleteSecurity:
+      method: delete
+      resourcePath: /securitygroup/{security_group_name}
+    RegisterKey:
+      method: post
+      resourcePath: /regkeypair  
+    UnregisterKey:
+      method: delete 
+      resourcePath: /regkeypair/{key_pair_name}
+    CreateKey:
+      method: post
+      resourcePath: /keypair  
+    ListKey:
+      method: get
+      resourcePath: /keypair
+    GetKey:
+      method: get
+      resourcePath: /keypair/{key_pair_name}  
+    DeleteKey:  
+      method: delete
+      resourcePath: /keypair/{key_pair_name}  
+    RegisterVM:
+      method: post 
+      resourcePath: /regvm
+    UnregisterVM:
+      method: delete
+      resourcePath: /regvm/{vm_name}
+    StartVM:
+      method: post
+      resourcePath: /vm
+    ListVM:
+      method: get
+      resourcePath: /vm
+    GetVM:
+      method: get
+      resourcePath: /vm/{vm_name}
+    ListVMStatus:
+      method: get
+      resourcePath: /vmstatus
+    GetVMStatus:
+      method: get
+      resourcePath: /vmstatus/{vm_status_name}
+    ControlVM:
+      method: get
+      resourcePath: /controlvm/{vm_name}
+    ResumeVM:
+      method: get
+      resourcePath: /controlvm/{vm_name}
+    RebootVM:
+      method: get
+      resourcePath: /controlvm/{vm_name}  
+    TerminateVM:
+      method: delete
+      resourcePath: /vm/{vm_name}  
+    RegisterDisk:
+      method: post 
+      resourcePath: /regdisk
+    UnregisterDisk:
+      method: delete
+      resourcePath: /regdisk/{disk_name}  
+    CreateDisk:
+      method: post 
+      resourcePath: /disk
+    ListDisk:
+      method: get
+      resourcePath: /disk
+    GetDisk:
+      method: get
+      resourcePath: /disk/{disk_name}
+    AttachDisk:
+      method: put
+      resourcePath: /disk/{disk_name}/attach
+    # UpsizeDisk:
+    #   method: put
+    #   resourcePath: /disk/{disk_name}/detach
+    DetachDisk:
+      method: put
+      resourcePath: /disk/{disk_name}/detach
+    DeleteDisk:
+      method: delete
+      resourcePath: /disk/{disk_id}
+    SnapshotVM:
+      method: post
+      resourcePath: /myimage
+    ListMyImage:
+      method: get
+      resourcePath: /myimage
+    GetMyImage:
+      method: get
+      resourcePath: /myimage/{image_name}
+    StartVMwithMyImage:
+      method: post
+      resourcePath: /vm
+    DeleteMyImage:
+      method: delete
+      resourcePath: /myimage/{image_name}
+    CreateNLB:
+      method: post
+      resourcePath: /nlb
+    ListNLB:
+      method: get  
+      resourcePath: /nlb
+    ListAllNLB:
+      method: get
+      resourcePath: /allnlb  
+    GetNLB:
+      method: get
+      resourcePath: /nlb/{nlb_name} 
+    GetVMGroupHealthInfo:
+      method: get
+      resourcePath: /nlb/{nlb_name}/health
+    AddNLBVMs:  
+      method: post
+      resourcePath: /nlb/{nlb_name}/vms
+    RemoveNLBVMs:
+      method: delete
+      resourcePath: /nlb/{nlb_name}/vms  
+    DeleteNLB:
+      method: delete
+      resourcePath: /nlb/{nlb_name}
+    NoNodeGroupCreateCluster:
+      method: post
+      resourcePath: /cluster    
+    CreateCluster:
+      method: post
+      resourcePath: /cluster  
+    AddNodeGroup:
+      method: post
+      resourcePath: /cluster/{cluster_name}/nodegroup
+    ListCluster:
+      method: get
+      resourcePath: /cluster
+    GetCluster:
+      method: get
+      resourcePath: /cluster/{cluster_name}
+    SetNodeGroupAutoScaling:
+      method: put
+      resourcePath: /cluster/{cluster_name}/nodegroup/{nodegroup_name}/autoscaling  
+    ChangeNodeGroupScaling:
+      method: put
+      resourcePath: /cluster/{cluster_name}/nodegroup/{nodegroup_name}/autoscalesize
+    RemoveNodeGroup:
+      method: delete
+      resourcePath: /cluster/{cluster_name}/nodegroup/{nodegroup_name}
+    DeleteCluster:
+      method: delete
+      resourcePath: /cluster/{cluster_name}
+    AllClusterList:
+      method: post 
+      resourcePath: /allcluster
+    GetCSPResourceInfo:
+      method: get
+      resourcePath: /cspresourceinfo/{vm_id}
+    GetCSPVM:
+      method: get
+      resourcePath: /cspvm/{vm_id}
+    GetCSPResourceName:
+      method: get
+      resourcePath: /cspresourceinfo/{vm_id}
+    AnyCall:
+      method: post
+      resourcePath: /anycall  
+  tumblebug:
+    HealthInfo:
+      method: get
+      resourcePath: /health
+  

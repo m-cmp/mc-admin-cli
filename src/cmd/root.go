@@ -11,32 +11,20 @@ import (
 )
 
 var cfgFile string
-var k8sprovider string
 
 // rootCmd represents the base command when called without any subcommands
-var rootCmd = &cobra.Command{
-	Use:   "mcc",
-	Short: "A tool to operate M-CMP system",
-	Long: `The mcc is a tool to operate M-CMP system. 
-  
-  For example, you can setup and run, stop, and ... M-CMP runtimes.
-  
-  - ./mcc pull [-f ../docker-compose-mode-files/docker-compose.yaml]
-  - ./mcc run [-f ../docker-compose-mode-files/docker-compose.yaml]
-  - ./mcc info
-  - ./mcc stop [-f ../docker-compose-mode-files/docker-compose.yaml]
-  - ./mcc remove [-f ../docker-compose-mode-files/docker-compose.yaml] -v -i
-
-  `,
+var RootCmd = &cobra.Command{
+	Use:               "mcc",
+	Short:             "A tool to operate M-CMP system",
+	Long:              `The mcc is a tool to operate M-CMP system.`,
+	CompletionOptions: cobra.CompletionOptions{HiddenDefaultCmd: true}, //completion 옵션 출력 제거
 	// Uncomment the following line if your bare application
-	// has an action associated with it:
-	//	Run: func(cmd *cobra.Command, args []string) { },
 }
 
 // Execute adds all child commands to the root command and sets flags appropriately.
 // This is called by main.main(). It only needs to happen once to the rootCmd.
 func Execute() {
-	if err := rootCmd.Execute(); err != nil {
+	if err := RootCmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(1)
 	}
