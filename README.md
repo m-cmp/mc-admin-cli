@@ -1,7 +1,7 @@
 # M-CMP ADMIN CLI (mcc)
 This repository provides a Multi-Cloud ADMIN CLI.    
 The name of this tool is mcc(Multi-Cloud admin CLI).    
-A sub-system of [M-CMP platform](https://github.com/m-cmp/docs/tree/main) to deploy and manage Multi-Cloud Infrastructures.    
+A sub-system of [M-CMP platform](https://github.com/m-cmp) to deploy and manage Multi-Cloud Infrastructures.    
 
 
 ```
@@ -16,7 +16,7 @@ If you have any difficulties in using mcc, please let us know.
 ## mcc 개요
 - M-CMP 시스템의 설치, 실행, 상태정보 제공, 종료, API 호출 등을 지원하는 관리 도구입니다.
 - 현재는 Docker Compose 모드 방식만 제공합니다.
-  - [Docker Compose 모드](docs/mcc-docker-compose-mode.md)
+  - [Docker Compose 모드](./docs/mcc-docker-compose-mode.md)
 
 ## Install Docker & Docker Compose V2
 - [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
