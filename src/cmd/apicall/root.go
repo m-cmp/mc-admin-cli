@@ -9,6 +9,7 @@ import (
 	"strings"
 
 	"github.com/go-resty/resty/v2"
+	"github.com/mc-admin-cli/mcc/src/cmd"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
@@ -365,5 +366,5 @@ func init() {
 	apiCmd.PersistentFlags().StringVarP(&sendData, "data", "d", "", "Data to send to the server")
 	apiCmd.PersistentFlags().StringVarP(&fileData, "file", "f", "", "Data to send to the server from file(not yet support)")
 
-	// cmd.RootCmd.AddCommand(apiCmd)
+	cmd.RootCmd.AddCommand(apiCmd)
 }
