@@ -52,7 +52,7 @@ var apiCmd = &cobra.Command{
 ./mcc api --help
 ./mcc api --list
 ./mcc api --service spider --list
-./mcc --service spider --action ListCloudOS
+./mcc api --service spider --action ListCloudOS
 ./mcc api --service spider --action GetCloudDriver --pathParam driver_name:AWS
 ./mcc api --service spider --action GetRegionZone --pathParam region_name:ap-northeast-3 --queryString ConnectionName:aws-config01
 `,
