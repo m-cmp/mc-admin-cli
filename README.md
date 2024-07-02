@@ -13,10 +13,10 @@ If you have any difficulties in using mcc, please let us know.
 (Open an issue or Join the M-CMP Slack)
 ```
 
-## mcc 개요
-- M-CMP 시스템의 설치, 실행, 상태정보 제공, 종료, API 호출 등을 지원하는 관리 도구입니다.
-- 현재는 Docker Compose 모드 방식만 제공합니다.
-  - [Docker Compose 모드](./docs/mcc-docker-compose-mode.md)
+## mcc Overview
+- Management tool that supports the installation, execution, status information provision, termination, and API calls of the M-CMP system.
+- Currently, only the Docker Compose mode is supported.
+  - [Docker Compose mode](./docs/mcc-docker-compose-mode.md)
 
 ## Install Docker & Docker Compose V2
 - [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
@@ -33,6 +33,14 @@ mc-admin-cli/src$ go get -u
 
 (Build a binary for mcc)
 mc-admin-cli/src$ go build -o mcc
+
+(Build a binary for mcc using Makerfile depends on your machine's os type)
+mc-admin-cli/src$ make
+mc-admin-cli/src$ make win
+mc-admin-cli/src$ make mac
+mc-admin-cli/src$ make linux-arm
+mc-admin-cli/src$ make win86
+mc-admin-cli/src$ make mac-arm
 ```
 
 # How to use the mcc
@@ -46,6 +54,7 @@ Usage:
   mcc [command]
 
 Available Commands:
+  api         Call the M-CMP system's Open APIs as services and actions
   docker      A tool to operate M-CMP system
   help        Help about any command
   rest        rest api call
@@ -56,6 +65,9 @@ Flags:
 Use "mcc [command] --help" for more information about a command.
 ```
 
+For more detailed explanations, see the articles below.   
+- [docker sub-command guide](./docs/mc-admin-cli-docker-compose-mode.md)
+- [rest sub-command guide](./docs/mc-admin-cli-rest.md)
 
 ## docker-compose.yaml
 ```
@@ -67,12 +79,13 @@ If you want to change the information for each container you want to deploy, mod
 ## docker subcommand
 For more information, check out [the docker subcommand document.](./docs/mc-admin-cli-docker-compose-mode.md)
 
-```
+
 For now, it supports docker's run/stop/info/pull/remove commands.
 
 Use the -h option at the end of the sub-command requiring assistance, or executing 'mcc' without any options will display the help manual.
 
 
+```
 Usage:
   mcc docker [flags]
   mcc docker [command]
@@ -147,4 +160,45 @@ Simple usage examples for rest commands
                 "name": "morpheus",
                 "job": "leader"
         }'
+```
+
+## api subcommand
+The api subcommands are developed to make it easy to use the open APIs of M-CMP-related frameworks from the CLI.
+
+```
+Call the action of the service defined in api.yaml. 
+
+Usage:
+  mcc api [flags]
+  mcc api [command]
+
+Available Commands:
+  tool        Swagger JSON parsing tool to assist in writing api.yaml files
+
+Flags:
+  -a, --action string        Action to perform
+  -c, --config string        config file (default "../conf/api.yaml")
+  -d, --data string          Data to send to the server
+  -f, --file string          Data to send to the server from file
+  -h, --help                 help for api
+  -l, --list                 Show Service or Action list
+  -m, --method string        HTTP Method
+  -p, --pathParam string     Variable path info set "key1:value1 key2:value2" for URIs
+  -q, --queryString string   Use if you have a query string to add to URIs
+  -s, --service string       Service to perform
+  -v, --verbose              Show more detail information
+
+Use "mcc api [command] --help" for more information about a command.
+```
+
+## api subcommand examples
+Simple usage examples for api subcommand.
+
+```
+./mcc api --help
+./mcc api --list
+./mcc api --service spider --list
+./mcc api --service spider --action ListCloudOS
+./mcc api --service spider --action GetCloudDriver --pathParam driver_name:AWS
+./mcc api --service spider --action GetRegionZone --pathParam region_name:ap-northeast-3 --queryString ConnectionName:aws-config01
 ```
