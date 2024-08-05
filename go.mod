@@ -8,7 +8,12 @@ require (
 	github.com/spf13/viper v1.10.1
 )
 
-require golang.org/x/net v0.22.0 // indirect
+require (
+	github.com/tidwall/gjson v1.17.3 // indirect
+	github.com/tidwall/match v1.1.1 // indirect
+	github.com/tidwall/pretty v1.2.1 // indirect
+	golang.org/x/net v0.22.0 // indirect
+)
 
 require (
 	github.com/fsnotify/fsnotify v1.7.0 // indirect

@@ -49,3 +49,11 @@ docker-compose-mode-files/data/cb-dragonfly/
 
 # Binary
 src/mcc
+
+
+*.db
+package.json
+yarn.lock
+
+docker-compose-mode-files/data/*
+conf/docker/data/*
