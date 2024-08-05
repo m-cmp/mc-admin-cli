@@ -5,6 +5,7 @@ package rest
 
 import (
 	"fmt"
+	"io/ioutil"
 
 	"strings"
 
@@ -22,7 +23,9 @@ var username string
 var password string
 var isShowHeaders bool
 var sendData string
+var inputFileData string
 var fileData string
+
 var isVerbose bool
 var authToken string
 var authScheme string
@@ -109,11 +112,26 @@ func SetHeaders() {
 }
 
 // func SetReqData(req *resty.Request) {
-func SetReqData() {
-	if isVerbose {
-		fmt.Println("request data : \n" + sendData)
+func SetReqData() error {
+	if inputFileData != "" {
+		if isVerbose {
+			fmt.Printf("use [%s] data file\n" + inputFileData)
+		}
+
+		// 파일에서 데이터 읽기
+		data, err := ioutil.ReadFile(inputFileData)
+		if err != nil {
+			return err
+		}
+		req.SetBody(data)
+	} else {
+		if isVerbose {
+			fmt.Printf("request data : %s\n" + sendData)
+		}
+		req.SetBody(sendData)
 	}
-	req.SetBody(sendData)
+
+	return nil
 }
 
 func ProcessResultInfo(resp *resty.Response) {
