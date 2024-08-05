@@ -6,6 +6,7 @@ package apicall
 import (
 	"errors"
 	"fmt"
+	"io/ioutil"
 	"strings"
 
 	"github.com/go-resty/resty/v2"
@@ -28,6 +29,7 @@ var queryString string
 var client = resty.New()
 var req = client.R()
 var sendData string
+var inputFileData string
 var fileData string
 
 type ServiceInfo struct {
@@ -300,11 +302,26 @@ func SetBasicAuth() {
 }
 
 // func SetReqData(req *resty.Request) {
-func SetReqData() {
-	if isVerbose {
-		fmt.Println("request data : \n" + sendData)
+func SetReqData() error {
+	if inputFileData != "" {
+		if isVerbose {
+			fmt.Printf("use [%s] data file\n" + inputFileData)
+		}
+
+		// 파일에서 데이터 읽기
+		data, err := ioutil.ReadFile(inputFileData)
+		if err != nil {
+			return err
+		}
+		req.SetBody(data)
+	} else {
+		if isVerbose {
+			fmt.Printf("request data : %s\n" + sendData)
+		}
+		req.SetBody(sendData)
 	}
-	req.SetBody(sendData)
+
+	return nil
 }
 
 func ProcessResultInfo(resp *resty.Response) {
