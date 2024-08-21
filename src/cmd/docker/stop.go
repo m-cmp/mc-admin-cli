@@ -20,9 +20,7 @@ var stopCmd = &cobra.Command{
 			fmt.Println("file is required")
 		} else {
 			//	common.FileStr = common.GenConfigPath(common.FileStr, common.MccMode)
-			var cmdStr string
-			cmdStr = fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s stop", ComposeProjectName, DockerFilePath)
-			// 	//fmt.Println(cmdStr)
+			cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s stop", ComposeProjectName, DockerFilePath)
 			common.SysCall(cmdStr)
 
 			SysCallDockerComposePs()
