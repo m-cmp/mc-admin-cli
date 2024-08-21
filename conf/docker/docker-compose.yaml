@@ -1,36 +1,57 @@
 networks:
-  internal_network:
-    internal: true
-  external_network:
-    driver: bridge
+  mc-infra-connector-network:
+  mc-infra-manager-network:
+  mc-iam-manager-network:
 
 services:
-  # CB-Tumblebug
-  cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.9.4
-    container_name: cb-tumblebug
+  mc-infra-connector:
+    image: cloudbaristaorg/cb-spider:0.9.0
     pull_policy: missing
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
+    container_name: mc-infra-connector
     platform: linux/amd64
     networks:
-      - internal_network
-      - external_network
+      - mc-infra-connector-network
     ports:
-      - 1323:1323
-    depends_on: 
-      - cb-tumblebug-etcd
-      # - cb-tumblebug-etcd-conf
-      - cb-spider      
+      - target: 1024
+        published: 1024
+        protocol: tcp
     volumes:
-      - ./conf/:/app/conf/
-      - ./container-volume/cb-tumblebug-container/meta_db/:/app/meta_db/
-      - ./container-volume/cb-tumblebug-container/log/:/app/log/
+      - ./conf/mc-infra-connector/:/root/go/src/github.com/cloud-barista/cb-spider/conf/
+      - ./data/mc-infra-connector/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
+      - ./data/mc-infra-connector/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
+    environment:
+      - PLUGIN_SW=OFF
+      # - SERVER_ADDRESS=localhost
+      # if you leave these values empty, REST Auth will be disabled.
+      # - API_USERNAME=
+      # - API_PASSWORD=
+      - SPIDER_LOG_LEVEL=error
+      - SPIDER_HISCALL_LOG_LEVEL=error
+      # - ID_TRANSFORM_MODE=ON
+
+  mc-infra-manager:
+    image: cloudbaristaorg/cb-tumblebug:0.9.4
+    container_name: mc-infra-manager
+    pull_policy: missing
+    platform: linux/amd64
+    networks:
+      - mc-infra-connector-network
+      - mc-infra-manager-network
+    ports:
+      - target: 1323
+        published: 1323
+        protocol: tcp
+    depends_on: 
+      - mc-infra-manager-etcd
+      - mc-infra-connector
+    volumes:
+      - ./conf/mc-infra-manager/:/app/conf/
+      - ./data/mc-infra-manager/meta_db/:/app/meta_db/
+      - ./data/mc-infra-manager/log/:/app/log/
     environment:
       # - TB_ROOT_PATH=/app
-      - TB_SPIDER_REST_URL=http://cb-spider:1024/spider
-      - TB_ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
+      - TB_SPIDER_REST_URL=http://mc-infra-connector:1024/spider
+      - TB_ETCD_ENDPOINTS=http://mc-infra-manager-etcd:2379
       # - TB_ETCD_AUTH_ENABLED=true
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
@@ -55,24 +76,21 @@ services:
       # - TB_LOGLEVEL=debug
       # - TB_LOGWRITER=both
       # - TB_NODE_ENV=development
-    healthcheck: # for CB-Tumblebug
-      test: [ "CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz" ]
-      interval: 1m
-      timeout: 5s
-      retries: 3
-      start_period: 10s
 
-  # cb-tumblebug-etcd
-  cb-tumblebug-etcd:
+  mc-infra-manager-etcd:
     image: gcr.io/etcd-development/etcd:v3.5.14
-    container_name: cb-tumblebug-etcd
+    container_name: mc-infra-manager-etcd
     networks:
-      - internal_network
+      - mc-infra-manager-network
     ports:
-      - 2379:2379
-      - 2380:2380
+      - target: 2379
+        published: 2379
+        protocol: tcp
+      - target: 2380
+        published: 2380
+        protocol: tcp
     volumes: 
-      - ./container-volume/etcd/data:/etcd-data
+      - ./data/mc-infra-manager/etcd/data:/etcd-data
     entrypoint: /usr/local/bin/etcd
     command:
       - --name
@@ -101,90 +119,89 @@ services:
       - stderr
       - --auth-token
       - simple
-    healthcheck: # for etcd
-      test: [ "CMD", "/usr/local/bin/etcd", "--version"]
+    healthcheck:
+      test: [ "CMD", "etcdctl", "endpoint", "health", "--endpoints=http://localhost:2379"]
       interval: 1m
       timeout: 5s
       retries: 3
       start_period: 10s
 
-  # CB-Spider
-  cb-spider:
-    image: cloudbaristaorg/cb-spider:0.9.0
-    container_name: cb-spider
-    # build:
-    #   context: ../cb-spider
-    #   dockerfile: Dockerfile    
+  mc-iam-manager:
+    container_name: mc-iam-manager
+    image: mc-iam-manager:local
+    pull_policy: missing
     platform: linux/amd64
     networks:
-      - internal_network
-      - external_network    # for outbound access (not ideal for security) 
-    # expose:
-    #   - 1024
+      - mc-iam-manager-network
+      - mc-infra-manager-network
     ports:
-      - 1024:1024
-    volumes:
-      - ./container-volume/cb-spider-container/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
-      - ./container-volume/cb-spider-container/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
+      - target: 5000
+        published: 5000
+        protocol: tcp
+    depends_on:
+      - mc-iam-manager-db
+      - mc-iam-manager-kc
     environment:
-      - PLUGIN_SW=OFF
-      - SERVER_ADDRESS=localhost
-      # if you leave these values empty, REST Auth will be disabled.
-      # - API_USERNAME=
-      # - API_PASSWORD=
-      - SPIDER_LOG_LEVEL=error
-      - SPIDER_HISCALL_LOG_LEVEL=error
-      - ID_TRANSFORM_MODE=ON
-    healthcheck: # for CB-Spider
-      test: [ "CMD", "curl", "-f", "http://localhost:1024/spider/readyz" ]
-      interval: 1m
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+      GO_ENV: development # production | development
+      GODEBUG: netdns=go
+      DEV_DATABASE_URL: postgres://mciamadmin:mciammanagerpassword@mc-iam-manager-db:5432/mciamdb
+      DATABASE_URL: postgres://mciamadmin:mciammanagerpassword@mc-iam-manager-db:5432/mciamdb
+      PORT: 5000
+    env_file:
+      - ./conf/mc-iam-manager/.env
 
-  # # cb-mapui
-  # cb-mapui:
-  #   image: cloudbaristaorg/cb-mapui:0.9.1
-  #   container_name: cb-mapui
-  #   # build:
-  #   #   context: ../cb-mapui
-  #   #   dockerfile: Dockerfile
-  #   networks:
-  #     - external_network
-  #   ports:
-  #     - target: 1324
-  #       published: 1324
-  #       protocol: tcp
-  #   healthcheck: # for cb-mapui
-  #     test: ["CMD", "nc", "-vz", "localhost", "1324"]
-  #     interval: 1m
-  #     timeout: 5s
-  #     retries: 3
-  #     start_period: 10s
+  mc-iam-manager-db:
+    container_name: mc-iam-manager-db
+    image: postgres:14-alpine
+    pull_policy: missing
+    platform: linux/amd64
+    networks:
+      - mc-iam-manager-network
+    ports:
+      - target: 5432
+        published: 5432
+        protocol: tcp
+    volumes:
+      - ./data/mc-iam-manager/postgres/postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: mciamdb
+      POSTGRES_USER: mciamadmin
+      POSTGRES_PASSWORD: mciammanagerpassword
 
-  # # cb-tumblebug-etcd-conf
-  # cb-tumblebug-etcd-conf:
-  #   image: alpine:latest
-  #   container_name: cb-tumblebug-etcd-conf
-  #   networks:
-  #     - internal_network
-  #     - external_network
-  #   depends_on:
-  #     - cb-tumblebug-etcd
-  #   volumes:
-  #     - ./scripts/etcd/:/scripts/etcd/
-  #   environment:
-  #     - ETCD_VERSION_TAG=v3.5.14
-  #     - ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
-  #     - ETCD_PATH=/tmp/etcd-download-test
-  #     - ETCD_AUTH_ENABLED=true
-  #     - ETCD_ROOT_PASSWORD=default
-  #     - ETCD_ADMIN_USERNAME=default
-  #     - ETCD_ADMIN_PASSWORD=default
-  #   command: sh -c "sh /scripts/etcd/etcd-conf.sh"
-  #   healthcheck: # for etcd-conf
-  #     test: ["CMD", "test", "-f", "/tmp/healthcheck"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 10s
+  mc-iam-manager-kc:
+    container_name: mc-iam-manager-kc
+    build:
+      context: ./
+      dockerfile: ./dockerfiles/Dockerfile.keycloak
+    networks:
+      - mc-iam-manager-network
+    ports:
+      - target: 8080
+        published: 8080
+        protocol: tcp
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/mciamdb
+      KC_DB_USERNAME: mciamadmin
+      KC_DB_PASSWORD: mciammanagerpassword
+
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+
+    volumes:
+      - ./data/mc-iam-manager/keycloak/data/:/opt/keycloak/data/
+      - ./conf/mc-iam-manager/realm-import.json:/opt/keycloak/data/import/realm-import.json
+    env_file:
+      - ./conf/mc-iam-manager/.env
+    depends_on:
+      - mc-iam-manager-db
+    command: 
+      - start-dev 
+      - --import-realm 
+      - --verbose 
+      - --features=token-exchange  
+      - --https-key-store-file=/opt/keycloak/conf/server.keystore
+      - --https-key-store-password=password123
