@@ -19,6 +19,11 @@ services:
     baseurl: http://localhost:4000
     auth:
       type: bearer
+
+  mc-web-console:
+    baseurl: http://localhost:3000
+    auth:
+      type: bearer
   
   sample:
     baseurl: http://localhost:1323/test
