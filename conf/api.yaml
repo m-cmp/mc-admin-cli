@@ -914,3 +914,42 @@ serviceActions:
       method: post
       resourcePath: /api/wsuserrole
       description: "workspace - user - role mapping 생성"
+  
+  # 240826 updated : https://raw.githubusercontent.com/m-cmp/mc-web-console/main/mc_web_console_api/docs/swagger.json
+  mc-web-console:
+    Weblogin:
+      method: post
+      resourcePath: /api/auth/login
+      description: "webLogin"
+    Weblogout:
+      method: post
+      resourcePath: /api/auth/logout
+      description: "webLogout"
+    Webloginrefresh:
+      method: post
+      resourcePath: /api/auth/refresh
+      description: "webLoginRefresh"
+    Webdisklookup:
+      method: post
+      resourcePath: /api/disklookup
+      description: "webDiskLookup"
+    Webanycontroller:
+      method: post
+      resourcePath: /api/{operationId}
+      description: "webAnyController"
+    Webgetuserinfo:
+      method: post
+      resourcePath: /api/auth/userinfo
+      description: "webGetUserInfo"
+    Webvalidate:
+      method: post
+      resourcePath: /api/auth/validate
+      description: "webValidate"
+    Webavailabledisktypebyproviderregion:
+      method: post
+      resourcePath: /api/availabledisktypebyproviderregion
+      description: "webAvailableDiskTypeByProviderRegion"
+    Webcreatemenuresources:
+      method: post
+      resourcePath: /api/createmenuresources
+      description: "webCreateMenuResources"
