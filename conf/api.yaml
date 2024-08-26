@@ -922,6 +922,10 @@ serviceActions:
   
   # 240826 updated : https://raw.githubusercontent.com/m-cmp/mc-web-console/main/mc_web_console_api/docs/swagger.json
   mc-web-console:
+    Disklookup:
+      method: post
+      resourcePath: /api/disklookup
+      description: "DiskLookup"
     Weblogin:
       method: post
       resourcePath: /api/auth/login
@@ -934,14 +938,6 @@ serviceActions:
       method: post
       resourcePath: /api/auth/refresh
       description: "webLoginRefresh"
-    Webdisklookup:
-      method: post
-      resourcePath: /api/disklookup
-      description: "webDiskLookup"
-    Webanycontroller:
-      method: post
-      resourcePath: /api/{operationId}
-      description: "webAnyController"
     Webgetuserinfo:
       method: post
       resourcePath: /api/auth/userinfo
@@ -950,11 +946,15 @@ serviceActions:
       method: post
       resourcePath: /api/auth/validate
       description: "webValidate"
-    Webavailabledisktypebyproviderregion:
+    Availabledisktypebyproviderregion:
       method: post
       resourcePath: /api/availabledisktypebyproviderregion
-      description: "webAvailableDiskTypeByProviderRegion"
-    Webcreatemenuresources:
+      description: "AvailableDiskTypeByProviderRegion"
+    Createmenuresources:
       method: post
       resourcePath: /api/createmenuresources
-      description: "webCreateMenuResources"
+      description: "CreateMenuResources"
+    Anycontroller:
+      method: post
+      resourcePath: /api/{operationId}
+      description: "AnyController"
