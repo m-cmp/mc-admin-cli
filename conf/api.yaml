@@ -926,10 +926,10 @@ serviceActions:
       method: post
       resourcePath: /api/disklookup
       description: "DiskLookup"
-    Weblogin:
+    Anycontroller:
       method: post
-      resourcePath: /api/auth/login
-      description: "webLogin"
+      resourcePath: /api/{operationId}
+      description: "AnyController"
     Weblogout:
       method: post
       resourcePath: /api/auth/logout
@@ -938,10 +938,6 @@ serviceActions:
       method: post
       resourcePath: /api/auth/refresh
       description: "webLoginRefresh"
-    Webgetuserinfo:
-      method: post
-      resourcePath: /api/auth/userinfo
-      description: "webGetUserInfo"
     Webvalidate:
       method: post
       resourcePath: /api/auth/validate
@@ -954,7 +950,15 @@ serviceActions:
       method: post
       resourcePath: /api/createmenuresources
       description: "CreateMenuResources"
-    Anycontroller:
+    Weblogin:
       method: post
-      resourcePath: /api/{operationId}
-      description: "AnyController"
+      resourcePath: /api/auth/login
+      description: "webLogin"
+    Webgetuserinfo:
+      method: post
+      resourcePath: /api/auth/userinfo
+      description: "webGetUserInfo"
+    Getmenutree:
+      method: post
+      resourcePath: /api/getmenutree
+      description: "GetmenuTree"
