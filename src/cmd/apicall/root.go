@@ -19,7 +19,8 @@ var configFile string
 
 var serviceName string
 var actionName string
-var method string
+
+// var method string
 var isInit bool
 var isListMode bool
 var isVerbose bool
@@ -30,17 +31,27 @@ var client = resty.New()
 var req = client.R()
 var sendData string
 var inputFileData string
-var fileData string
+var outputFile string
+
+// auth : About changing credentials from the CLI
+var username string
+var password string
+var authToken string
 
 type ServiceInfo struct {
-	BaseURL string `yaml:"baseurl"`
-	Auth    struct {
-		Type     string `yaml:"type"`
-		Username string `yaml:"username"`
-		Password string `yaml:"password"`
-	} `yaml:"auth"`
+	BaseURL      string `yaml:"baseurl"`
+	Auth         Auth   `yaml:"auth"`
 	ResourcePath string `yaml:"resourcePath"`
 	Method       string `yaml:"method"`
+}
+
+// basic : username / password
+// bearer : token
+type Auth struct {
+	Type     string `yaml:"type"`
+	Username string `yaml:"username,omitempty"`
+	Password string `yaml:"password,omitempty"`
+	Token    string `yaml:"token,omitempty"`
 }
 
 var serviceInfo ServiceInfo
@@ -130,6 +141,7 @@ var apiCmd = &cobra.Command{
 			fmt.Println("Auth Type:", serviceInfo.Auth.Type)
 			fmt.Println("Username:", serviceInfo.Auth.Username)
 			fmt.Println("Password:", serviceInfo.Auth.Password)
+			fmt.Println("Token:", serviceInfo.Auth.Token)
 			fmt.Println("ResourcePath:", serviceInfo.ResourcePath)
 			fmt.Println("Method:", serviceInfo.Method)
 		}
@@ -193,6 +205,17 @@ func parseRequestInfo() error {
 	err := viper.UnmarshalKey("services."+serviceName, &serviceInfo)
 	if err != nil {
 		return err
+	}
+
+	// 인증 정보를 CLI로 전달 받았을 경우 처리
+	if authToken != "" {
+		serviceInfo.Auth.Token = authToken
+	}
+	if username != "" {
+		serviceInfo.Auth.Username = username
+	}
+	if password != "" {
+		serviceInfo.Auth.Password = password
 	}
 
 	if serviceInfo.BaseURL == "" {
@@ -287,17 +310,37 @@ func parsePathParam() error {
 }
 
 func SetBasicAuth() {
-	if serviceInfo.Auth.Type == "" || strings.ToLower(serviceInfo.Auth.Type) == "none" {
-	} else {
-		// Set basic authentication
-		if serviceInfo.Auth.Username != "" && serviceInfo.Auth.Password != "" {
-			if isVerbose {
-				fmt.Println("setting basic auth")
-				fmt.Println("username : " + serviceInfo.Auth.Username)
-				fmt.Println("password : " + serviceInfo.Auth.Password)
-			}
-			client.SetBasicAuth(serviceInfo.Auth.Username, serviceInfo.Auth.Password)
+	// Set basic authentication
+	if serviceInfo.Auth.Username != "" && serviceInfo.Auth.Password != "" {
+		if isVerbose {
+			fmt.Println("setting basic auth")
+			fmt.Println("username : " + serviceInfo.Auth.Username)
+			fmt.Println("password : " + serviceInfo.Auth.Password)
 		}
+		client.SetBasicAuth(serviceInfo.Auth.Username, serviceInfo.Auth.Password)
+	}
+}
+
+// Authentication
+func SetAuth() {
+	switch strings.ToLower(serviceInfo.Auth.Type) {
+	case "none", "":
+		// 인증이 필요 없는 경우 아무 것도 하지 않음
+	case "basic":
+		// Set basic authentication
+		SetBasicAuth()
+	case "bearer":
+		// Set Bearer authentication
+		if serviceInfo.Auth.Token != "" {
+			if isVerbose {
+				fmt.Println("Setting bearer auth")
+				fmt.Println("Token : " + serviceInfo.Auth.Token)
+			}
+			client.SetAuthToken(serviceInfo.Auth.Token)
+		}
+	default:
+		SetBasicAuth() // Set basic authentication
+		//fmt.Println("Unknown authentication type:", serviceInfo.Auth.Type)
 	}
 }
 
@@ -343,8 +386,16 @@ func callRest() error {
 	var resp *resty.Response
 	var err error
 
-	SetBasicAuth()
-	SetReqData()
+	SetAuth()          // 인증 처리
+	err = SetReqData() // 전송 데이터 처리
+	if err != nil {
+		return err
+	}
+
+	//출력 파일 지정
+	if outputFile != "" {
+		req.SetOutput(outputFile)
+	}
 
 	url := serviceInfo.BaseURL + serviceInfo.ResourcePath
 
@@ -372,16 +423,25 @@ func callRest() error {
 func init() {
 	apiCmd.PersistentFlags().StringVarP(&configFile, "config", "c", "../conf/api.yaml", "config file (default is ../conf/api.yaml)")
 
+	// Add flags for basic authentication
+	apiCmd.PersistentFlags().StringVarP(&username, "authUser", "", "", "Username for basic authentication") // - sets the basic authentication header in the HTTP request
+	apiCmd.PersistentFlags().StringVarP(&password, "authPassword", "", "", "Password for basic authentication")
+
+	// 인증 토큰 설정
+	apiCmd.PersistentFlags().StringVarP(&authToken, "authToken", "", "", "sets the auth token of the 'Authorization' header for all HTTP requests.(The default auth scheme is 'Bearer')")
+	//apiCmd.PersistentFlags().StringVarP(&authScheme, "authScheme", "", "", "sets the auth scheme type in the HTTP request.(Exam. OAuth)(The default auth scheme is Bearer)")
+
 	apiCmd.PersistentFlags().StringVarP(&serviceName, "service", "s", "", "Service to perform")
 	apiCmd.PersistentFlags().StringVarP(&actionName, "action", "a", "", "Action to perform")
-	apiCmd.PersistentFlags().StringVarP(&method, "method", "m", "", "HTTP Method")
+	// apiCmd.PersistentFlags().StringVarP(&method, "method", "m", "", "HTTP Method")
 	apiCmd.PersistentFlags().BoolVarP(&isVerbose, "verbose", "v", false, "Show more detail information")
 	apiCmd.PersistentFlags().StringVarP(&pathParam, "pathParam", "p", "", "Variable path info set \"key1:value1 key2:value2\" for URIs")
 	apiCmd.PersistentFlags().StringVarP(&queryString, "queryString", "q", "", "Use if you have a query string to add to URIs")
 
 	apiCmd.Flags().BoolVarP(&isListMode, "list", "l", false, "Show Service or Action list")
 	apiCmd.PersistentFlags().StringVarP(&sendData, "data", "d", "", "Data to send to the server")
-	apiCmd.PersistentFlags().StringVarP(&fileData, "file", "f", "", "Data to send to the server from file(not yet support)")
+	apiCmd.PersistentFlags().StringVarP(&inputFileData, "file", "f", "", "Data to send to the server from file")
+	apiCmd.PersistentFlags().StringVarP(&outputFile, "output", "o", "", "<file> Write to file instead of stdout")
 
 	cmd.RootCmd.AddCommand(apiCmd)
 }
