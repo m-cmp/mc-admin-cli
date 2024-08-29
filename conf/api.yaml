@@ -685,44 +685,44 @@ serviceActions:
       resourcePath: /ns/{nsId}/resources/customImage
       description: "Delete all customImages"
   
-  # 240828 updated : https://raw.githubusercontent.com/m-cmp/mc-iam-manager/docs/swagger/swagger.json
+  # 240829 updated : https://raw.githubusercontent.com/m-cmp/mc-iam-manager/docs/swagger/swagger.json
   mc-iam-manager:
-    CreateresourcesbyswaggerDeprecated:
-      method: post
-      resourcePath: /api/resource/file/framework/{framework}
-      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Getprojectbyid:
+      method: get
+      resourcePath: /api/prj/project/id/{projectId}
+      description: "project 단건 조회"
+    Updateprojectbyid:
+      method: put
+      resourcePath: /api/prj/project/id/{projectId}
+      description: "project 수정"
+    Deleteprojectbyid:
+      method: delete
+      resourcePath: /api/prj/project/id/{projectId}
+      description: "project 삭제"
     Createmenuresourcesbymenuyaml:
       method: post
       resourcePath: /api/resource/file/framework/{framework}/menu
       description: "사용자는 uma_protection Role 을 가져야 한다."
-    Getrolelist:
+    Getrolebyid:
       method: get
-      resourcePath: /api/role
-      description: "role 전체 목록 조회"
-    Createrole:
+      resourcePath: /api/role/id/{roleId}
+      description: "role 단건 조회"
+    Updaterolebyid:
+      method: put
+      resourcePath: /api/role/id/{roleId}
+      description: "role 수정"
+    Deleterolebyid:
+      method: delete
+      resourcePath: /api/role/id/{roleId}
+      description: "role 수정"
+    Syncprojectlistwithmcinfra:
+      method: get
+      resourcePath: /api/tool/mcinfra/sync
+      description: "연결된 TB(mcinframanager)의 NS 리스트를 Project List 로 등록.  \n  \n기존 등록된 project 와 중복이 발생하면 오류 발생. 새로운 환경에서 첫 회 실행하는 것을 추천."
+    Logout:
       method: post
-      resourcePath: /api/role
-      description: "role 생성"
-    Getworkspaceuserrolemappinglistorderbyworkspace:
-      method: get
-      resourcePath: /api/wsuserrole
-      description: "workspace - user - role mapping 목록 workspace 기준 전체 조회"
-    Createworkspaceuserrolemappingbyname:
-      method: post
-      resourcePath: /api/wsuserrole
-      description: "workspace - user - role mapping 생성"
-    Getprojectlist:
-      method: get
-      resourcePath: /api/prj
-      description: "project 목록 조회"
-    Createproject:
-      method: post
-      resourcePath: /api/prj
-      description: "project 생성"
-    Getpermissions:
-      method: get
-      resourcePath: /api/permission
-      description: "사용자는 uma_protection Role 을 가져야 한다."
+      resourcePath: /api/auth/logout
+      description: "AccessToken및 RefreshToken을 받아 해당 토큰 파기"
     Getcurrentpermissioncsv:
       method: get
       resourcePath: /api/permission/file/framework/{framework}
@@ -731,17 +731,117 @@ serviceActions:
       method: post
       resourcePath: /api/permission/file/framework/{framework}
       description: "사용자는 uma_protection Role 을 가져야 한다."
-    Resetresource:
-      method: delete
-      resourcePath: /api/resource/reset
-      description: "ResetResource"
-    Getallpermissions:
+    Getpermission:
       method: get
-      resourcePath: /api/ticket
+      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}
       description: "사용자는 uma_protection Role 을 가져야 한다."
-    Getpermissionticket:
+    Updateresourcepermissionbyoperationid:
+      method: put
+      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Getprojectlist:
+      method: get
+      resourcePath: /api/prj
+      description: "project 목록 조회"
+    Createproject:
       method: post
-      resourcePath: /api/ticket
+      resourcePath: /api/prj
+      description: "project 생성"
+    Deleteworkspacebyid:
+      method: delete
+      resourcePath: /api/ws/workspace/id/{workspaceId}
+      description: "workspace 삭제"
+    Getworkspacebyid:
+      method: get
+      resourcePath: /api/ws/workspace/id/{workspaceId}
+      description: "workspace 단건 조회"
+    Updateworkspacebyid:
+      method: put
+      resourcePath: /api/ws/workspace/id/{workspaceId}
+      description: "workspace 수정"
+    Updatewpmappings:
+      method: put
+      resourcePath: /api/wsprj
+      description: "workspace - projects mapping 수정\n\n새로 입력되는 projects 와 기존 projects 를 비교하여, 없는 project 는 삭제하고, 신규 projects 는 새로 mapping 한다."
+    Getwpmappinglistorderbyworkspace:
+      method: get
+      resourcePath: /api/wsprj
+      description: "workspace - projects mapping workspace 기준 모든 목록 조회"
+    Createwpmapping:
+      method: post
+      resourcePath: /api/wsprj
+      description: "workspace - projects mapping 생성"
+    Readyz:
+      method: get
+      resourcePath: /readyz
+      description: "mc-iam-manager가 정상적으로 작동중인지 단순 확인합니다."
+    Searchrolesbyname:
+      method: get
+      resourcePath: /api/role/name/{roleName}
+      description: "role 검색"
+    SecuritykeyNotuse:
+      method: get
+      resourcePath: /api/poc/sts/securitykey
+      description: "임시보안자격증명 발급요청\n\nPOC 단계.\n\nAWS / Alibaba OIDC 기반 Keyclaok IDP 사용으로 연결 설정 필요"
+    GetrolebypolicyidNotuse:
+      method: get
+      resourcePath: /api/role/policyid/{policyid}
+      description: "role 단건 조회"
+    Deleteworkspaceprojectmappingbyid:
+      method: delete
+      resourcePath: /api/wsprj/workspace/id/{workspaceId}/project/id/{projectId}
+      description: "workspace - projects mapping 단건 삭제"
+    Getworkspaceuserrolemappinglistorderbyworkspace:
+      method: get
+      resourcePath: /api/wsuserrole
+      description: "workspace - user - role mapping 목록 workspace 기준 전체 조회"
+    Createworkspaceuserrolemappingbyname:
+      method: post
+      resourcePath: /api/wsuserrole
+      description: "workspace - user - role mapping 생성"
+    Gettokeninfo:
+      method: get
+      resourcePath: /api/auth/tokeninfo
+      description: "유저 정보 조회"
+    UpdateresourceDeprecated:
+      method: put
+      resourcePath: /api/resource/id/{id}
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Deleteresource:
+      method: delete
+      resourcePath: /api/resource/id/{id}
+      description: "DeleteResource"
+    Activeuser:
+      method: post
+      resourcePath: /api/user/active
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Deactiveuser:
+      method: post
+      resourcePath: /api/user/deactive
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Deleteuser:
+      method: delete
+      resourcePath: /api/user/id/{userid}
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Updateuser:
+      method: put
+      resourcePath: /api/user/id/{userid}
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Searchworkspacesbyname:
+      method: get
+      resourcePath: /api/ws/workspace/{workspaceName}
+      description: "workspace 검색"
+    Login:
+      method: post
+      resourcePath: /api/auth/login
+      description: "ID/Password를 받아 JWT 세션 토큰을 반환"
+    Authgetuservalidate:
+      method: get
+      resourcePath: /api/auth/validate
+      description: "유저 토큰의 사용가능 유무"
+    Getmenuresources:
+      method: get
+      resourcePath: /api/resource/menus
       description: "사용자는 uma_protection Role 을 가져야 한다."
     Getusers:
       method: get
@@ -751,182 +851,34 @@ serviceActions:
       method: post
       resourcePath: /api/user
       description: "사용자는 uma_protection Role 을 가져야 한다."
-    Updateworkspacebyid:
-      method: put
-      resourcePath: /api/ws/workspace/id/{workspaceId}
-      description: "workspace 수정"
-    Deleteworkspacebyid:
-      method: delete
-      resourcePath: /api/ws/workspace/id/{workspaceId}
-      description: "workspace 삭제"
-    Getworkspacebyid:
-      method: get
-      resourcePath: /api/ws/workspace/id/{workspaceId}
-      description: "workspace 단건 조회"
     Getwpmappinglistbyworkspaceid:
       method: get
       resourcePath: /api/wsprj/workspace/id/{workspaceId}
       description: "workspace - projects mapping workspace 기준 단건 목록 조회"
-    Authgetuservalidate:
-      method: get
-      resourcePath: /api/auth/validate
-      description: "유저 토큰의 사용가능 유무"
-    Getallavailablemenus:
-      method: get
-      resourcePath: /api/ticket/menus
-      description: "사용자는 uma_protection Role 을 가져야 한다."
     Getworkspaceuserrolemappinglistbyuserid:
       method: get
       resourcePath: /api/wsuserrole/user/id/{userId}
       description: "workspace - user - role mapping 목록 user 기준 조회"
-    Readyz:
-      method: get
-      resourcePath: /readyz
-      description: "mc-iam-manager가 정상적으로 작동중인지 단순 확인합니다."
-    Resetmenuresource:
-      method: delete
-      resourcePath: /api/resource/reset/menu
-      description: "ResetMenuResource"
-    Getpermission:
-      method: get
-      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}
-      description: "사용자는 uma_protection Role 을 가져야 한다."
-    Updateresourcepermissionbyoperationid:
-      method: put
-      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}
-      description: "사용자는 uma_protection Role 을 가져야 한다."
-    SecuritykeyNotuse:
-      method: get
-      resourcePath: /api/poc/sts/securitykey
-      description: "임시보안자격증명 발급요청\n\nPOC 단계.\n\nAWS / Alibaba OIDC 기반 Keyclaok IDP 사용으로 연결 설정 필요"
-    Getresources:
-      method: get
-      resourcePath: /api/resource
-      description: "사용자는 uma_protection Role 을 가져야 한다."
-    Createresource:
-      method: post
-      resourcePath: /api/resource
-      description: "사용자는 uma_protection Role 을 가져야 한다."
-    Deleteresource:
-      method: delete
-      resourcePath: /api/resource/id/{id}
-      description: "DeleteResource"
-    UpdateresourceDeprecated:
-      method: put
-      resourcePath: /api/resource/id/{id}
-      description: "사용자는 uma_protection Role 을 가져야 한다."
-    GetrolebypolicyidNotuse:
-      method: get
-      resourcePath: /api/role/policyid/{policyid}
-      description: "role 단건 조회"
     Getworkspaceuserrolemappinglistbyworkspaceid:
       method: get
       resourcePath: /api/wsuserrole/workspace/id/{workspaceId}
       description: "workspace - user - role mapping 목록 workspace 기준 조회"
-    DeactivateuserNotuse:
+    Resetresource:
       method: delete
-      resourcePath: /api/auth/userinfo
-      description: "유저 정보 조회"
-    Getuserinfo:
+      resourcePath: /api/resource/reset
+      description: "ResetResource"
+    Getallavailablemenus:
       method: get
-      resourcePath: /api/auth/userinfo
-      description: "유저 정보 조회"
-    UpdateuseinfoNotuse:
-      method: put
-      resourcePath: /api/auth/userinfo
-      description: "유저 정보 조회"
-    Searchrolesbyname:
-      method: get
-      resourcePath: /api/role/name/{roleName}
-      description: "role 검색"
-    Searchprojectsbyname:
-      method: get
-      resourcePath: /api/prj/project/{projectName}
-      description: "project 목록 검색"
-    Syncprojectlistwithmcinfra:
-      method: get
-      resourcePath: /api/tool/mcinfra/sync
-      description: "연결된 TB(mcinframanager)의 NS 리스트를 Project List 로 등록.  \n  \n기존 등록된 project 와 중복이 발생하면 오류 발생. 새로운 환경에서 첫 회 실행하는 것을 추천."
-    Deleteuser:
-      method: delete
-      resourcePath: /api/user/id/{userid}
+      resourcePath: /api/ticket/framework/{framework}/menus
       description: "사용자는 uma_protection Role 을 가져야 한다."
-    Updateuser:
-      method: put
-      resourcePath: /api/user/id/{userid}
-      description: "사용자는 uma_protection Role 을 가져야 한다."
-    Deleteworkspaceprojectmappingbyid:
-      method: delete
-      resourcePath: /api/wsprj/workspace/id/{workspaceId}/project/id/{projectId}
-      description: "workspace - projects mapping 단건 삭제"
-    Loginrefresh:
-      method: post
-      resourcePath: /api/auth/login/refresh
-      description: "refresh_token과 기존 JWT를 받아, 새로운 JWT 토큰 발급"
-    Login:
-      method: post
-      resourcePath: /api/auth/login
-      description: "ID/Password를 받아 JWT 세션 토큰을 반환"
-    Gettokeninfo:
-      method: get
-      resourcePath: /api/auth/tokeninfo
-      description: "유저 정보 조회"
-    Deleteprojectbyid:
-      method: delete
-      resourcePath: /api/prj/project/id/{projectId}
-      description: "project 삭제"
-    Getprojectbyid:
-      method: get
-      resourcePath: /api/prj/project/id/{projectId}
-      description: "project 단건 조회"
-    Updateprojectbyid:
-      method: put
-      resourcePath: /api/prj/project/id/{projectId}
-      description: "project 수정"
-    Deleterolebyid:
-      method: delete
-      resourcePath: /api/role/id/{roleId}
-      description: "role 수정"
-    Getrolebyid:
-      method: get
-      resourcePath: /api/role/id/{roleId}
-      description: "role 단건 조회"
-    Updaterolebyid:
-      method: put
-      resourcePath: /api/role/id/{roleId}
-      description: "role 수정"
-    Getwpmappinglistorderbyworkspace:
-      method: get
-      resourcePath: /api/wsprj
-      description: "workspace - projects mapping workspace 기준 모든 목록 조회"
-    Createwpmapping:
-      method: post
-      resourcePath: /api/wsprj
-      description: "workspace - projects mapping 생성"
-    Updatewpmappings:
-      method: put
-      resourcePath: /api/wsprj
-      description: "workspace - projects mapping 수정\n\n새로 입력되는 projects 와 기존 projects 를 비교하여, 없는 project 는 삭제하고, 신규 projects 는 새로 mapping 한다."
-    Getcerts:
-      method: get
-      resourcePath: /api/auth/certs
-      description: "유저 토큰의 사용가능 유무"
-    Getmenuresources:
-      method: get
-      resourcePath: /api/resource/menus
-      description: "사용자는 uma_protection Role 을 가져야 한다."
-    Getworkspacelist:
-      method: get
-      resourcePath: /api/ws
-      description: "workspace 목록 조회"
     Createworkspace:
       method: post
       resourcePath: /api/ws
       description: "workspace 생성"
-    Searchworkspacesbyname:
+    Getworkspacelist:
       method: get
-      resourcePath: /api/ws/workspace/{workspaceName}
-      description: "workspace 검색"
+      resourcePath: /api/ws
+      description: "workspace 목록 조회"
     Deleteworkspaceuserrolemapping:
       method: delete
       resourcePath: /api/wsuserrole/workspace/id/{workspaceId}/user/id/{userId}
@@ -935,10 +887,62 @@ serviceActions:
       method: get
       resourcePath: /api/wsuserrole/workspace/id/{workspaceId}/user/id/{userId}
       description: "workspace - user - role mapping 목록 workspace 와 user 로 role 조회"
-    Logout:
+    Getcerts:
+      method: get
+      resourcePath: /api/auth/certs
+      description: "유저 토큰의 사용가능 유무"
+    Searchprojectsbyname:
+      method: get
+      resourcePath: /api/prj/project/{projectName}
+      description: "project 목록 검색"
+    Createresource:
       method: post
-      resourcePath: /api/auth/logout
-      description: "AccessToken및 RefreshToken을 받아 해당 토큰 파기"
+      resourcePath: /api/resource
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Getresources:
+      method: get
+      resourcePath: /api/resource
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Createapiresourcesbyapiyaml:
+      method: post
+      resourcePath: /api/resource/file/framework/{framework}
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Getrolelist:
+      method: get
+      resourcePath: /api/role
+      description: "role 전체 목록 조회"
+    Createrole:
+      method: post
+      resourcePath: /api/role
+      description: "role 생성"
+    Getallpermissions:
+      method: get
+      resourcePath: /api/ticket
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Getpermissionticket:
+      method: post
+      resourcePath: /api/ticket
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Loginrefresh:
+      method: post
+      resourcePath: /api/auth/login/refresh
+      description: "refresh_token과 기존 JWT를 받아, 새로운 JWT 토큰 발급"
+    Getuserinfo:
+      method: get
+      resourcePath: /api/auth/userinfo
+      description: "유저 정보 조회"
+    UpdateuseinfoNotuse:
+      method: put
+      resourcePath: /api/auth/userinfo
+      description: "유저 정보 조회"
+    Getpermissions:
+      method: get
+      resourcePath: /api/permission
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Resetmenuresource:
+      method: delete
+      resourcePath: /api/resource/reset/menu
+      description: "ResetMenuResource"
   
   # 240826 updated : https://raw.githubusercontent.com/m-cmp/mc-web-console/main/mc_web_console_api/docs/swagger.json
   mc-web-console:
