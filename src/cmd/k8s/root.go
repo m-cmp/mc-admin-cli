@@ -13,18 +13,16 @@ var K8sprovider string
 
 // restCmd represents the rest command
 var k8sCmd = &cobra.Command{
-	Use: "k8s",
-	//Short: "Installing and managing M-CMP's infrastructure",
-	//Long:  `Build the environment of the infrastructure required for M-CMP and monitor the running status of the infrastructure.`,
-	Short: "A tool to operate M-CMP system",
-	Long: `The mayfly is a tool to operate M-CMP system.
+	Use:   "k8s",
+	Short: "Installing and managing M-CMP's infrastructure",
+	Long: `Build the environment of the infrastructure required for M-CMP and monitor the running status of the infrastructure.
 For example, you can setup and run, stop, and ... M-CMP runtimes.
 
-- ./mcc k8s pull [-f ../docker-compose-mode-files/docker-compose.yaml]
-- ./mcc k8s run [-f ../docker-compose-mode-files/docker-compose.yaml]
+- ./mcc k8s run [-f ../conf/helm-chart/values.yaml]
 - ./mcc k8s info
-- ./mcc k8s stop [-f ../docker-compose-mode-files/docker-compose.yaml]
-- ./mcc k8s remove [-f ../docker-compose-mode-files/docker-compose.yaml] -v -i
+- ./mcc k8s update [-f ../conf/helm-chart/values.yaml]
+- ./mcc k8s stop [-f ../conf/helm-chart/values.yaml]
+- ./mcc k8s remove [-f ../conf/helm-chart/values.yaml]
 
 	     `,
 	Run: func(cmd *cobra.Command, args []string) {
