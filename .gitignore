@@ -57,3 +57,4 @@ yarn.lock
 
 docker-compose-mode-files/data/*
 conf/docker/data/*
+conf/docker/container-volume

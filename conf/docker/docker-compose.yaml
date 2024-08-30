@@ -2,6 +2,7 @@ networks:
   mc-infra-connector-network:
   mc-infra-manager-network:
   mc-iam-manager-network:
+  mc-cost-optimizer-network:
 
 services:
   mc-infra-connector:
@@ -16,9 +17,9 @@ services:
         published: 1024
         protocol: tcp
     volumes:
-      - ./conf/mc-infra-connector/:/root/go/src/github.com/cloud-barista/cb-spider/conf/
-      - ./data/mc-infra-connector/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
-      - ./data/mc-infra-connector/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
+      - ./conf/mc-infra-connector/:/root/go/src/github.com/cloud-barista/cb-spider/conf/:ro
+      - ./container-volume/mc-infra-connector/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
+      - ./container-volume/mc-infra-connector/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
     environment:
       - PLUGIN_SW=OFF
       # - SERVER_ADDRESS=localhost
@@ -45,9 +46,9 @@ services:
       - mc-infra-manager-etcd
       - mc-infra-connector
     volumes:
-      - ./conf/mc-infra-manager/:/app/conf/
-      - ./data/mc-infra-manager/meta_db/:/app/meta_db/
-      - ./data/mc-infra-manager/log/:/app/log/
+      - ./conf/mc-infra-manager/:/app/conf/:ro
+      - ./container-volume/mc-infra-manager/meta_db/:/app/meta_db/
+      - ./container-volume/mc-infra-manager/log/:/app/log/
     environment:
       # - TB_ROOT_PATH=/app
       - TB_SPIDER_REST_URL=http://mc-infra-connector:1024/spider
@@ -90,7 +91,7 @@ services:
         published: 2380
         protocol: tcp
     volumes: 
-      - ./data/mc-infra-manager/etcd/data:/etcd-data
+      - ./container-volume/mc-infra-manager/etcd/data:/etcd-data
     entrypoint: /usr/local/bin/etcd
     command:
       - --name
@@ -128,7 +129,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: mc-iam-manager:local
+    image: sehyeong0108/mc-iam-manager:v0.2.8
     pull_policy: missing
     platform: linux/amd64
     networks:
@@ -144,8 +145,8 @@ services:
     environment:
       GO_ENV: development # production | development
       GODEBUG: netdns=go
-      DEV_DATABASE_URL: postgres://mciamadmin:mciammanagerpassword@mc-iam-manager-db:5432/mciamdb
-      DATABASE_URL: postgres://mciamadmin:mciammanagerpassword@mc-iam-manager-db:5432/mciamdb
+      DEV_DATABASE_URL: postgres://${IAM_POSTGRES_USER}:${IAM_POSTGRES_PASSWORD}@mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
+      DATABASE_URL: postgres://${IAM_POSTGRES_USER}:${IAM_POSTGRES_PASSWORD}@mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
       PORT: 5000
     env_file:
       - ./conf/mc-iam-manager/.env
@@ -162,11 +163,11 @@ services:
         published: 5432
         protocol: tcp
     volumes:
-      - ./data/mc-iam-manager/postgres/postgres_data:/var/lib/postgresql/data
+      - ./container-volume/mc-iam-manager/postgres/postgres_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: mciamdb
-      POSTGRES_USER: mciamadmin
-      POSTGRES_PASSWORD: mciammanagerpassword
+      POSTGRES_DB: ${IAM_POSTGRES_DB}
+      POSTGRES_USER: ${IAM_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${IAM_POSTGRES_PASSWORD}
 
   mc-iam-manager-kc:
     container_name: mc-iam-manager-kc
@@ -181,19 +182,16 @@ services:
         protocol: tcp
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/mciamdb
-      KC_DB_USERNAME: mciamadmin
-      KC_DB_PASSWORD: mciammanagerpassword
-
+      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
+      KC_DB_USERNAME: ${IAM_POSTGRES_USER}
+      KC_DB_PASSWORD: ${IAM_POSTGRES_PASSWORD}
       KEYCLOAK_ADMIN: admin
       KEYCLOAK_ADMIN_PASSWORD: admin
-
       KC_HOSTNAME: localhost
       KC_HOSTNAME_PORT: 8080
-
     volumes:
-      - ./data/mc-iam-manager/keycloak/data/:/opt/keycloak/data/
       - ./conf/mc-iam-manager/realm-import.json:/opt/keycloak/data/import/realm-import.json
+      - ./container-volume/mc-iam-manager/keycloak/data/:/opt/keycloak/data/
     env_file:
       - ./conf/mc-iam-manager/.env
     depends_on:
@@ -205,3 +203,107 @@ services:
       - --features=token-exchange  
       - --https-key-store-file=/opt/keycloak/conf/server.keystore
       - --https-key-store-password=password123
+
+  mc-cost-optimizer-fe:
+    restart: always
+    image: sehyeong0108/mc-cost-optimizer:fe-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 80
+        published: 7780
+        protocol: tcp
+
+  mc-cost-optimizer-be:
+    restart: always
+    image: sehyeong0108/mc-cost-optimizer:be-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 9090
+        published: 9090
+        protocol: tcp
+    environment:
+      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
+  
+  mc-cost-optimizer-cost-collector:
+    restart: always
+    image: sehyeong0108/mc-cost-optimizer:cost-collector-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 8081
+        published: 8081
+        protocol: tcp
+    environment:
+      spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
+      unusedBatchCronSchedule: ${CO_COST_COLLECT_CRON_SCHEDULE}
+  
+  mc-cost-optimizer-cost-processor:
+    restart: always
+    image: sehyeong0108/mc-cost-optimizer:cost-processor-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 8082
+        published: 8082
+        protocol: tcp
+    environment:
+      spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
+      unusedProcessCronSchedule: ${CO_COST_PROCESS_CRON_SCHEDULE}
+      cost.selector.url: ${CO_COST_SELECTOR_URL}
+  
+  mc-cost-optimizer-cost-selector:
+    restart: always
+    image: sehyeong0108/mc-cost-optimizer:cost-selector-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 8083
+        published: 8083
+        protocol: tcp
+    environment:
+      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
+  
+  mc-cost-optimizer-alarm-service:
+    restart: always
+    image: sehyeong0108/mc-cost-optimizer:alarm-service-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 9000
+        published: 9000
+        protocol: tcp
+    environment:
+      spring.datasource.hikari.slack.jdbc-url: ${CO_SLACK_DB_URL}
+      spring.datasource.hikari.slack.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.slack.password: ${CO_MYSQL_PASSWORD}
+      spring.datasource.hikari.mailing.jdbc-url: ${CO_MAIL_DB_URL}
+      spring.datasource.hikari.mailing.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.mailing.password: ${CO_MYSQL_PASSWORD}
+      spring.datasource.hikari.history.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.history.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.history.password: ${CO_MYSQL_PASSWORD}
+
+  mc-cost-optimizer-db:
+    image: mariadb:latest
+    container_name: mc-cost-optimizer-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=${CO_MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${CO_MYSQL_USER}
+      - MYSQL_PASSWORD=${CO_MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./conf/mc-cost-optimizer/init/:/docker-entrypoint-initdb.d/:ro
+      - ./container-volume/mc-cost-optimizer/mysql/:/var/lib/mysql/
+    networks:
+      - mc-cost-optimizer-network
