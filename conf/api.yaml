@@ -11,6 +11,15 @@ services:
       type: basic
       username: default
       password: default
+  mc-iam-manager:
+    baseurl: http://localhost:5000
+    auth:
+      type: bearer
+
+  mc-web-console:
+    baseurl: http://localhost:3000
+    auth:
+      type: bearer
   sample:
     baseurl: http://localhost:1323/test
     auth:
