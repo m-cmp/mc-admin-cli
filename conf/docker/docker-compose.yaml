@@ -3,6 +3,7 @@ networks:
   mc-infra-manager-network:
   mc-iam-manager-network:
   mc-cost-optimizer-network:
+  mc-application-manager-network:
 
 services:
   mc-infra-connector:
@@ -206,6 +207,7 @@ services:
 
   mc-cost-optimizer-fe:
     restart: always
+    container_name: mc-cost-optimizer-fe
     image: sehyeong0108/mc-cost-optimizer:fe-v0.2.0
     networks:
       - mc-cost-optimizer-network
@@ -216,6 +218,7 @@ services:
 
   mc-cost-optimizer-be:
     restart: always
+    container_name: mc-cost-optimizer-be
     image: sehyeong0108/mc-cost-optimizer:be-v0.2.0
     networks:
       - mc-cost-optimizer-network
@@ -230,6 +233,7 @@ services:
   
   mc-cost-optimizer-cost-collector:
     restart: always
+    container_name: mc-cost-optimizer-cost-collector
     image: sehyeong0108/mc-cost-optimizer:cost-collector-v0.2.0
     networks:
       - mc-cost-optimizer-network
@@ -245,6 +249,7 @@ services:
   
   mc-cost-optimizer-cost-processor:
     restart: always
+    container_name: mc-cost-optimizer-cost-processor
     image: sehyeong0108/mc-cost-optimizer:cost-processor-v0.2.0
     networks:
       - mc-cost-optimizer-network
@@ -261,6 +266,7 @@ services:
   
   mc-cost-optimizer-cost-selector:
     restart: always
+    container_name: mc-cost-optimizer-cost-selector
     image: sehyeong0108/mc-cost-optimizer:cost-selector-v0.2.0
     networks:
       - mc-cost-optimizer-network
@@ -275,6 +281,7 @@ services:
   
   mc-cost-optimizer-alarm-service:
     restart: always
+    container_name: mc-cost-optimizer-alarm-service
     image: sehyeong0108/mc-cost-optimizer:alarm-service-v0.2.0
     networks:
       - mc-cost-optimizer-network
@@ -307,3 +314,77 @@ services:
       - ./container-volume/mc-cost-optimizer/mysql/:/var/lib/mysql/
     networks:
       - mc-cost-optimizer-network
+
+  mc-application-manager-jenkins:
+    image: jenkins/jenkins:jdk17
+    container_name: mc-application-manager-jenkins
+    platform: linux/amd64
+    networks:
+      - mc-application-manager-network
+    ports:
+      - target: 8080
+        published: 9800
+        protocol: tcp
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - ./container-volume/mc-application-manager/jenkins/:/var/jenkins_home/:rw
+    environment:
+      - PROJECT=mcmp
+    user: root
+    healthcheck: 
+      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+
+  mc-application-manager-sonatype-nexus:
+    image: sonatype/nexus3:latest
+    container_name: mc-application-manager-sonatype-nexus
+    platform: linux/amd64
+    networks:
+      - mc-application-manager-network
+    ports:
+      - target: 8081
+        published: 8881
+        protocol: tcp
+      - target: 5000
+        published: 5005
+        protocol: tcp
+    volumes:
+      - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
+    environment:
+      - PROJECT=mcmp
+    user: root
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:8081" ]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  mc-application-manager:
+    image: cloudbaristaorg/mc-application-manager:edge
+    container_name: mc-application-manager
+    networks:
+      - mc-application-manager-network
+    ports:
+      - target: 18084
+        published: 18084
+        protocol: tcp
+    volumes:
+    - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
+    user: root
+    environment:
+      - DDL_AUTO=create-drop
+      - DB_USER=application
+      - DB_PASS=application!23
+      - SQL_DATA_INIT=always
+    healthcheck:
+      test: ["CMD", "nc", "-vz", "localhost", "1324"]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
