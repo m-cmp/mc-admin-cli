@@ -1,4 +1,8 @@
 services:
+  mc-iam-manager:
+    baseurl: http://localhost:5000
+    auth:
+      type: bearer
   mc-infra-connector:
     baseurl: http://localhost:1024/spider
     auth:
@@ -11,11 +15,6 @@ services:
       type: basic
       username: default
       password: default
-  mc-iam-manager:
-    baseurl: http://localhost:5000
-    auth:
-      type: bearer
-
   mc-web-console:
     baseurl: http://localhost:3000
     auth:
@@ -311,8 +310,12 @@ serviceActions:
       description: Check resources' existence
     CreateOrUpdateLabel:
       method: put
-      resourcePath: /label/{labelType}/{uuid}
-      description: Create or update a label for a resource identified by its UUID
+      resourcePath: /label/{labelType}/{uid}
+      description: Create or update a label for a resource identified by its uid
+    CreateSharedResource:
+      method: post
+      resourcePath: /ns/{nsId}/sharedResource
+      description: Create shared resources for MC-Infra
     DelAllCustomImage:
       method: delete
       resourcePath: /ns/{nsId}/resources/customImage
@@ -421,6 +424,14 @@ serviceActions:
       method: delete
       resourcePath: /requests
       description: Delete details of all requests
+    DeleteDeregisterSubnet:
+      method: delete
+      resourcePath: /ns/{nsId}/deregisterCspResource/vNet/{vNetId}/subnet/{subnetId}
+      description: Deregister Subnet, which was created in CSP
+    DeleteDeregisterVNet:
+      method: delete
+      resourcePath: /ns/{nsId}/deregisterCspResource/vNet/{vNetId}
+      description: Deregister the VNet, which was created in CSP
     DeleteK8sCluster:
       method: delete
       resourcePath: /ns/{nsId}/k8scluster/{k8sClusterId}
@@ -513,6 +524,10 @@ serviceActions:
       method: get
       resourcePath: /ns/{nsId}/resources/sshKey
       description: List all SSH Keys or SSH Keys' ID
+    GetAllSubnet:
+      method: get
+      resourcePath: /ns/{nsId}/resources/vNet/{vNetId}/subnet
+      description: List all subnets (metadata)
     GetAllVNet:
       method: get
       resourcePath: /ns/{nsId}/resources/vNet
@@ -580,8 +595,8 @@ serviceActions:
       description: Get kubernetes cluster information
     GetLabels:
       method: get
-      resourcePath: /label/{labelType}/{uuid}
-      description: Get labels for a resource identified by its UUID
+      resourcePath: /label/{labelType}/{uid}
+      description: Get labels for a resource identified by its uid
     GetLatencyBenchmark:
       method: get
       resourcePath: /ns/{nsId}/benchmarkLatency/mci/{mciId}
@@ -650,10 +665,10 @@ serviceActions:
       method: get
       resourcePath: /provider/{providerName}/region/{regionName}
       description: Get registered region info
-    GetRegionList:
+    GetRegions:
       method: get
-      resourcePath: /region
-      description: List all registered regions
+      resourcePath: /provider/{providerName}/region
+      description: Get registered region info
     GetRequest:
       method: get
       resourcePath: /request/{reqId}
@@ -694,6 +709,10 @@ serviceActions:
       method: get
       resourcePath: /ns/{nsId}/resources/sshKey/{sshKeyId}
       description: Get SSH Key
+    GetSubnet:
+      method: get
+      resourcePath: /ns/{nsId}/resources/vNet/{vNetId}/subnet/{subnetId}
+      description: Get Subnet (metadata)
     GetVNet:
       method: get
       resourcePath: /ns/{nsId}/resources/vNet/{vNetId}
@@ -720,14 +739,10 @@ serviceActions:
       resourcePath: /inspectResourcesOverview
       description: Inspect Resources Overview (vNet, securityGroup, sshKey, vm) registered
         in CB-Tumblebug and CSP for all connections
-    LoadCommonResource:
+    LoadAssets:
       method: get
-      resourcePath: /loadCommonResource
+      resourcePath: /loadAssets
       description: Load Common Resources from internal asset files (Spec, Image)
-    LoadSharedResource:
-      method: get
-      resourcePath: /ns/{nsId}/loadSharedResource
-      description: Load Default Resource from internal asset file
     LookupImage:
       method: post
       resourcePath: /lookupImage
@@ -836,6 +851,14 @@ serviceActions:
       method: post
       resourcePath: /ns/{nsId}/registerCspVm
       description: Register existing VM in a CSP to Cloud-Barista MCI
+    PostRegisterSubnet:
+      method: post
+      resourcePath: /ns/{nsId}/registerCspResource/vNet/{vNetId}/subnet
+      description: Register Subnet, which was created in CSP
+    PostRegisterVNet:
+      method: post
+      resourcePath: /ns/{nsId}/registerCspResource/vNet
+      description: Register the VNet, which was created in CSP
     PostSecurityGroup:
       method: post
       resourcePath: /ns/{nsId}/resources/securityGroup
@@ -865,6 +888,10 @@ serviceActions:
       resourcePath: /util/net/design
       description: Design a hierarchical network configuration of a VPC network or
         multi-cloud network consisting of multiple VPC networks
+    PostUtilToDesignVNet:
+      method: post
+      resourcePath: /util/vNet/design
+      description: Design VNet and subnets based on user-friendly properties
     PostUtilToValidateNetwork:
       method: post
       resourcePath: /util/net/validate
@@ -873,7 +900,7 @@ serviceActions:
     PostVNet:
       method: post
       resourcePath: /ns/{nsId}/resources/vNet
-      description: Create VNet
+      description: Create a new VNet
     PostVmDataDisk:
       method: post
       resourcePath: /ns/{nsId}/mci/{mciId}/vm/{vmId}/dataDisk
@@ -952,12 +979,16 @@ serviceActions:
       description: Remove a bastion VM from all vNets
     RemoveLabel:
       method: delete
-      resourcePath: /label/{labelType}/{uuid}/{key}
-      description: Remove a label from a resource identified by its UUID
+      resourcePath: /label/{labelType}/{uid}/{key}
+      description: Remove a label from a resource identified by its uid
     RemoveNLBVMs:
       method: delete
       resourcePath: /ns/{nsId}/mci/{mciId}/nlb/{nlbId}/vm
       description: Delete VMs from NLB
+    RetrieveRegionListFromCsp:
+      method: get
+      resourcePath: /regionFromCsp
+      description: RetrieveR all region lists from CSPs
     SearchImage:
       method: post
       resourcePath: /ns/{nsId}/resources/searchImage
