@@ -7,8 +7,6 @@ import (
 	"log"
 	"net/http"
 	"os"
-	"path/filepath"
-	"runtime"
 	"strings"
 
 	"github.com/spf13/cobra"
@@ -47,7 +45,7 @@ var updateCmd = &cobra.Command{
 }
 var (
 	originApiYamlFile string
-	rootPath          = getRootPath()
+	createPath        string
 	services          = map[string]string{
 		"mc-infra-manager": "https://raw.githubusercontent.com/cloud-barista/cb-tumblebug/main/src/api/rest/docs/swagger.json",
 		"mc-iam-manager":   "https://raw.githubusercontent.com/m-cmp/mc-iam-manager/docs/swagger/swagger.json",
@@ -55,14 +53,9 @@ var (
 	}
 )
 
-func getRootPath() string {
-	_, b, _, _ := runtime.Caller(0)
-	basePath := filepath.Dir(b)
-	return basePath[0 : len(basePath)-len("/src/cmd/apicall")]
-}
-
 func init() {
-	updateCmd.PersistentFlags().StringVarP(&originApiYamlFile, "originApiYamlFile", "O", fmt.Sprintf("%s/conf/api.yaml", rootPath), "Path to the origin YAML configuration file")
+	updateCmd.PersistentFlags().StringVarP(&createPath, "createPath", "C", "../conf", "Path to the origin YAML configuration file")
+	updateCmd.PersistentFlags().StringVarP(&originApiYamlFile, "originApiYamlFile", "O", fmt.Sprintf("%s/api.yaml", createPath), "Path to the origin YAML configuration file")
 	apiCmd.AddCommand(updateCmd)
 }
 
@@ -127,7 +120,6 @@ func backupFileIfExists(filePath, backupPath string) error {
 	}
 	return nil
 }
-
 
 func fetchSwaggerJSON(url string) ([]byte, error) {
 	resp, err := http.Get(url)
