@@ -1,36 +1,60 @@
 networks:
-  internal_network:
-    internal: true
-  external_network:
-    driver: bridge
+  mc-infra-connector-network:
+  mc-infra-manager-network:
+  mc-iam-manager-network:
+  mc-cost-optimizer-network:
+  mc-application-manager-network:
+  mc-workflow-manager-network:
 
 services:
-  # CB-Tumblebug
-  cb-tumblebug:
-    image: cloudbaristaorg/cb-tumblebug:0.9.4
-    container_name: cb-tumblebug
+  mc-infra-connector:
+    image: cloudbaristaorg/cb-spider:0.9.4
     pull_policy: missing
-    # build:
-    #   context: .
-    #   dockerfile: Dockerfile
+    container_name: mc-infra-connector
     platform: linux/amd64
     networks:
-      - internal_network
-      - external_network
+      - mc-infra-connector-network
     ports:
-      - 1323:1323
-    depends_on: 
-      - cb-tumblebug-etcd
-      # - cb-tumblebug-etcd-conf
-      - cb-spider      
+      - target: 1024
+        published: 1024
+        protocol: tcp
     volumes:
-      - ./conf/:/app/conf/
-      - ./container-volume/cb-tumblebug-container/meta_db/:/app/meta_db/
-      - ./container-volume/cb-tumblebug-container/log/:/app/log/
+      - ./conf/mc-infra-connector/:/root/go/src/github.com/cloud-barista/cb-spider/conf/:ro
+      - ./container-volume/mc-infra-connector/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
+      - ./container-volume/mc-infra-connector/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
+    environment:
+      - PLUGIN_SW=OFF
+      # - SERVER_ADDRESS=localhost
+      # if you leave these values empty, REST Auth will be disabled.
+      # - API_USERNAME=
+      # - API_PASSWORD=
+      - SPIDER_LOG_LEVEL=error
+      - SPIDER_HISCALL_LOG_LEVEL=error
+      # - ID_TRANSFORM_MODE=ON
+
+  mc-infra-manager:
+    image: cloudbaristaorg/cb-tumblebug:0.9.11
+    container_name: mc-infra-manager
+    pull_policy: missing
+    platform: linux/amd64
+    networks:
+      - mc-infra-connector-network
+      - mc-infra-manager-network
+    ports:
+      - target: 1323
+        published: 1323
+        protocol: tcp
+    depends_on: 
+      - mc-infra-manager-etcd
+      - mc-infra-connector
+    volumes:
+      - ./conf/mc-infra-manager/:/app/conf/:ro
+      - ./container-volume/mc-infra-manager/meta_db/:/app/meta_db/
+      - ./container-volume/mc-infra-manager/log/:/app/log/
     environment:
       # - TB_ROOT_PATH=/app
-      - TB_SPIDER_REST_URL=http://cb-spider:1024/spider
-      - TB_ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
+      - TB_SPIDER_REST_URL=http://mc-infra-connector:1024/spider
+      - TB_ETCD_ENDPOINTS=http://mc-infra-manager-etcd:2379
       # - TB_ETCD_AUTH_ENABLED=true
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
@@ -55,24 +79,21 @@ services:
       # - TB_LOGLEVEL=debug
       # - TB_LOGWRITER=both
       # - TB_NODE_ENV=development
-    healthcheck: # for CB-Tumblebug
-      test: [ "CMD", "curl", "-f", "http://localhost:1323/tumblebug/readyz" ]
-      interval: 1m
-      timeout: 5s
-      retries: 3
-      start_period: 10s
 
-  # cb-tumblebug-etcd
-  cb-tumblebug-etcd:
+  mc-infra-manager-etcd:
     image: gcr.io/etcd-development/etcd:v3.5.14
-    container_name: cb-tumblebug-etcd
+    container_name: mc-infra-manager-etcd
     networks:
-      - internal_network
+      - mc-infra-manager-network
     ports:
-      - 2379:2379
-      - 2380:2380
+      - target: 2379
+        published: 2379
+        protocol: tcp
+      - target: 2380
+        published: 2380
+        protocol: tcp
     volumes: 
-      - ./container-volume/etcd/data:/etcd-data
+      - ./container-volume/mc-infra-manager/etcd/data:/etcd-data
     entrypoint: /usr/local/bin/etcd
     command:
       - --name
@@ -101,90 +122,287 @@ services:
       - stderr
       - --auth-token
       - simple
-    healthcheck: # for etcd
-      test: [ "CMD", "/usr/local/bin/etcd", "--version"]
+    healthcheck:
+      test: [ "CMD", "etcdctl", "endpoint", "health", "--endpoints=http://localhost:2379"]
       interval: 1m
       timeout: 5s
       retries: 3
       start_period: 10s
 
-  # CB-Spider
-  cb-spider:
-    image: cloudbaristaorg/cb-spider:0.9.0
-    container_name: cb-spider
-    # build:
-    #   context: ../cb-spider
-    #   dockerfile: Dockerfile    
+  mc-iam-manager:
+    container_name: mc-iam-manager
+    image: sehyeong0108/mc-iam-manager:v0.2.8
+    pull_policy: missing
     platform: linux/amd64
     networks:
-      - internal_network
-      - external_network    # for outbound access (not ideal for security) 
-    # expose:
-    #   - 1024
+      - mc-iam-manager-network
+      - mc-infra-manager-network
     ports:
-      - 1024:1024
-    volumes:
-      - ./container-volume/cb-spider-container/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
-      - ./container-volume/cb-spider-container/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
+      - target: 5000
+        published: 5000
+        protocol: tcp
+    depends_on:
+      - mc-iam-manager-db
+      - mc-iam-manager-kc
     environment:
-      - PLUGIN_SW=OFF
-      - SERVER_ADDRESS=localhost
-      # if you leave these values empty, REST Auth will be disabled.
-      # - API_USERNAME=
-      # - API_PASSWORD=
-      - SPIDER_LOG_LEVEL=error
-      - SPIDER_HISCALL_LOG_LEVEL=error
-      - ID_TRANSFORM_MODE=ON
-    healthcheck: # for CB-Spider
-      test: [ "CMD", "curl", "-f", "http://localhost:1024/spider/readyz" ]
-      interval: 1m
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+      GO_ENV: development # production | development
+      GODEBUG: netdns=go
+      DEV_DATABASE_URL: postgres://${IAM_POSTGRES_USER}:${IAM_POSTGRES_PASSWORD}@mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
+      DATABASE_URL: postgres://${IAM_POSTGRES_USER}:${IAM_POSTGRES_PASSWORD}@mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
+      PORT: 5000
+    env_file:
+      - ./conf/mc-iam-manager/.env
 
-  # # cb-mapui
-  # cb-mapui:
-  #   image: cloudbaristaorg/cb-mapui:0.9.1
-  #   container_name: cb-mapui
-  #   # build:
-  #   #   context: ../cb-mapui
-  #   #   dockerfile: Dockerfile
-  #   networks:
-  #     - external_network
-  #   ports:
-  #     - target: 1324
-  #       published: 1324
-  #       protocol: tcp
-  #   healthcheck: # for cb-mapui
-  #     test: ["CMD", "nc", "-vz", "localhost", "1324"]
-  #     interval: 1m
-  #     timeout: 5s
-  #     retries: 3
-  #     start_period: 10s
+  mc-iam-manager-db:
+    container_name: mc-iam-manager-db
+    image: postgres:14-alpine
+    pull_policy: missing
+    platform: linux/amd64
+    networks:
+      - mc-iam-manager-network
+    ports:
+      - target: 5432
+        published: 5432
+        protocol: tcp
+    volumes:
+      - ./container-volume/mc-iam-manager/postgres/postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${IAM_POSTGRES_DB}
+      POSTGRES_USER: ${IAM_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${IAM_POSTGRES_PASSWORD}
 
-  # # cb-tumblebug-etcd-conf
-  # cb-tumblebug-etcd-conf:
-  #   image: alpine:latest
-  #   container_name: cb-tumblebug-etcd-conf
-  #   networks:
-  #     - internal_network
-  #     - external_network
-  #   depends_on:
-  #     - cb-tumblebug-etcd
-  #   volumes:
-  #     - ./scripts/etcd/:/scripts/etcd/
-  #   environment:
-  #     - ETCD_VERSION_TAG=v3.5.14
-  #     - ETCD_ENDPOINTS=http://cb-tumblebug-etcd:2379
-  #     - ETCD_PATH=/tmp/etcd-download-test
-  #     - ETCD_AUTH_ENABLED=true
-  #     - ETCD_ROOT_PASSWORD=default
-  #     - ETCD_ADMIN_USERNAME=default
-  #     - ETCD_ADMIN_PASSWORD=default
-  #   command: sh -c "sh /scripts/etcd/etcd-conf.sh"
-  #   healthcheck: # for etcd-conf
-  #     test: ["CMD", "test", "-f", "/tmp/healthcheck"]
-  #     interval: 30s
-  #     timeout: 10s
-  #     retries: 3
-  #     start_period: 10s
+  mc-iam-manager-kc:
+    container_name: mc-iam-manager-kc
+    build:
+      context: ./
+      dockerfile: ./dockerfiles/Dockerfile.keycloak
+    networks:
+      - mc-iam-manager-network
+    ports:
+      - target: 8080
+        published: 8080
+        protocol: tcp
+    environment:
+      KC_DB: postgres
+      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
+      KC_DB_USERNAME: ${IAM_POSTGRES_USER}
+      KC_DB_PASSWORD: ${IAM_POSTGRES_PASSWORD}
+      KEYCLOAK_ADMIN: admin
+      KEYCLOAK_ADMIN_PASSWORD: admin
+      KC_HOSTNAME: localhost
+      KC_HOSTNAME_PORT: 8080
+    volumes:
+      - ./conf/mc-iam-manager/realm-import.json:/opt/keycloak/data/import/realm-import.json
+      - ./container-volume/mc-iam-manager/keycloak/data/:/opt/keycloak/data/
+    env_file:
+      - ./conf/mc-iam-manager/.env
+    depends_on:
+      - mc-iam-manager-db
+    command: 
+      - start-dev 
+      - --import-realm 
+      - --verbose 
+      - --features=token-exchange  
+      - --https-key-store-file=/opt/keycloak/conf/server.keystore
+      - --https-key-store-password=password123
+
+  mc-cost-optimizer-fe:
+    restart: always
+    container_name: mc-cost-optimizer-fe
+    image: sehyeong0108/mc-cost-optimizer:fe-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 80
+        published: 7780
+        protocol: tcp
+
+  mc-cost-optimizer-be:
+    restart: always
+    container_name: mc-cost-optimizer-be
+    image: sehyeong0108/mc-cost-optimizer:be-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 9090
+        published: 9090
+        protocol: tcp
+    environment:
+      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
+  
+  mc-cost-optimizer-cost-collector:
+    restart: always
+    container_name: mc-cost-optimizer-cost-collector
+    image: sehyeong0108/mc-cost-optimizer:cost-collector-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 8081
+        published: 8081
+        protocol: tcp
+    environment:
+      spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
+      unusedBatchCronSchedule: ${CO_COST_COLLECT_CRON_SCHEDULE}
+  
+  mc-cost-optimizer-cost-processor:
+    restart: always
+    container_name: mc-cost-optimizer-cost-processor
+    image: sehyeong0108/mc-cost-optimizer:cost-processor-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 8082
+        published: 8082
+        protocol: tcp
+    environment:
+      spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
+      unusedProcessCronSchedule: ${CO_COST_PROCESS_CRON_SCHEDULE}
+      cost.selector.url: ${CO_COST_SELECTOR_URL}
+  
+  mc-cost-optimizer-cost-selector:
+    restart: always
+    container_name: mc-cost-optimizer-cost-selector
+    image: sehyeong0108/mc-cost-optimizer:cost-selector-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 8083
+        published: 8083
+        protocol: tcp
+    environment:
+      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
+  
+  mc-cost-optimizer-alarm-service:
+    restart: always
+    container_name: mc-cost-optimizer-alarm-service
+    image: sehyeong0108/mc-cost-optimizer:alarm-service-v0.2.0
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 9000
+        published: 9000
+        protocol: tcp
+    environment:
+      spring.datasource.hikari.slack.jdbc-url: ${CO_SLACK_DB_URL}
+      spring.datasource.hikari.slack.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.slack.password: ${CO_MYSQL_PASSWORD}
+      spring.datasource.hikari.mailing.jdbc-url: ${CO_MAIL_DB_URL}
+      spring.datasource.hikari.mailing.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.mailing.password: ${CO_MYSQL_PASSWORD}
+      spring.datasource.hikari.history.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.history.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.history.password: ${CO_MYSQL_PASSWORD}
+
+  mc-cost-optimizer-db:
+    image: mariadb:latest
+    container_name: mc-cost-optimizer-db
+    environment:
+      - MYSQL_ROOT_PASSWORD=${CO_MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${CO_MYSQL_USER}
+      - MYSQL_PASSWORD=${CO_MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    volumes:
+      - ./conf/mc-cost-optimizer/init/:/docker-entrypoint-initdb.d/:ro
+      - ./container-volume/mc-cost-optimizer/mysql/:/var/lib/mysql/
+    networks:
+      - mc-cost-optimizer-network
+
+  mc-application-manager-jenkins:
+    image: jenkins/jenkins:jdk17
+    container_name: mc-application-manager-jenkins
+    platform: linux/amd64
+    networks:
+      - mc-application-manager-network
+    ports:
+      - target: 8080
+        published: 9800
+        protocol: tcp
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - ./container-volume/mc-application-manager/jenkins/:/var/jenkins_home/:rw
+    environment:
+      - PROJECT=mcmp
+    user: root
+
+  mc-application-manager-sonatype-nexus:
+    image: sonatype/nexus3:latest
+    container_name: mc-application-manager-sonatype-nexus
+    platform: linux/amd64
+    networks:
+      - mc-application-manager-network
+    ports:
+      - target: 8081
+        published: 8881
+        protocol: tcp
+      - target: 5000
+        published: 5005
+        protocol: tcp
+    volumes:
+      - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
+    environment:
+      - PROJECT=mcmp
+    user: root
+
+  mc-application-manager:
+    image: cloudbaristaorg/mc-application-manager:edge
+    container_name: mc-application-manager
+    networks:
+      - mc-application-manager-network
+    ports:
+      - target: 18084
+        published: 18084
+        protocol: tcp
+    volumes:
+      - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
+    user: root
+    environment:
+      - DDL_AUTO=create-drop
+      - DB_USER=application
+      - DB_PASS=application!23
+      - SQL_DATA_INIT=always
+
+  mc-workflow-manager-jenkins:
+    image: jenkins/jenkins:jdk17
+    container_name: mc-workflow-manager-jenkins
+    platform: linux/amd64
+    networks:
+      - mc-workflow-manager-network
+    ports:
+      - target: 8080
+        published: 9880
+        protocol: tcp
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - ./container-volume/mc-workflow-manager/jenkins/:/var/jenkins_home/:rw
+    environment:
+      - PROJECT=mcmp
+    user: root
+
+  mc-workflow-manager:
+    image: cloudbaristaorg/mc-workflow-manager:edge
+    container_name: mc-workflow-manager
+    platform: linux/amd64
+    networks:
+      - mc-workflow-manager-network
+    ports:
+      - target: 18083
+        published: 18083
+        protocol: tcp
+    volumes:
+      - ./conf/mc-workflow-manager/document/:/document/
+    environment:
+      - DB_INIT_YN=create
+      - DB_ID=workflow
+      - DB_PW=workflow!23
+      - SQL_DATA_INIT=always
