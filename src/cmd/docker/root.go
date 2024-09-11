@@ -12,18 +12,16 @@ import (
 
 // restCmd represents the rest command
 var dockerCmd = &cobra.Command{
-	Use: "docker",
-	//Short: "Installing and managing M-CMP's infrastructure",
-	//Long:  `Build the environment of the infrastructure required for M-CMP and monitor the running status of the infrastructure.`,
-	Short: "A tool to operate M-CMP system",
-	Long: `The mayfly is a tool to operate M-CMP system.
+	Use:   "docker",
+	Short: "Installing and managing M-CMP's infrastructure",
+	Long: `Build the environment of the infrastructure required for M-CMP and monitor the running status of the infrastructure.
 For example, you can setup and run, stop, and ... M-CMP runtimes.
 
-- ./mcc pull [-f ../docker-compose-mode-files/docker-compose.yaml]
-- ./mcc run [-f ../docker-compose-mode-files/docker-compose.yaml]
-- ./mcc info
-- ./mcc stop [-f ../docker-compose-mode-files/docker-compose.yaml]
-- ./mcc remove [-f ../docker-compose-mode-files/docker-compose.yaml] -v -i
+- ./mcc docker pull [-f ../conf/docker/docker-compose.yaml]
+- ./mcc docker run [-f ../conf/docker/docker-compose.yaml]
+- ./mcc docker info
+- ./mcc docker stop [-f ../conf/docker/docker-compose.yaml]
+- ./mcc docker remove [-f ../conf/docker/docker-compose.yaml] -v -i
 
 	     `,
 	Run: func(cmd *cobra.Command, args []string) {

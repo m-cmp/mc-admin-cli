@@ -1,15 +1,15 @@
 module github.com/mc-admin-cli/mcc
 
-go 1.17
+go 1.23
 
 require (
 	github.com/mitchellh/go-homedir v1.1.0
 	github.com/spf13/cobra v1.8.0
 	github.com/spf13/viper v1.10.1
+	github.com/tidwall/gjson v1.17.3
 )
 
 require (
-	github.com/tidwall/gjson v1.17.3 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
 	golang.org/x/net v0.22.0 // indirect
