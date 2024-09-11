@@ -56,7 +56,6 @@ var (
 func init() {
 	updateCmd.PersistentFlags().StringVarP(&createPath, "createPath", "C", "../conf", "Path to the origin YAML configuration file")
 	updateCmd.PersistentFlags().StringVarP(&originApiYamlFile, "originApiYamlFile", "O", fmt.Sprintf("%s/api.yaml", createPath), "Path to the origin YAML configuration file")
-	apiCmd.AddCommand(updateCmd)
 }
 
 func updateConfig() {
