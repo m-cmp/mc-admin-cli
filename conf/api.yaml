@@ -46,6 +46,11 @@ services:
     version: main
     baseurl: http://localhost:9090
     auth:
+
+  mc-data-manager:
+    version: main:20240923
+    baseurl: http://localhost:3300
+    auth:
   
   # sample:
   #   baseurl: http://localhost:1323/test
@@ -2288,6 +2293,145 @@ serviceActions:
       method: get
       resourcePath: /api/v2/getWorkspaces
       description: "워크스페이스 목록을 조회합니다."
+
+  mc-data-manager:
+    GenerateWindows:
+      method: post
+      resourcePath: /generate/windows
+      description: "Generate test data on on-premise Windows."
+    MigrationDynamodbFirestore:
+      method: post
+      resourcePath: /migration/dynamodb/firestore
+      description: "Migrate data stored in AWS DynamoDB to Google Cloud Firestore."
+    MigrationLinuxNcp:
+      method: post
+      resourcePath: /migration/linux/ncp
+      description: "Migrate data stored in a Linux-based system to NCP Object Storage."
+    MigrationNcpLinux:
+      method: post
+      resourcePath: /migration/ncp/linux
+      description: "Migrate data stored in NCP Object Storage to a Linux-based system."
+    MigrationNcpWindows:
+      method: post
+      resourcePath: /migration/ncp/windows
+      description: "Migrate data stored in NCP Object Storage to a Windows-based system."
+    MigrationGcpWindows:
+      method: post
+      resourcePath: /migration/gcp/windows
+      description: "Migrate data stored in GCP Cloud Storage to a Windows-based system."
+    MigrationLinuxS3:
+      method: post
+      resourcePath: /migration/linux/s3
+      description: "Migrate data stored in a Linux-based system to AWS S3."
+    MigrationNcpS3:
+      method: post
+      resourcePath: /migration/ncp/s3
+      description: "Migrate data stored in NCP Object Storage to AWS S3."
+    MigrationS3Windows:
+      method: post
+      resourcePath: /migration/s3/windows
+      description: "Migrate data stored in AWS S3 to a Windows-based system."
+    GenerateDynamodb:
+      method: post
+      resourcePath: /generate/dynamodb
+      description: "Generate test data on AWS DynamoDB."
+    MigrationDynamodbMongodb:
+      method: post
+      resourcePath: /migration/dynamodb/mongodb
+      description: "Migrate data stored in AWS DynamoDB to Naver Cloud MongoDB."
+    MigrationLinuxGcp:
+      method: post
+      resourcePath: /migration/linux/gcp
+      description: "Migrate data stored in a Linux-based system to GCP Cloud Storage."
+    MigrationMysql:
+      method: post
+      resourcePath: /migration/mysql
+      description: "Migrate data from one MySQL database to another MySQL database."
+    MigrationWindowsS3:
+      method: post
+      resourcePath: /migration/windows/s3
+      description: "Migrate data stored in a Windows-based system to AWS S3."
+    GenerateFirestore:
+      method: post
+      resourcePath: /generate/firestore
+      description: "Generate test data on GCP Firestore."
+    GenerateMongodb:
+      method: post
+      resourcePath: /generate/mongodb
+      description: "Generate test data on NCP MongoDB."
+    MigrationFirestoreMongodb:
+      method: post
+      resourcePath: /migration/firestore/mongodb
+      description: "Migrate data stored in Google Cloud Firestore to Naver Cloud MongoDB."
+    MigrationS3Linux:
+      method: post
+      resourcePath: /migration/s3/linux
+      description: "Migrate data stored in AWS S3 to a Linux-based system."
+    GenerateGcp:
+      method: post
+      resourcePath: /generate/gcp
+      description: "Generate test data on GCP Cloud Storage."
+    GenerateMysql:
+      method: post
+      resourcePath: /generate/mysql
+      description: "Generate test data on MySQL."
+    MigrationFirestoreDynamodb:
+      method: post
+      resourcePath: /migration/firestore/dynamodb
+      description: "Migrate data stored in Google Cloud Firestore to AWS DynamoDB."
+    MigrationGcpNcp:
+      method: post
+      resourcePath: /migration/gcp/ncp
+      description: "Migrate data stored in GCP Cloud Storage to NCP Object Storage."
+    MigrationNcpGcp:
+      method: post
+      resourcePath: /migration/ncp/gcp
+      description: "Migrate data stored in NCP Object Storage to GCP Cloud Storage."
+    GenerateLinux:
+      method: post
+      resourcePath: /generate/linux
+      description: "Generate test data on on-premise Linux."
+    GenerateNcp:
+      method: post
+      resourcePath: /generate/ncp
+      description: "Generate test data on NCP Object Storage."
+    MigrationGcpS3:
+      method: post
+      resourcePath: /migration/gcp/s3
+      description: "Migrate data stored in GCP Cloud Storage to AWS S3."
+    MigrationMongodbDynamodb:
+      method: post
+      resourcePath: /migration/mongodb/dynamodb
+      description: "Migrate data stored in Naver Cloud MongoDB to AWS DynamoDB."
+    GenerateS3:
+      method: post
+      resourcePath: /generate/s3
+      description: "Generate test data on AWS S3."
+    MigrationS3Gcp:
+      method: post
+      resourcePath: /migration/s3/gcp
+      description: "Migrate data stored in AWS S3 to Google Cloud Storage."
+    MigrationS3Ncp:
+      method: post
+      resourcePath: /migration/s3/ncp
+      description: "Migrate data stored in AWS S3 to Naver Cloud Object Storage."
+    MigrationGcpLinux:
+      method: post
+      resourcePath: /migration/gcp/linux
+      description: "Migrate data stored in GCP Cloud Storage to a Linux-based system."
+    MigrationMongodbFirestore:
+      method: post
+      resourcePath: /migration/mongodb/firestore
+      description: "Migrate data stored in Naver Cloud MongoDB to Google Cloud Firestore."
+    MigrationWindowsGcp:
+      method: post
+      resourcePath: /migration/windows/gcp
+      description: "Migrate data stored in a Windows-based system to GCP Cloud Storage."
+    MigrationWindowsNcp:
+      method: post
+      resourcePath: /migration/windows/ncp
+      description: "Migrate data stored in a Windows-based system to NCP Object Storage."
+
 
 
 

@@ -5,6 +5,7 @@ networks:
   mc-cost-optimizer-network:
   mc-application-manager-network:
   mc-workflow-manager-network:
+  mc-data-manager-network:
 
 services:
   mc-infra-connector:
@@ -131,7 +132,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: sehyeong0108/mc-iam-manager:v0.2.8
+    image: sehyeong0108/mc-iam-manager:20240923
     pull_policy: missing
     platform: linux/amd64
     networks:
@@ -187,9 +188,6 @@ services:
       KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
       KC_DB_USERNAME: ${IAM_POSTGRES_USER}
       KC_DB_PASSWORD: ${IAM_POSTGRES_PASSWORD}
-      KEYCLOAK_ADMIN: admin
-      KEYCLOAK_ADMIN_PASSWORD: admin
-      KC_HOSTNAME: localhost
       KC_HOSTNAME_PORT: 8080
     volumes:
       - ./conf/mc-iam-manager/realm-import.json:/opt/keycloak/data/import/realm-import.json
@@ -207,7 +205,7 @@ services:
       - --https-key-store-password=password123
 
   mc-cost-optimizer-fe:
-    restart: always
+    restart: on-failure
     container_name: mc-cost-optimizer-fe
     image: sehyeong0108/mc-cost-optimizer:fe-v0.2.0
     networks:
@@ -218,7 +216,7 @@ services:
         protocol: tcp
 
   mc-cost-optimizer-be:
-    restart: always
+    restart: on-failure
     container_name: mc-cost-optimizer-be
     image: sehyeong0108/mc-cost-optimizer:be-v0.2.0
     networks:
@@ -233,7 +231,7 @@ services:
       spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
   
   mc-cost-optimizer-cost-collector:
-    restart: always
+    restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
     image: sehyeong0108/mc-cost-optimizer:cost-collector-v0.2.0
     networks:
@@ -249,7 +247,7 @@ services:
       unusedBatchCronSchedule: ${CO_COST_COLLECT_CRON_SCHEDULE}
   
   mc-cost-optimizer-cost-processor:
-    restart: always
+    restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
     image: sehyeong0108/mc-cost-optimizer:cost-processor-v0.2.0
     networks:
@@ -266,7 +264,7 @@ services:
       cost.selector.url: ${CO_COST_SELECTOR_URL}
   
   mc-cost-optimizer-cost-selector:
-    restart: always
+    restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
     image: sehyeong0108/mc-cost-optimizer:cost-selector-v0.2.0
     networks:
@@ -281,7 +279,7 @@ services:
       spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
   
   mc-cost-optimizer-alarm-service:
-    restart: always
+    restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
     image: sehyeong0108/mc-cost-optimizer:alarm-service-v0.2.0
     networks:
@@ -406,3 +404,34 @@ services:
       - DB_ID=workflow
       - DB_PW=workflow!23
       - SQL_DATA_INIT=always
+
+  mc-data-manager-init-volumes:
+    image: busybox:stable
+    container_name: mc-data-manager-init-volumes
+    command: ["sh", "-c", "chown -R ${UID:-0}:${GID:-0} /app/log"]
+    volumes:
+      - ./container-volume/mc-data-manager/log:/app/log/
+    user: root
+    env_file:
+      - ./conf/mc-data-manager/.env
+    init: true
+    networks:
+      - mc-data-manager-network
+
+  mc-data-manager:
+    image: sehyeong0108/mc-data-manager:20240923
+    container_name: mc-data-manager
+    depends_on:
+      - mc-data-manager-init-volumes
+    tty: true
+    ports:
+      - "3300:3300"
+    restart: on-failure
+    user: root
+    volumes:
+      - ./container-volume/mc-data-manager/log:/app/log/
+      - /etc/localtime:/etc/localtime:ro
+    env_file:
+      - ./conf/mc-data-manager/.env
+    networks:
+      - mc-data-manager-network
