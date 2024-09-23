@@ -5,9 +5,14 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
+
+	"math/rand"
 
 	"github.com/spf13/cobra"
 	"github.com/tidwall/gjson"
+	"golang.org/x/text/cases"
+	"golang.org/x/text/language"
 )
 
 var swaggerFile string
@@ -44,6 +49,9 @@ func parseJson() {
 
 	// paths 하위의 URI, method 및 operationId 추출
 	paths := gjson.Get(json, "paths").Map()
+
+	tempMap := make(map[string]interface{})
+
 	for path, methods := range paths {
 		//fmt.Println("URI:", path)
 		for method, details := range methods.Map() {
@@ -54,6 +62,15 @@ func parseJson() {
 
 			//fmt.Printf("  Method: %s, OperationId: %s\n", method, operationId.String())
 			tmpActionName := convertActionlName(operationId.String())
+			if tmpActionName == "" {
+				tmpActionName = toCamelCase(path, "/")
+			}
+
+			_, ok := tempMap[tmpActionName]
+			if ok {
+				tmpActionName = putRandNum(tmpActionName)
+			}
+
 			fmt.Printf("    %s:\n", tmpActionName)
 			fmt.Printf("      method: %s\n", method)
 			fmt.Printf("      resourcePath: %s\n", path)
@@ -62,6 +79,12 @@ func parseJson() {
 	}
 }
 
+func putRandNum(origin string) string {
+	rand.Seed(time.Now().UnixNano())
+	randomNumber := rand.Intn(10000)
+	randomNumberStr := fmt.Sprintf("%04d", randomNumber)
+	return origin + randomNumberStr
+}
 func convertActionlName(tmpActionName string) string {
 	//일부 특수 기호들 제거
 	tmpActionName = strings.ReplaceAll(tmpActionName, ":", "-")
@@ -70,16 +93,17 @@ func convertActionlName(tmpActionName string) string {
 	//tmpActionName = strings.ReplaceAll(tmpActionName, "\n", " ")
 
 	//카멜타입으로 변경
-	tmpActionName = toCamelCase(tmpActionName)
+	tmpActionName = toCamelCase(tmpActionName, " ")
 
 	return tmpActionName
 }
 
-func toCamelCase(str string) string {
-	words := strings.Fields(str) // 문자열을 공백을 기준으로 단어로 분할
+func toCamelCase(str, delim string) string {
+	words := strings.Split(str, delim)
 	var result strings.Builder
+	caser := cases.Title(language.English)
 	for _, word := range words {
-		result.WriteString(strings.Title(word)) // 각 단어의 첫 글자를 대문자로 만듦
+		result.WriteString(caser.String(word)) // 각 단어의 첫 글자를 대문자로 만듦
 	}
 	return result.String()
 }
