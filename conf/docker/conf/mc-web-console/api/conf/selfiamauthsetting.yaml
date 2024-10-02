@@ -1,0 +1,10 @@
+setting:
+  encryptionkey: selfiam-secret-key # CHANGE ME
+
+user:
+  id: selfiamuser
+  password: selfiamuserPassword # CHANGE ME
+  role: platformAdmin
+  firstName: selfiam
+  lastName: user
+  email: selfiam@user.changeme

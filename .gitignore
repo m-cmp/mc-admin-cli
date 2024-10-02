@@ -60,3 +60,5 @@ conf/docker/data/*
 conf/docker/container-volume
 bin/swagger.json
 
+
+conf/swagger.json

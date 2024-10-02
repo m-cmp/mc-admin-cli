@@ -1,0 +1,30 @@
+menus:
+  - id: depth1
+    parentmenuid: ""
+    displayname: depth1
+    isaction: "false"
+    priority: "0"
+
+  - id: depth2
+    parentmenuid: depth1
+    displayname: depth2
+    isaction: "false"
+    priority: "0"
+
+  - id: depth3
+    parentmenuid: depth2
+    displayname: depth3
+    isaction: "false"
+    priority: "0"
+
+  - id: menu1
+    parentmenuid: depth3
+    displayname: menu1
+    isaction: "true"
+    priority: "0"
+
+  - id: menu2
+    parentmenuid: depth3
+    displayname: menu2
+    isaction: "true"
+    priority: "1"
