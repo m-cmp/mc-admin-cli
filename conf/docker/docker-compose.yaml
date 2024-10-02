@@ -6,6 +6,7 @@ networks:
   mc-application-manager-network:
   mc-workflow-manager-network:
   mc-data-manager-network:
+  mc-web-console-network:
 
 services:
   mc-infra-connector:
@@ -15,6 +16,7 @@ services:
     platform: linux/amd64
     networks:
       - mc-infra-connector-network
+      - mc-web-console-network
     ports:
       - target: 1024
         published: 1024
@@ -41,6 +43,7 @@ services:
     networks:
       - mc-infra-connector-network
       - mc-infra-manager-network
+      - mc-web-console-network
     ports:
       - target: 1323
         published: 1323
@@ -138,6 +141,7 @@ services:
     networks:
       - mc-iam-manager-network
       - mc-infra-manager-network
+      - mc-web-console-network
     ports:
       - target: 5000
         published: 5000
@@ -221,6 +225,7 @@ services:
     image: sehyeong0108/mc-cost-optimizer:be-v0.2.0
     networks:
       - mc-cost-optimizer-network
+      - mc-web-console-network
     ports:
       - target: 9090
         published: 9090
@@ -356,6 +361,7 @@ services:
     container_name: mc-application-manager
     networks:
       - mc-application-manager-network
+      - mc-web-console-network
     ports:
       - target: 18084
         published: 18084
@@ -393,6 +399,7 @@ services:
     platform: linux/amd64
     networks:
       - mc-workflow-manager-network
+      - mc-web-console-network
     ports:
       - target: 18083
         published: 18083
@@ -435,3 +442,67 @@ services:
       - ./conf/mc-data-manager/.env
     networks:
       - mc-data-manager-network
+      - mc-web-console-network
+
+
+  mc-web-console-db:
+    image: postgres:14-alpine
+    container_name: mc-web-console-db
+    volumes:
+      - ./container-volume/mc-web-console/postgres/postgres_data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: ${CONSOLE_POSTGRES_DB}
+      POSTGRES_USER: ${CONSOLE_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${CONSOLE_POSTGRES_PASSWORD}
+    networks:
+      - mc-web-console-network
+    pull_policy: missing
+    platform: linux/amd64
+    ports:
+      - target: 5432
+        published: 15432
+        protocol: tcp
+    
+  mc-web-console-api:
+    image: sehyeong0108/mc-web-console-api:20241002
+    container_name: mc-web-console-api
+    depends_on:
+      - mc-web-console-db
+    ports:
+      - "3000:3000"
+    networks:
+      - mc-web-console-network
+    environment:
+      GO_ENV: development
+      GODEBUG: netdns=go
+      API_ADDR: "0.0.0.0"
+      API_PORT: "3000"
+      DATABASE_URL: postgres://${CONSOLE_POSTGRES_USER}:${CONSOLE_POSTGRES_PASSWORD}@mc-web-console-db:5432/${CONSOLE_POSTGRES_DB}
+      MCIAM_USE: true
+      MCIAM_TICKET_USE: false
+    volumes:
+      - ./conf/mc-web-console/api/conf/:/conf/
+
+  mc-web-console-front:
+    image: sehyeong0108/mc-web-console-front:20241002
+    container_name: mc-web-console-front
+    depends_on:
+      - mc-web-console-api
+    networks:
+      - mc-web-console-network
+    ports:
+      - "3001:3001"
+    environment:
+      API_ADDR: mc-web-console-api
+      API_PORT: 3000
+      FRONT_ADDR: 0.0.0.0
+      FRONT_PORT: 3001
+    
+
+
+
+
+
+
+
+
