@@ -4,10 +4,11 @@ networks:
   mc-iam-manager-network:
   mc-cost-optimizer-network:
   mc-application-manager-network:
+  mc-workflow-manager-network:
 
 services:
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.9.0
+    image: cloudbaristaorg/cb-spider:0.9.4
     pull_policy: missing
     container_name: mc-infra-connector
     platform: linux/amd64
@@ -32,7 +33,7 @@ services:
       # - ID_TRANSFORM_MODE=ON
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.9.4
+    image: cloudbaristaorg/cb-tumblebug:0.9.11
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
@@ -332,13 +333,6 @@ services:
     environment:
       - PROJECT=mcmp
     user: root
-    healthcheck: 
-      test: [ "CMD", "curl", "-f", "http://localhost:8080" ]
-      interval: 1m
-      timeout: 5s
-      retries: 3
-      start_period: 10s
-
 
   mc-application-manager-sonatype-nexus:
     image: sonatype/nexus3:latest
@@ -358,12 +352,6 @@ services:
     environment:
       - PROJECT=mcmp
     user: root
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8081" ]
-      interval: 1m
-      timeout: 5s
-      retries: 3
-      start_period: 10s
 
   mc-application-manager:
     image: cloudbaristaorg/mc-application-manager:edge
@@ -375,16 +363,46 @@ services:
         published: 18084
         protocol: tcp
     volumes:
-    - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
+      - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
     user: root
     environment:
       - DDL_AUTO=create-drop
       - DB_USER=application
       - DB_PASS=application!23
       - SQL_DATA_INIT=always
-    healthcheck:
-      test: ["CMD", "nc", "-vz", "localhost", "1324"]
-      interval: 1m
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+
+  mc-workflow-manager-jenkins:
+    image: jenkins/jenkins:jdk17
+    container_name: mc-workflow-manager-jenkins
+    platform: linux/amd64
+    networks:
+      - mc-workflow-manager-network
+    ports:
+      - target: 8080
+        published: 9880
+        protocol: tcp
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /usr/bin/docker:/usr/bin/docker
+      - ./container-volume/mc-workflow-manager/jenkins/:/var/jenkins_home/:rw
+    environment:
+      - PROJECT=mcmp
+    user: root
+
+  mc-workflow-manager:
+    image: cloudbaristaorg/mc-workflow-manager:edge
+    container_name: mc-workflow-manager
+    platform: linux/amd64
+    networks:
+      - mc-workflow-manager-network
+    ports:
+      - target: 18083
+        published: 18083
+        protocol: tcp
+    volumes:
+      - ./conf/mc-workflow-manager/document/:/document/
+    environment:
+      - DB_INIT_YN=create
+      - DB_ID=workflow
+      - DB_PW=workflow!23
+      - SQL_DATA_INIT=always
