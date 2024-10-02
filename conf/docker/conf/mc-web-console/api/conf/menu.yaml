@@ -1,0 +1,263 @@
+# restype:menu = title > category > menu > submenu
+# restype:screen
+
+menus:  
+    ########## step1 : title  ################
+  - id: settings
+    parentid: home
+    displayname: Settings
+    restype: menu
+    isaction: "false"
+    priority: 1
+
+  - id: operations
+    parentid: home
+    displayname: Operations
+    restype: menu
+    isaction: "false"
+    priority: 2  
+
+    ################## step2 : auth  ################
+  - id: login
+    parentid: none
+    displayname: Login
+    restype: screen
+    isaction: "true"
+    priority: 0
+
+    ################## step2 : quick Link  ################
+      
+
+    ############## step2 : category  : settings  ################    
+  - id: accountnaccess
+    parentid: settings
+    displayname: Account & Access
+    restype: menu
+    isaction: "false"
+    priority: 1
+
+  - id: environment
+    parentid: settings
+    displayname: Environment
+    restype: menu
+    isaction: "false"
+    priority: 2
+
+    ############## step2 : category  : operations  ################
+  - id: manage
+    parentid: operations
+    displayname: Manage
+    restype: menu
+    isaction: "false"
+    priority: 1
+
+  - id: analytics
+    parentid: operations
+    displayname: Analytics
+    restype: menu
+    isaction: "false"
+    priority: 2    
+
+    ################## step3 : menu : settings > accountnaccess  ################
+  - id: organizations
+    parentid: accountnaccess
+    displayname: Organizations
+    restype: menu
+    isaction: "false"
+    priority: 1
+
+    ################## step3 : menu : settings > environment  ################
+  - id: cloudsps
+    parentid: environment
+    displayname: Cloud SPs
+    restype: menu
+    isaction: "false"
+    priority: 1
+
+  - id: cloudresources
+    parentid: environment
+    displayname: Cloud Resources
+    restype: menu
+    isaction: "false"
+    priority: 2
+
+    ################## step3 : menu : operations > manage  ################
+  - id: workspaces
+    parentid: manage
+    displayname: Workspaces
+    restype: menu
+    isaction: "true"
+    priority: 1
+
+  - id: workloads
+    parentid: manage
+    displayname: Workloads
+    restype: menu
+    isaction: "true"
+    priority: 2
+   
+    ################## step3 : menu : operations > analytics ################
+  - id: monitorings
+    parentid: analytics
+    displayname: Monitorings
+    restype: menu
+    isaction: "false"
+    priority: 1
+
+  - id: eventsntraces
+    parentid: analytics
+    displayname: Events & Traces
+    restype: menu
+    isaction: "false"
+    priority: 2
+
+  - id: costanalysis
+    parentid: analytics
+    displayname: Cost Analysis
+    restype: menu
+    isaction: "true"
+    priority: 3
+
+
+    ###################### step4 : submenu : settings > accountaccess > organizations ################
+  - id: users
+    parentid: organizations
+    displayname: Users
+    restype: menu
+    isaction: "true"
+    priority: 1
+
+  - id: accesscontrols
+    parentid: organizations
+    displayname: Access Controls
+    restype: menu
+    isaction: "true"
+    priority: 2
+
+    ###################### step4 : submenu : settings > environment > cloudsps ################
+  - id: cloudoverview
+    parentid: cloudsps
+    displayname: Cloud Overview
+    restype: menu
+    isaction: "true"
+    priority: 1
+
+  - id: credentials
+    parentid: cloudsps
+    displayname: Credentials
+    restype: menu
+    isaction: "true"
+    priority: 2
+
+    ###################### step4 : submenu : settings > environment > cloudresources ################
+  - id: networks
+    parentid: cloudresources
+    displayname: Networks
+    restype: menu
+    isaction: "true"
+    priority: 1
+
+  - id: myimages
+    parentid: cloudresources
+    displayname: MyImages
+    restype: menu
+    isaction: "true"
+    priority: 2    
+
+
+    ###################### step4 : submenu : operations > manage > workspaces ################
+  - id: projects
+    parentid: workspaces
+    displayname: Projects
+    restype: menu
+    isaction: "true"
+    priority: 1
+
+  - id: members
+    parentid: workspaces
+    displayname: Members
+    restype: menu
+    isaction: "true"
+    priority: 2
+
+  - id: roles
+    parentid: workspaces
+    displayname: Roles
+    restype: menu
+    isaction: "true"
+    priority: 3
+
+    ###################### step4 : submenu : operations > manage > workloads ################
+  - id: mciswls
+    parentid: workloads
+    displayname: MCI WLs
+    restype: menu
+    isaction: "true"
+    priority: 1
+
+  - id: pmkwls
+    parentid: workloads
+    displayname: PMK WLs
+    restype: menu
+    isaction: "true"
+    priority: 2
+
+    ###################### step4 : submenu : operations > analytics > monitorings ################
+  - id: mcismonitoring
+    parentid: monitorings
+    displayname: MCIs Monitoring
+    restype: menu
+    isaction: "true"
+    priority: 1
+
+  - id: thirdpartymonitoring
+    parentid: monitorings
+    displayname: 3rd party Monitoring
+    restype: menu
+    isaction: "true"
+    priority: 2
+
+  - id: monitoringconfig
+    parentid: monitorings
+    displayname: Monitoring Config
+    restype: menu
+    isaction: "true"
+    priority: 3
+
+    ###################### step4 : submenu : operations > analytics > eventsntraces ################
+  - id: alarmshistory
+    parentid: eventsntraces
+    displayname: Alarms History
+    restype: menu
+    isaction: "true"
+    priority: 1
+
+  - id: thresholdconfig
+    parentid: eventsntraces
+    displayname: Threshold Config
+    restype: menu
+    isaction: "true"
+    priority: 2
+
+  - id: logmanage
+    parentid: eventsntraces
+    displayname: Log Manage
+    restype: menu
+    isaction: "true"
+    priority: 3
+
+  - id: logconfig
+    parentid: eventsntraces
+    displayname: Log Config
+    restype: menu
+    isaction: "true"
+    priority: 4
+
+  - id: eventtrace
+    parentid: eventsntraces
+    displayname: Event Trace
+    restype: menu
+    isaction: "true"
+    priority: 5
+
+    ###################### step4 : submenu : operations > analytics > costanalysis ################
