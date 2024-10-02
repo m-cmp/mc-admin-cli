@@ -6,6 +6,7 @@ networks:
   mc-application-manager-network:
   mc-workflow-manager-network:
   mc-data-manager-network:
+  mc-observability-network:
   mc-web-console-network:
 
 services:
@@ -259,7 +260,7 @@ services:
       - mc-cost-optimizer-network
     ports:
       - target: 8082
-        published: 8082
+        published: 18082
         protocol: tcp
     environment:
       spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
@@ -444,7 +445,6 @@ services:
       - mc-data-manager-network
       - mc-web-console-network
 
-
   mc-web-console-db:
     image: postgres:14-alpine
     container_name: mc-web-console-db
@@ -497,11 +497,174 @@ services:
       API_PORT: 3000
       FRONT_ADDR: 0.0.0.0
       FRONT_PORT: 3001
-    
 
+  mc-o11y-manager:
+    image: cloudbaristaorg/mc-observability:edge
+    container_name: mc-o11y-manager
+    ports:
+      - 18080:18080
+      - 18081:18081
+    networks:
+      - mc-observability-network
+      - mc-web-console-network
+    environment:
+      - TUMBLEBUG_URL=http://cb-tumblebug:1323
+      - TUMBLEBUG_ID=default
+      - TUMBLEBUG_PW=default
+      - INSIGHT_URL=http://mc-o11y-insight:9001
+    volumes:
+      - ./container-volume/mc-o11y/mc-o11y-manager/log:/var/log:ro
 
+  mc-o11y-maria:
+    image: mariadb:10.7.6
+    container_name: mc-o11y-maria
+    ports:
+      - 3308:3306
+    volumes:
+      - ./conf/mc-observability/mariadb/maria_init.sql:/docker-entrypoint-initdb.d/maria_init.sql
+      - ./container-volume/mc-o11y/maria/mysql/conf.d:/etc/mysql/conf.d:ro
+      - ./container-volume/mc-o11y/maria/mysql:/var/lib/mysql
+      - ./container-volume/mc-o11y/maria/log:/var/log/maria
+    environment:
+      - TZ="Asia/Seoul"
+      - ALLOW_EMPTY_PASSWORD=no
+      - MARIADB_ROOT_PASSWORD=qwe1212!Q
+      - MARIADB_USER=mc-agent
+      - MARIADB_DATABASE=mc-observability
+      - MARIADB_PASSWORD=mc-agent
+    networks:
+      - mc-observability-network
 
+  mc-o11y-influx:
+    image: influxdb:1.8
+    container_name: mc-o11y-influx
+    ports:
+      - 8086:8086
+      - 8082:8082
+    environment:
+      - INFLUXDB_USER=mc-agent
+      - INFLUXDB_PASSWORD=mc-agent
+      - INFLUXDB_DB="mc-observability"
+    volumes:
+      - ./conf/mc-observability/influxdb/influxdb_init:/docker-entrypoint-initdb.d
+      - ./container-volume/mc-o11y/influxdb/config:/etc/influxdb
+      - ./container-volume/mc-o11y/influxdb:/var/lib/influxdb
+    networks:
+      - mc-observability-network
 
+  mc-o11y-chronograf:
+    image: chronograf:1.9.4
+    container_name: mc-o11y-chronograf
+    ports:
+      - 8888:8888
+    volumes:
+      - ./container-volume/mc-o11y/chronograf/chronograf_data:/var/lib/chronograf
+    networks:
+      - mc-observability-network
+
+  mc-o11y-kapacitor:
+    image: kapacitor:1.7.5
+    container_name: mc-o11y-kapacitor
+    ports:
+      - 9092:9092
+    environment:
+      - KAPACITOR_INFLUXDB_0_URLS_0=http://mc-o11y-influx:8086
+    volumes:
+      - ./container-volume/mc-o11y/kapacitor/kapacitor_data:/var/lib/kapacitor
+    networks:
+      - mc-observability-network
+
+  mc-o11y-opensearch-node1:
+    image: opensearchproject/opensearch:1.3.19
+    container_name: mc-o11y-opensearch-node1
+    environment:
+      - cluster.name=opensearch-cluster
+      - node.name=opensearch-node1
+      - bootstrap.memory_lock=true
+      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
+      - "DISABLE_INSTALL_DEMO_CONFIG=true"
+      - "DISABLE_SECURITY_PLUGIN=true"
+      - "discovery.type=single-node"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ./container-volume/mc-o11y/opensearch/opensearch_data:/usr/share/opensearch/data
+    ports:
+      - 9200:9200
+      - 9600:9600
+    networks:
+      - mc-observability-network
+
+  mc-o11y-opensearch-dashboards:
+    image: opensearchproject/opensearch-dashboards:1.3.19
+    container_name: mc-o11y-opensearch-dashboards
+    ports:
+      - 5601:5601
+    environment:
+      - 'OPENSEARCH_HOSTS=["http://mc-o11y-opensearch-node1:9200"]'
+      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true"
+    networks:
+      - mc-observability-network
+
+  mc-o11y-insight:
+    image: sehyeong0108/mc-observability-insight:20241002
+    container_name: mc-o11y-insight
+    ports:
+      - 9001:9001
+    environment:
+      - TZ=Asia/Seoul
+    volumes:
+      - ./container-volume/mc-o11y/insight/log:/mc-insight/log
+    networks:
+      - mc-observability-network
+
+  mc-o11y-insight-scheduler:
+    image: sehyeong0108/mc-observability-scheduler:20241002
+    container_name: mc-o11y-insight-scheduler
+    ports:
+      - 9002:9002
+    environment:
+      - TZ=Asia/Seoul
+    networks:
+      - mc-observability-network
+    volumes:
+      - ./conf/mc-observability/scheduler/airflow-home:/usr/local/airflow
+      - /etc/localtime:/etc/localtime:ro
+    command: >
+      /bin/bash -c "
+        # Wait for MySQL
+        sleep 10
+
+        # Clean up pid
+        rm -f airflow-webserver.pid
+
+        # Set up metadata database
+        airflow db migrate
+
+        # Create default user
+        airflow users create --username admin --password admin --email admin@innogrid.com --firstname admin --lastname admin --role Admin
+
+        # Import variables & Make connections
+        # airflow variables import -a overwrite /usr/local/airflow/airflow_variables.json
+
+        airflow connections add --conn-type http --conn-host mc-o11y-insight --conn-schema http --conn-port 9001 api_base_url
+        airflow connections add --conn-type mysql --conn-host mc-o11y-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3308 mcmp_db
+
+        # Reload & Run dags
+        airflow dags reserialize
+        airflow dags unpause anomaly_detection
+
+        # Start airflow
+        airflow scheduler & airflow webserver -p 9002
+
+        # Keep the server on no matter what
+        sleep infinity
+            "
 
 
 
