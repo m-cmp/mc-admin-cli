@@ -1,0 +1,796 @@
+{
+	"info": {
+		"_postman_id": "4cd7a940-4770-42a7-9847-0748b6a908df",
+		"name": "[M-CMP] Workflow-manager",
+		"description": "# 🚀 Get started here\n\nThis template guides you through CRUD operations (GET, POST, PUT, DELETE), variables, and tests.\n\n## 🔖 **How to use this template**\n\n#### **Step 1: Send requests**\n\nRESTful APIs allow you to perform CRUD operations using the POST, GET, PUT, and DELETE HTTP methods.\n\nThis collection contains each of these [request](https://learning.postman.com/docs/sending-requests/requests/) types. Open each request and click \"Send\" to see what happens.\n\n#### **Step 2: View responses**\n\nObserve the response tab for status code (200 OK), response time, and size.\n\n#### **Step 3: Send new Body data**\n\nUpdate or add new data in \"Body\" in the POST request. Typically, Body data is also used in PUT request.\n\n```\n{\n    \"name\": \"Add your name in the body\"\n}\n\n ```\n\n#### **Step 4: Update the variable**\n\nVariables enable you to store and reuse values in Postman. We have created a [variable](https://learning.postman.com/docs/sending-requests/variables/) called `base_url` with the sample request [https://postman-api-learner.glitch.me](https://postman-api-learner.glitch.me). Replace it with your API endpoint to customize this collection.\n\n#### **Step 5: Add tests in the \"Scripts\" tab**\n\nAdding tests to your requests can help you confirm that your API is working as expected. You can write test scripts in JavaScript and view the output in the \"Test Results\" tab.\n\n<img src=\"https://content.pstmn.io/fa30ea0a-373d-4545-a668-e7b283cca343/aW1hZ2UucG5n\" alt=\"\" height=\"1530\" width=\"2162\">\n\n## 💪 Pro tips\n\n- Use folders to group related requests and organize the collection.\n    \n- Add more [scripts](https://learning.postman.com/docs/writing-scripts/intro-to-scripts/) to verify if the API works as expected and execute workflows.\n    \n\n## 💡Related templates\n\n[API testing basics](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9a37a28-055b-49cd-8c7e-97494a21eb54&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[API documentation](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=e9c28f47-1253-44af-a2f3-20dce4da1f18&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)  \n[Authorization methods](https://go.postman.co/redirect/workspace?type=personal&collectionTemplateId=31a9a6ed-4cdf-4ced-984c-d12c9aec1c27&sourceTemplateId=ddb19591-3097-41cf-82af-c84273e56719)",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "23366391"
+	},
+	"item": [
+		{
+			"name": "OSS",
+			"item": [
+				{
+					"name": "ossType",
+					"item": [
+						{
+							"name": "OSS Type 등록",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ossTypeName\": \"JENKINS\",\r\n  \"ossTypeDesc\": \"젠킨스\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/ossType",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"ossType"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "OSS Type 목록",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/ossType/list",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"ossType",
+										"list"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "OSS Type 수정",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ossTypeIdx\": 1,\r\n  \"ossTypeName\": \"JENKINS\",\r\n  \"ossTypeDesc\": \"JENKINS TEST\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/ossType/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"ossType",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "OSS Type 삭제",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/ossType/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"ossType",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "oss",
+					"item": [
+						{
+							"name": "OSS 목록",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/oss/list",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"oss",
+										"list"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "OSS 등록",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ossDesc\": \"젠킨스\",\r\n  \"ossName\": \"JENKINS\",\r\n  \"ossPassword\": \"cm9xa2Z0cHN4ajEyIyQ=\",\r\n  \"ossTypeIdx\": 1,\r\n  \"ossUrl\": \"http://10.10.30.22:9800\",\r\n  \"ossUsername\": \"admin\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/oss",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"oss"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "OSS 수정",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ossIdx\": 0,\r\n  \"ossName\": \"JENKINS\",\r\n  \"ossDesc\": \"TEST 젠킨스\",\r\n  \"ossPassword\": \"cm9xa2Z0cHN4ajEyIyQ=\",\r\n  \"ossTypeIdx\": 1,\r\n  \"ossUrl\": \"http://10.10.30.22:9800\",\r\n  \"ossUsername\": \"admin\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/oss/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"oss",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "OSS 삭제",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/oss/delete/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"oss",
+										"delete",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "OSS 명 중복 검사",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/oss/duplicate?ossName=test&ossUrl=http://localhost:8080&ossUsername=admin",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"oss",
+										"duplicate"
+									],
+									"query": [
+										{
+											"key": "ossName",
+											"value": "test"
+										},
+										{
+											"key": "ossUrl",
+											"value": "http://localhost:8080"
+										},
+										{
+											"key": "ossUsername",
+											"value": "admin"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "OSS 연결 확인",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"ossDesc\": \"젠킨스\",\r\n  \"ossName\": \"JENKINS\",\r\n  \"ossPassword\": \"cm9xa2Z0cHN4ajEyIyQ=\",\r\n  \"ossTypeIdx\": 1,\r\n  \"ossUrl\": \"http://10.10.30.22:9800\",\r\n  \"ossUsername\": \"admin\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/oss/connection-check",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"oss",
+										"connection-check"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "OSS Type 상세",
+					"request": {
+						"method": "GET",
+						"header": [],
+						"url": {
+							"raw": "{{base_url}}/ossType/1",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"ossType",
+								"1"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "WorkflowStage",
+			"item": [
+				{
+					"name": "WorkflowStageType",
+					"item": [
+						{
+							"name": "Workflow Stage Type 등록",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"workflowStageTypeName\": \"Test\",\r\n    \"workflowStageTypeDesc\": \"테스트\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/workflowStageType",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStageType"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow Stage Type 목록",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflowStageType/list",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStageType",
+										"list"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow Stage Type 수정",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"workflowStageTypeIdx\": 1,\r\n    \"workflowStageTypeName\": \"TEST\",\r\n    \"workflowStageTypeDesc\": \"TEST\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/workflowStageType/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStageType",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow Stage Type 삭제",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflowStageType/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStageType",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow Stage Type 상세",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflowStageType/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStageType",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "WorkflowStage",
+					"item": [
+						{
+							"name": "Workflow Stage 등록",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n  \"workflowStageTypeIdx\": 1,\r\n  \"workflowStageOrder\": 1,\r\n  \"workflowStageName\": \"test_stage\",\r\n  \"workflowStageDesc\": \"테스트\",\r\n  \"workflowStageContent\": \"스크립트\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/workflowStage",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStage"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow Stage 목록",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflowStage/list",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStage",
+										"list"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow Stage 수정",
+							"request": {
+								"method": "PUT",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"workflowStageIdx\": 1,\r\n    \"workflowStageTypeIdx\": 1,\r\n    \"workflowStageOrder\": 1,\r\n    \"workflowStageName\": \"test stage\",\r\n    \"workflowStageDesc\": \"테스트\",\r\n    \"workflowStageContent\": \"script\"\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/workflowStage/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStage",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow Stage 삭제",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflowStage/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStage",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow Stage 상세",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflowStage/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStage",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow Stage 중복체크",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflowStage/duplicate?workflowStageTypeName=Test&workflowStageName=test stage",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStage",
+										"duplicate"
+									],
+									"query": [
+										{
+											"key": "workflowStageTypeName",
+											"value": "Test"
+										},
+										{
+											"key": "workflowStageName",
+											"value": "test stage"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow Stage Default Script 조회",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflowStage/default/script/Test",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflowStage",
+										"default",
+										"script",
+										"Test"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				}
+			]
+		},
+		{
+			"name": "Workflow",
+			"item": [
+				{
+					"name": "Workflow",
+					"item": [
+						{
+							"name": "Workflow 목록",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflow/list",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflow",
+										"list"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow 등록",
+							"request": {
+								"method": "POST",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"workflowInfo\": {\r\n        \"workflowName\": \"test-ysh-1\",\r\n        \"workflowPurpose\": \"test\",\r\n        \"ossIdx\": 1,\r\n        \"script\": \"tttttt\"\r\n    },\r\n    \"workflowParams\": [\r\n        {\r\n            \"workflowIdx\": 1,\r\n            \"paramKey\": \"key\",\r\n            \"paramValue\": \"value\"\r\n        },\r\n        {\r\n            \"workflowIdx\": 1,\r\n            \"paramKey\": \"key\",\r\n            \"paramValue\": \"value\"\r\n        }\r\n    ],\r\n    \"workflowStageMappings\": [\r\n        {\r\n            \"workflowIdx\": 1,\r\n            \"stageOrder\": 1,\r\n            \"workflowStageTypeIdx\": 1,\r\n            \"stageContent\": \"test\"\r\n        },\r\n        {\r\n            \"workflowIdx\": 1,\r\n            \"stageOrder\": 2,\r\n            \"workflowStageTypeIdx\": 1,\r\n            \"stageContent\": \"test\"\r\n        }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/workflow",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflow"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow 수정",
+							"request": {
+								"method": "PATCH",
+								"header": [],
+								"body": {
+									"mode": "raw",
+									"raw": "{\r\n    \"workflowInfo\": {\r\n        \"workflowIdx\": 1,\r\n        \"workflowName\": \"test-ysh-1\",\r\n        \"workflowPurpose\": \"test123\",\r\n        \"ossIdx\": 1,\r\n        \"script\": \"ttttttdasdfasdfasdf\"\r\n    },\r\n    \"workflowParams\": [\r\n        {\r\n            \"workflowIdx\": 1,\r\n            \"paramKey\": \"key12\",\r\n            \"paramValue\": \"value12\"\r\n        },\r\n        {\r\n            \"workflowIdx\": 1,\r\n            \"paramKey\": \"key34\",\r\n            \"paramValue\": \"value34\"\r\n        }\r\n    ],\r\n    \"workflowStageMappings\": [\r\n        {\r\n            \"workflowIdx\": 1,\r\n            \"stageOrder\": 1,\r\n            \"workflowStageTypeIdx\": 1,\r\n            \"stageContent\": \"test12\"\r\n        },\r\n        {\r\n            \"workflowIdx\": 1,\r\n            \"stageOrder\": 2,\r\n            \"workflowStageTypeIdx\": 1,\r\n            \"stageContent\": \"test34\"\r\n        }\r\n    ]\r\n}",
+									"options": {
+										"raw": {
+											"language": "json"
+										}
+									}
+								},
+								"url": {
+									"raw": "{{base_url}}/workflow/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflow",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow 삭제",
+							"request": {
+								"method": "DELETE",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflow/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflow",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow 상세",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflow/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflow",
+										"1"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow 중복 확인",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflow/name/duplicate?workflowName=test-ysh-1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflow",
+										"name",
+										"duplicate"
+									],
+									"query": [
+										{
+											"key": "workflowName",
+											"value": "test-ysh-1"
+										}
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow Type 목록",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflow/workflowStageList",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflow",
+										"workflowStageList"
+									]
+								}
+							},
+							"response": []
+						},
+						{
+							"name": "Workflow 템플릿",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflow/template/test",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflow",
+										"template",
+										"test"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Workflow History",
+					"item": [
+						{
+							"name": "Workflow History 목록",
+							"request": {
+								"method": "GET",
+								"header": [],
+								"url": {
+									"raw": "{{base_url}}/workflow/history/1",
+									"host": [
+										"{{base_url}}"
+									],
+									"path": [
+										"workflow",
+										"history",
+										"1"
+									]
+								}
+							},
+							"response": []
+						}
+					]
+				},
+				{
+					"name": "Workflow Param",
+					"item": []
+				}
+			]
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "id",
+			"value": "1"
+		},
+		{
+			"key": "base_url",
+			"value": "https://postman-rest-api-learner.glitch.me/"
+		}
+	]
+}
