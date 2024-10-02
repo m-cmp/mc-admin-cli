@@ -1,3 +1,6 @@
+# mc-admin-cli/conf/api.yaml
+# 우선 api.yaml 을 내장합니다. 정식 릴리즈 이후 github 기반 링크 예정
+
 services:
   mc-infra-connector:
     version: 0.9.4
@@ -2443,9 +2446,12 @@ serviceActions:
       method: post
       resourcePath: /migration/windows/ncp
       description: "Migrate data stored in a Windows-based system to NCP Object Storage."
+<<<<<<< HEAD
 
 
 
 
 
 
+=======
+>>>>>>> main
