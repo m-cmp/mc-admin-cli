@@ -95,6 +95,13 @@ menus:
     restype: menu
     isaction: "true"
     priority: 2
+
+  - id: plugins
+    parentid: manage
+    displayname: Plugins
+    restype: menu
+    isaction: "false"
+    priority: 3
    
     ################## step3 : menu : operations > analytics ################
   - id: monitorings
@@ -261,3 +268,32 @@ menus:
     priority: 5
 
     ###################### step4 : submenu : operations > analytics > costanalysis ################
+
+    ###################### step4 : submenu : operations > manage > plugins ################
+  - id: costoptimizer
+    parentid: plugins
+    displayname: CostOptimizer
+    restype: menu
+    isaction: "true"
+    priority: 1
+
+  - id: workflowmanager
+    parentid: plugins
+    displayname: WorkflowManager
+    restype: menu
+    isaction: "true"
+    priority: 2
+
+  - id: softwaremanager
+    parentid: plugins
+    displayname: SoftwareManager
+    restype: menu
+    isaction: "true"
+    priority: 3
+
+  - id: datamanager
+    parentid: plugins
+    displayname: DataManager
+    restype: menu
+    isaction: "true"
+    priority: 4
