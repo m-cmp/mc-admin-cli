@@ -3963,4 +3963,3 @@ INSERT INTO cost.unused_process_mart (create_dt,resource_id,collect_dt,metric_ty
 
 INSERT INTO cost.workspace_meta (workspace_cd,workspace_nm,csp_type,csp_account) VALUES ('testWs','테스트워크스페이스','AWS','111111111111');
 INSERT INTO cost.workspace_meta (workspace_cd,workspace_nm,csp_type,csp_account) VALUES ('testWs2','테스트워크스페이스2','AWS','111111111111');
-

@@ -1,3 +1,9 @@
+x-default-health-check: &default-health-check
+  interval: ${HEALTH_CHECK_INTERVAL}
+  timeout: ${HEALTH_CHECK_TIMEOUT}
+  retries: ${HEALTH_CHECK_RETIES}
+  start_period: ${HEALTH_CHECK_START_PERIOD}
+
 networks:
   mc-infra-connector-network:
   mc-infra-manager-network:
@@ -10,8 +16,10 @@ networks:
   mc-web-console-network:
 
 services:
+##### MC-INFRA-CONNECTOR #########################################################################################################################
+
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.9.4
+    image: cloudbaristaorg/cb-spider:0.9.7
     pull_policy: missing
     container_name: mc-infra-connector
     platform: linux/amd64
@@ -23,6 +31,7 @@ services:
         published: 1024
         protocol: tcp
     volumes:
+      - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-infra-connector/:/root/go/src/github.com/cloud-barista/cb-spider/conf/:ro
       - ./container-volume/mc-infra-connector/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
       - ./container-volume/mc-infra-connector/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
@@ -35,9 +44,14 @@ services:
       - SPIDER_LOG_LEVEL=error
       - SPIDER_HISCALL_LOG_LEVEL=error
       # - ID_TRANSFORM_MODE=ON
+    healthcheck: # for CB-Spider
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:1024/spider/readyz" ]
+      <<: *default-health-check
+
+##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.9.11
+    image: cloudbaristaorg/cb-tumblebug:0.9.18
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
@@ -53,6 +67,7 @@ services:
       - mc-infra-manager-etcd
       - mc-infra-connector
     volumes:
+      - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-infra-manager/:/app/conf/:ro
       - ./container-volume/mc-infra-manager/meta_db/:/app/meta_db/
       - ./container-volume/mc-infra-manager/log/:/app/log/
@@ -84,6 +99,9 @@ services:
       # - TB_LOGLEVEL=debug
       # - TB_LOGWRITER=both
       # - TB_NODE_ENV=development
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:1323/tumblebug/readyz" ]
+      <<: *default-health-check
 
   mc-infra-manager-etcd:
     image: gcr.io/etcd-development/etcd:v3.5.14
@@ -129,14 +147,13 @@ services:
       - simple
     healthcheck:
       test: [ "CMD", "etcdctl", "endpoint", "health", "--endpoints=http://localhost:2379"]
-      interval: 1m
-      timeout: 5s
-      retries: 3
-      start_period: 10s
+      <<: *default-health-check
+
+##### MC-IAM-MANAGER #########################################################################################################################
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: sehyeong0108/mc-iam-manager:20240923
+    image: sehyeong0108/mc-iam-manager:20241015
     pull_policy: missing
     platform: linux/amd64
     networks:
@@ -151,14 +168,16 @@ services:
       - mc-iam-manager-db
       - mc-iam-manager-kc
     environment:
-      GO_ENV: development # production | development
-      GODEBUG: netdns=go
-      DEV_DATABASE_URL: postgres://${IAM_POSTGRES_USER}:${IAM_POSTGRES_PASSWORD}@mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
       DATABASE_URL: postgres://${IAM_POSTGRES_USER}:${IAM_POSTGRES_PASSWORD}@mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
       PORT: 5000
     env_file:
       - ./conf/mc-iam-manager/.env
-
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:5000/readyz"]
+      <<: *default-health-check
+    
   mc-iam-manager-db:
     container_name: mc-iam-manager-db
     image: postgres:14-alpine
@@ -176,6 +195,9 @@ services:
       POSTGRES_DB: ${IAM_POSTGRES_DB}
       POSTGRES_USER: ${IAM_POSTGRES_USER}
       POSTGRES_PASSWORD: ${IAM_POSTGRES_PASSWORD}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      <<: *default-health-check
 
   mc-iam-manager-kc:
     container_name: mc-iam-manager-kc
@@ -195,6 +217,7 @@ services:
       KC_DB_PASSWORD: ${IAM_POSTGRES_PASSWORD}
       KC_HOSTNAME_PORT: 8080
     volumes:
+      - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-iam-manager/realm-import.json:/opt/keycloak/data/import/realm-import.json
       - ./container-volume/mc-iam-manager/keycloak/data/:/opt/keycloak/data/
     env_file:
@@ -208,22 +231,35 @@ services:
       - --features=token-exchange  
       - --https-key-store-file=/opt/keycloak/conf/server.keystore
       - --https-key-store-password=password123
+    healthcheck:
+      test: ["CMD", "/app/tool/mcc", "rest", "get","http://localhost:8080"]
+      <<: *default-health-check
+
+##### MC-COST-OPTIMIZER #########################################################################################################################
 
   mc-cost-optimizer-fe:
     restart: on-failure
     container_name: mc-cost-optimizer-fe
-    image: sehyeong0108/mc-cost-optimizer:fe-v0.2.0
+    image: sehyeong0108/mc-cost-optimizer:fe-20241015
     networks:
       - mc-cost-optimizer-network
+      - mc-web-console-network
     ports:
       - target: 80
         published: 7780
         protocol: tcp
-
+    depends_on:
+      - mc-cost-optimizer-be
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:80" ]
+      <<: *default-health-check
+    
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: sehyeong0108/mc-cost-optimizer:be-v0.2.0
+    image: sehyeong0108/mc-cost-optimizer:be-20241015
     networks:
       - mc-cost-optimizer-network
       - mc-web-console-network
@@ -231,69 +267,109 @@ services:
       - target: 9090
         published: 9090
         protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
     environment:
       spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
       spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get",  "http://localhost:9090/readyz" ]
+      <<: *default-health-check
   
   mc-cost-optimizer-cost-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
-    image: sehyeong0108/mc-cost-optimizer:cost-collector-v0.2.0
+    image: sehyeong0108/mc-cost-optimizer:cost-collector-20241015
     networks:
       - mc-cost-optimizer-network
     ports:
       - target: 8081
         published: 8081
         protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
     environment:
       spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
       spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
-      unusedBatchCronSchedule: ${CO_COST_COLLECT_CRON_SCHEDULE}
+      unusedBatchCronSchedule: ${CO_COST_COLLECT_UNUSED_CRON_SCHEDULE}
+      curBatchCronSchedule: ${CO_COST_COLLECT_CUR_CRON_SCHEDULE}
+      aws.data.export.name: ${CO_AWS_CUR_EXPORT_NAME}
+      aws.data.export.path.prefix: ${CO_AWS_CUR_EXPORT_PATH_PREFIX}
+      AWS_ACCESS_KEY_ID: ${CO_AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${CO_AWS_SECRET_ACCESS_KEY}
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8081/readyz" ]
+      <<: *default-health-check
   
   mc-cost-optimizer-cost-processor:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
-    image: sehyeong0108/mc-cost-optimizer:cost-processor-v0.2.0
+    image: sehyeong0108/mc-cost-optimizer:cost-processor-20241015
     networks:
       - mc-cost-optimizer-network
     ports:
       - target: 8082
         published: 18082
         protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
     environment:
       spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
       spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
-      unusedProcessCronSchedule: ${CO_COST_PROCESS_CRON_SCHEDULE}
+      unusedProcessCronSchedule: ${CO_COST_PROCESS_UNUSED_CRON_SCHEDULE}
+      abnormalProcessCronSchedule: ${CO_COST_PROCESS_ABNORMAL_CRON_SCHEDULE}
       cost.selector.url: ${CO_COST_SELECTOR_URL}
+      opti.alarm.url: ${CO_ALARM_URL}
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8082/readyz" ]
+      <<: *default-health-check
   
   mc-cost-optimizer-cost-selector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
-    image: sehyeong0108/mc-cost-optimizer:cost-selector-v0.2.0
+    image: sehyeong0108/mc-cost-optimizer:cost-selector-20241015
     networks:
       - mc-cost-optimizer-network
     ports:
       - target: 8083
         published: 8083
         protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
     environment:
       spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
       spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
+      opti.alarm.url: ${CO_ALARM_URL}
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8083/readyz" ]
+      <<: *default-health-check
   
   mc-cost-optimizer-alarm-service:
     restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
-    image: sehyeong0108/mc-cost-optimizer:alarm-service-v0.2.0
+    image: sehyeong0108/mc-cost-optimizer:alarm-service-20241015
     networks:
       - mc-cost-optimizer-network
     ports:
       - target: 9000
         published: 9000
         protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
     environment:
       spring.datasource.hikari.slack.jdbc-url: ${CO_SLACK_DB_URL}
       spring.datasource.hikari.slack.username: ${CO_MYSQL_USER}
@@ -304,6 +380,33 @@ services:
       spring.datasource.hikari.history.jdbc-url: ${CO_COST_DB_URL}
       spring.datasource.hikari.history.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.history.password: ${CO_MYSQL_PASSWORD}
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9000/readyz" ]
+      <<: *default-health-check
+
+  mc-cost-optimizer-asset-collector:
+    restart: on-failure
+    container_name: mc-cost-optimizer-asset-collector
+    image: sehyeong0108/mc-cost-optimizer:asset-collector-20241015
+    networks:
+      - mc-cost-optimizer-network
+    ports:
+      - target: 8091
+        published: 8091
+        protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    environment:
+      spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
+      asset.collect.url: ${CO_ASSET_MONITORING_SERVER}
+      assetCollectBatchCronSchedule: ${CO_ASSET_COLLECT_BATCH_CRON_SCHEDULE}
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8091/readyz" ]
+      <<: *default-health-check
 
   mc-cost-optimizer-db:
     image: mariadb:latest
@@ -319,6 +422,12 @@ services:
       - ./container-volume/mc-cost-optimizer/mysql/:/var/lib/mysql/
     networks:
       - mc-cost-optimizer-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      <<: *default-health-check
+
+
+##### MC-APPLICATION-MANAGER #########################################################################################################################
 
   mc-application-manager-jenkins:
     image: jenkins/jenkins:jdk17
@@ -337,6 +446,9 @@ services:
     environment:
       - PROJECT=mcmp
     user: root
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      <<: *default-health-check
 
   mc-application-manager-sonatype-nexus:
     image: sonatype/nexus3:latest
@@ -349,13 +461,16 @@ services:
         published: 8881
         protocol: tcp
       - target: 5000
-        published: 5005
+        published: 5500
         protocol: tcp
     volumes:
       - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
     environment:
       - PROJECT=mcmp
     user: root
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8081"]
+      <<: *default-health-check
 
   mc-application-manager:
     image: cloudbaristaorg/mc-application-manager:edge
@@ -368,6 +483,7 @@ services:
         published: 18084
         protocol: tcp
     volumes:
+      - ./tool/mcc:/app/tool/mcc
       - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
     user: root
     environment:
@@ -375,6 +491,12 @@ services:
       - DB_USER=application
       - DB_PASS=application!23
       - SQL_DATA_INIT=always
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18084/readyz" ]
+      <<: *default-health-check
+
+
+##### MC-WORKFLOW-MANAGER #########################################################################################################################
 
   mc-workflow-manager-jenkins:
     image: jenkins/jenkins:jdk17
@@ -393,6 +515,10 @@ services:
     environment:
       - PROJECT=mcmp
     user: root
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      <<: *default-health-check
+
 
   mc-workflow-manager:
     image: cloudbaristaorg/mc-workflow-manager:edge
@@ -406,18 +532,26 @@ services:
         published: 18083
         protocol: tcp
     volumes:
+      - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-workflow-manager/document/:/document/
     environment:
       - DB_INIT_YN=create
       - DB_ID=workflow
       - DB_PW=workflow!23
       - SQL_DATA_INIT=always
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18083/readyz" ]
+      <<: *default-health-check
+
+
+##### MC-DATA-MANAGER #########################################################################################################################
 
   mc-data-manager-init-volumes:
     image: busybox:stable
     container_name: mc-data-manager-init-volumes
     command: ["sh", "-c", "chown -R ${UID:-0}:${GID:-0} /app/log"]
     volumes:
+      - ./tool/mcc:/app/tool/mcc
       - ./container-volume/mc-data-manager/log:/app/log/
     user: root
     env_file:
@@ -427,16 +561,19 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: sehyeong0108/mc-data-manager:20240923
+    image: cloudbaristaorg/mc-data-manager:edge
     container_name: mc-data-manager
     depends_on:
       - mc-data-manager-init-volumes
     tty: true
     ports:
-      - "3300:3300"
+      - target: 3300
+        published: 3300
+        protocol: tcp
     restart: on-failure
     user: root
     volumes:
+      - ./tool/mcc:/app/tool/mcc
       - ./container-volume/mc-data-manager/log:/app/log/
       - /etc/localtime:/etc/localtime:ro
     env_file:
@@ -444,6 +581,12 @@ services:
     networks:
       - mc-data-manager-network
       - mc-web-console-network
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:3300/readyz" ]
+      <<: *default-health-check
+
+
+##### MC-WEB-CONSOLE #########################################################################################################################
 
   mc-web-console-db:
     image: postgres:14-alpine
@@ -462,14 +605,19 @@ services:
       - target: 5432
         published: 15432
         protocol: tcp
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      <<: *default-health-check
     
   mc-web-console-api:
-    image: sehyeong0108/mc-web-console-api:20241002
+    image: sehyeong0108/mc-web-console-api:20241015
     container_name: mc-web-console-api
     depends_on:
       - mc-web-console-db
     ports:
-      - "3000:3000"
+      - target: 3000
+        published: 3000
+        protocol: tcp
     networks:
       - mc-web-console-network
     environment:
@@ -481,50 +629,79 @@ services:
       MCIAM_USE: true
       MCIAM_TICKET_USE: false
     volumes:
+      - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-web-console/api/conf/:/conf/
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:3000/readyz" ]
+      <<: *default-health-check
 
   mc-web-console-front:
-    image: sehyeong0108/mc-web-console-front:20241002
+    image: sehyeong0108/mc-web-console-front:20241015
     container_name: mc-web-console-front
     depends_on:
       - mc-web-console-api
     networks:
       - mc-web-console-network
     ports:
-      - "3001:3001"
+      - target: 3001
+        published: 3001
+        protocol: tcp
     environment:
       API_ADDR: mc-web-console-api
       API_PORT: 3000
       FRONT_ADDR: 0.0.0.0
       FRONT_PORT: 3001
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:3001" ]
+      <<: *default-health-check
 
-  mc-o11y-manager:
+
+##### MC-OBSERVABILITY #########################################################################################################################
+
+  mc-observability-manager:
     image: cloudbaristaorg/mc-observability:edge
-    container_name: mc-o11y-manager
+    container_name: mc-observability-manager
     ports:
-      - 18080:18080
-      - 18081:18081
+      - target: 18080
+        published: 18080
+        protocol: tcp
+      - target: 18081
+        published: 18081
+        protocol: tcp
     networks:
       - mc-observability-network
       - mc-web-console-network
     environment:
-      - TUMBLEBUG_URL=http://cb-tumblebug:1323
+      - TUMBLEBUG_URL=http://mc-infra-manager:1323
       - TUMBLEBUG_ID=default
       - TUMBLEBUG_PW=default
-      - INSIGHT_URL=http://mc-o11y-insight:9001
+      - SPIDER_URL=http://mc-infra-connector:1024
+      - DATABASE_HOST=mc-observability-maria
+      - INSIGHT_URL=http://mc-observability-insight:9001
+    env_file:
+      - ./conf/mc-observability/manager/.env
     volumes:
-      - ./container-volume/mc-o11y/mc-o11y-manager/log:/var/log:ro
+      - ./tool/mcc:/app/tool/mcc
+      - /var/log/syslog:/var/log/syslog:ro
+      - ./container-volume/mc-observability/mc-observability-manager/manager-conf:/etc/mc-observability-agent:rw
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18080/readyz" ]
+      <<: *default-health-check
 
-  mc-o11y-maria:
+  mc-observability-maria:
     image: mariadb:10.7.6
-    container_name: mc-o11y-maria
+    container_name: mc-observability-maria
     ports:
-      - 3308:3306
+      - target: 3306
+        published: 3308
+        protocol: tcp 
     volumes:
       - ./conf/mc-observability/mariadb/maria_init.sql:/docker-entrypoint-initdb.d/maria_init.sql
-      - ./container-volume/mc-o11y/maria/mysql/conf.d:/etc/mysql/conf.d:ro
-      - ./container-volume/mc-o11y/maria/mysql:/var/lib/mysql
-      - ./container-volume/mc-o11y/maria/log:/var/log/maria
+      - ./container-volume/mc-observability/maria/mysql/conf.d:/etc/mysql/conf.d:ro
+      - ./container-volume/mc-observability/maria/mysql:/var/lib/mysql
+      - ./container-volume/mc-observability/maria/log:/var/log/maria
     environment:
       - TZ="Asia/Seoul"
       - ALLOW_EMPTY_PASSWORD=no
@@ -534,49 +711,69 @@ services:
       - MARIADB_PASSWORD=mc-agent
     networks:
       - mc-observability-network
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized", "--user=mc-agent", "--password=mc-agent"]
+      <<: *default-health-check
 
-  mc-o11y-influx:
+  mc-observability-influx:
     image: influxdb:1.8
-    container_name: mc-o11y-influx
+    container_name: mc-observability-influx
     ports:
-      - 8086:8086
-      - 8082:8082
+      - target: 8086
+        published: 8086
+        protocol: tcp 
+      - target: 8082
+        published: 8082
+        protocol: tcp 
     environment:
       - INFLUXDB_USER=mc-agent
       - INFLUXDB_PASSWORD=mc-agent
       - INFLUXDB_DB="mc-observability"
     volumes:
       - ./conf/mc-observability/influxdb/influxdb_init:/docker-entrypoint-initdb.d
-      - ./container-volume/mc-o11y/influxdb/config:/etc/influxdb
-      - ./container-volume/mc-o11y/influxdb:/var/lib/influxdb
+      - ./container-volume/mc-observability/influxdb/config:/etc/influxdb
+      - ./container-volume/mc-observability/influxdb:/var/lib/influxdb
     networks:
       - mc-observability-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
+      <<: *default-health-check
 
-  mc-o11y-chronograf:
+  mc-observability-chronograf:
     image: chronograf:1.9.4
-    container_name: mc-o11y-chronograf
+    container_name: mc-observability-chronograf
     ports:
-      - 8888:8888
+      - target: 8888
+        published: 8888
+        protocol: tcp 
     volumes:
-      - ./container-volume/mc-o11y/chronograf/chronograf_data:/var/lib/chronograf
+      - ./container-volume/mc-observability/chronograf/chronograf_data:/var/lib/chronograf
     networks:
       - mc-observability-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8888/chronograf/v1/health"]
+      <<: *default-health-check
 
-  mc-o11y-kapacitor:
+  mc-observability-kapacitor:
     image: kapacitor:1.7.5
-    container_name: mc-o11y-kapacitor
+    container_name: mc-observability-kapacitor
     ports:
-      - 9092:9092
+      - target: 9092
+        published: 9092
+        protocol: tcp
     environment:
-      - KAPACITOR_INFLUXDB_0_URLS_0=http://mc-o11y-influx:8086
+      - KAPACITOR_INFLUXDB_0_URLS_0=http://mc-observability-influx:8086
     volumes:
-      - ./container-volume/mc-o11y/kapacitor/kapacitor_data:/var/lib/kapacitor
+      - ./container-volume/mc-observability/kapacitor/kapacitor_data:/var/lib/kapacitor
     networks:
       - mc-observability-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9092/health"]
+      <<: *default-health-check
 
-  mc-o11y-opensearch-node1:
+  mc-observability-opensearch-node1:
     image: opensearchproject/opensearch:1.3.19
-    container_name: mc-o11y-opensearch-node1
+    container_name: mc-observability-opensearch-node1
     environment:
       - cluster.name=opensearch-cluster
       - node.name=opensearch-node1
@@ -593,48 +790,69 @@ services:
         soft: 65536
         hard: 65536
     volumes:
-      - ./container-volume/mc-o11y/opensearch/opensearch_data:/usr/share/opensearch/data
+      - ./container-volume/mc-observability/opensearch/opensearch_data:/usr/share/opensearch/data
     ports:
-      - 9200:9200
-      - 9600:9600
+      - target: 9200
+        published: 9200
+        protocol: tcp
+      - target: 9600
+        published: 9600
+        protocol: tcp
     networks:
       - mc-observability-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
+      <<: *default-health-check
 
-  mc-o11y-opensearch-dashboards:
+  mc-observability-opensearch-dashboards:
     image: opensearchproject/opensearch-dashboards:1.3.19
-    container_name: mc-o11y-opensearch-dashboards
+    container_name: mc-observability-opensearch-dashboards
     ports:
-      - 5601:5601
+      - target: 5601
+        published: 5601
+        protocol: tcp
     environment:
-      - 'OPENSEARCH_HOSTS=["http://mc-o11y-opensearch-node1:9200"]'
+      - 'OPENSEARCH_HOSTS=["http://mc-observability-opensearch-node1:9200"]'
       - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true"
     networks:
       - mc-observability-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5601/api/status"]
+      <<: *default-health-check
 
-  mc-o11y-insight:
-    image: sehyeong0108/mc-observability-insight:20241002
-    container_name: mc-o11y-insight
+  mc-observability-insight:
+    image: sehyeong0108/mc-observability-insight:20241015
+    container_name: mc-observability-insight
     ports:
-      - 9001:9001
+      - target: 9001
+        published: 9001
+        protocol: tcp
     environment:
       - TZ=Asia/Seoul
     volumes:
-      - ./container-volume/mc-o11y/insight/log:/mc-insight/log
+      - ./tool/mcc:/app/tool/mcc
+      - ./container-volume/mc-observability/insight/log:/mc-insight/log
     networks:
       - mc-observability-network
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9001/readyz" ]
+      <<: *default-health-check
 
-  mc-o11y-insight-scheduler:
-    image: sehyeong0108/mc-observability-scheduler:20241002
-    container_name: mc-o11y-insight-scheduler
+  mc-observability-insight-scheduler:
+    image: sehyeong0108/mc-observability-scheduler:20241015
+    container_name: mc-observability-insight-scheduler
     ports:
-      - 9002:9002
+      - target: 9002
+        published: 9002
+        protocol: tcp
     environment:
       - TZ=Asia/Seoul
     networks:
       - mc-observability-network
     volumes:
-      - ./conf/mc-observability/scheduler/airflow-home:/usr/local/airflow
+      - ./tool/mcc:/app/tool/mcc
       - /etc/localtime:/etc/localtime:ro
+      - ./conf/mc-observability/scheduler/airflow-home:/usr/local/airflow
     command: >
       /bin/bash -c "
         # Wait for MySQL
@@ -647,17 +865,21 @@ services:
         airflow db migrate
 
         # Create default user
-        airflow users create --username admin --password admin --email admin@innogrid.com --firstname admin --lastname admin --role Admin
+        airflow users create --username admin --password admin --email admin@test.com --firstname admin --lastname admin --role Admin
 
         # Import variables & Make connections
         # airflow variables import -a overwrite /usr/local/airflow/airflow_variables.json
+        airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-observability-manager:18080/api/o11y
 
-        airflow connections add --conn-type http --conn-host mc-o11y-insight --conn-schema http --conn-port 9001 api_base_url
-        airflow connections add --conn-type mysql --conn-host mc-o11y-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3308 mcmp_db
+        airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
+        airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3308 mcmp_db
+        airflow connections add --conn-type http --conn-host mc-observability-manager --conn-port 18080 o11y-manager
+        airflow connections add --conn-type influxdb --conn-host mc-observability-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
 
         # Reload & Run dags
         airflow dags reserialize
         airflow dags unpause anomaly_detection
+        airflow dags unpause down_sampling
 
         # Start airflow
         airflow scheduler & airflow webserver -p 9002
@@ -665,6 +887,9 @@ services:
         # Keep the server on no matter what
         sleep infinity
             "
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9002/readyz" ]
+      <<: *default-health-check
 
 
 
