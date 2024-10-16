@@ -44,7 +44,7 @@ var volFlag bool
 var imgFlag bool
 
 func init() {
-	dockerCmd.AddCommand(removeCmd)
+	infraCmd.AddCommand(removeCmd)
 
 	pf := removeCmd.PersistentFlags()
 	pf.StringVarP(&DockerFilePath, "file", "f", DefaultDockerComposeConfig, "User-defined configuration file")
