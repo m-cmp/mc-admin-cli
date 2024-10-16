@@ -29,7 +29,7 @@ var pullCmd = &cobra.Command{
 }
 
 func init() {
-	dockerCmd.AddCommand(pullCmd)
+	infraCmd.AddCommand(pullCmd)
 
 	pf := pullCmd.PersistentFlags()
 	pf.StringVarP(&DockerFilePath, "file", "f", DefaultDockerComposeConfig, "User-defined configuration file")
