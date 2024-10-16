@@ -262,6 +262,7 @@ services:
     image: sehyeong0108/mc-cost-optimizer:be-20241015
     networks:
       - mc-cost-optimizer-network
+      - mc-infra-manager-network
       - mc-web-console-network
     ports:
       - target: 9090
@@ -275,6 +276,9 @@ services:
       spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
       spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
+      tumblebug.url: http://mc-infra-manager:1323
+      tumblebug.username: default
+      tumblebug.password: default
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get",  "http://localhost:9090/readyz" ]
       <<: *default-health-check
@@ -412,18 +416,21 @@ services:
     image: mariadb:latest
     container_name: mc-cost-optimizer-db
     environment:
+      - ALLOW_EMPTY_PASSWORD=no
       - MYSQL_ROOT_PASSWORD=${CO_MYSQL_ROOT_PASSWORD}
       - MYSQL_USER=${CO_MYSQL_USER}
       - MYSQL_PASSWORD=${CO_MYSQL_PASSWORD}
     ports:
-      - "3307:3306"
+      - target: 3306
+        published: 3307
+        protocol: tcp 
     volumes:
       - ./conf/mc-cost-optimizer/init/:/docker-entrypoint-initdb.d/:ro
       - ./container-volume/mc-cost-optimizer/mysql/:/var/lib/mysql/
     networks:
       - mc-cost-optimizer-network
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       <<: *default-health-check
 
 
@@ -672,6 +679,7 @@ services:
         protocol: tcp
     networks:
       - mc-observability-network
+      - mc-infra-manager-network
       - mc-web-console-network
     environment:
       - TUMBLEBUG_URL=http://mc-infra-manager:1323
@@ -705,14 +713,14 @@ services:
     environment:
       - TZ="Asia/Seoul"
       - ALLOW_EMPTY_PASSWORD=no
-      - MARIADB_ROOT_PASSWORD=qwe1212!Q
-      - MARIADB_USER=mc-agent
-      - MARIADB_DATABASE=mc-observability
-      - MARIADB_PASSWORD=mc-agent
+      - MYSQL_ROOT_PASSWORD=qwe1212!Q
+      - MYSQL_USER=mc-agent
+      - MYSQL_DATABASE=mc-observability
+      - MYSQL_PASSWORD=mc-agent
     networks:
       - mc-observability-network
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized", "--user=mc-agent", "--password=mc-agent"]
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
       <<: *default-health-check
 
   mc-observability-influx:
@@ -764,9 +772,11 @@ services:
     environment:
       - KAPACITOR_INFLUXDB_0_URLS_0=http://mc-observability-influx:8086
     volumes:
-      - ./container-volume/mc-observability/kapacitor/kapacitor_data:/var/lib/kapacitor
+      - ./container-volume/mc-observability/kapacitor:/var/lib/kapacitor
     networks:
       - mc-observability-network
+    restart: unless-stopped
+    user: root
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:9092/health"]
       <<: *default-health-check
@@ -790,7 +800,7 @@ services:
         soft: 65536
         hard: 65536
     volumes:
-      - ./container-volume/mc-observability/opensearch/opensearch_data:/usr/share/opensearch/data
+      - ./container-volume/mc-observability/opensearch:/usr/share/opensearch/data
     ports:
       - target: 9200
         published: 9200

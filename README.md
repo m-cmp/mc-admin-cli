@@ -87,8 +87,8 @@ Use the -h option at the end of the sub-command requiring assistance, or executi
 
 ```
 Usage:
-  mcc docker [flags]
-  mcc docker [command]
+  mcc infra [flags]
+  mcc infra [command]
 
 Available Commands:
   info        Get information of M-CMP System
@@ -100,17 +100,17 @@ Available Commands:
 Flags:
   -h, --help   help for docker
 
-Use "mcc docker [command] --help" for more information about a command.
+Use "mcc infra [command] --help" for more information about a command.
 ```
 
-## docker subcommand examples
+## infra subcommand examples
 Simple usage examples for docker subcommand
 ```
- ./mcc docker pull [-f ../docker-compose-mode-files/docker-compose.yaml]   
- ./mcc docker run [-f ../docker-compose-mode-files/docker-compose.yaml]   
- ./mcc docker info   
- ./mcc docker stop [-f ../docker-compose-mode-files/docker-compose.yaml]   
- ./mcc docker remove [-f ../docker-compose-mode-files/docker-compose.yaml] -v -i   
+- ./mcc infra pull [-f ../conf/docker/docker-compose.yaml]
+- ./mcc infra run [-f ../conf/docker/docker-compose.yaml]
+- ./mcc infra info
+- ./mcc infra stop [-f ../conf/docker/docker-compose.yaml]
+- ./mcc infra remove [-f ../conf/docker/docker-compose.yaml] -v -i
 
 ```
 ## k8s subcommand
