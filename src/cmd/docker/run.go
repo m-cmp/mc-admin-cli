@@ -33,7 +33,7 @@ var runCmd = &cobra.Command{
 var detachFlag bool
 
 func init() {
-	dockerCmd.AddCommand(runCmd)
+	infraCmd.AddCommand(runCmd)
 
 	pf := runCmd.PersistentFlags()
 	pf.StringVarP(&DockerFilePath, "file", "f", DefaultDockerComposeConfig, "User-defined configuration file")
