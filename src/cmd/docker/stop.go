@@ -30,7 +30,7 @@ var stopCmd = &cobra.Command{
 }
 
 func init() {
-	dockerCmd.AddCommand(stopCmd)
+	infraCmd.AddCommand(stopCmd)
 
 	pf := stopCmd.PersistentFlags()
 	pf.StringVarP(&DockerFilePath, "file", "f", DefaultDockerComposeConfig, "User-defined configuration file")
