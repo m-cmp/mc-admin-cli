@@ -4,7 +4,7 @@ USE cost;
 
 -- cost.alarm_history definition
 
-CREATE TABLE `alarm_history` (
+CREATE TABLE IF NOT EXISTS `alarm_history` (
                                  `event_type` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                  `resource_id` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                  `resource_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE `alarm_history` (
 
 -- cost.asset_compute_metric definition
 
-CREATE TABLE `asset_compute_metric` (
+CREATE TABLE IF NOT EXISTS `asset_compute_metric` (
                                         `csp_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                         `csp_account` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
                                         `csp_instanceid` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -36,7 +36,7 @@ CREATE TABLE `asset_compute_metric` (
 
 -- cost.asset_rsopt_settings definition
 
-CREATE TABLE `asset_rsopt_settings` (
+CREATE TABLE IF NOT EXISTS `asset_rsopt_settings` (
                                         `csp_type` varchar(100) DEFAULT NULL,
                                         `metric_type` varchar(100) DEFAULT NULL,
                                         `regress_duration` int DEFAULT NULL,
@@ -46,7 +46,7 @@ CREATE TABLE `asset_rsopt_settings` (
 
 -- cost.cur_origin definition
 
-CREATE TABLE `cur_origin` (
+CREATE TABLE IF NOT EXISTS `cur_origin` (
                               `lineitem_usageaccountid` varchar(100) NOT NULL COMMENT 'AWS 서브계정 구분 ID',
                               `lineitem_productcode` varchar(100) NOT NULL COMMENT '서비스구분코드',
                               `lineitem_resourceid` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT '인스턴스 구분 코드',
@@ -76,7 +76,7 @@ CREATE TABLE `cur_origin` (
 
 -- cost.cur_process_info definition
 
-CREATE TABLE `cur_process_info` (
+CREATE TABLE IF NOT EXISTS `cur_process_info` (
                                     `csp` varchar(10) NOT NULL,
                                     `payer_account` varchar(100) NOT NULL,
                                     `collect_date` varchar(10) NOT NULL,
@@ -88,7 +88,7 @@ CREATE TABLE `cur_process_info` (
 
 -- cost.daily_abnormal_by_product definition
 
-CREATE TABLE `daily_abnormal_by_product` (
+CREATE TABLE IF NOT EXISTS `daily_abnormal_by_product` (
                                              `collect_dt` date NOT NULL,
                                              `product_cd` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                              `abnormal_rating` varchar(100) DEFAULT NULL,
@@ -103,7 +103,7 @@ CREATE TABLE `daily_abnormal_by_product` (
 
 -- cost.daily_summation_by_product definition
 
-CREATE TABLE `daily_summation_by_product` (
+CREATE TABLE IF NOT EXISTS `daily_summation_by_product` (
                                               `date` date NOT NULL,
                                               `product` varchar(100) NOT NULL,
                                               `total_cost` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
@@ -115,7 +115,7 @@ CREATE TABLE `daily_summation_by_product` (
 
 -- cost.inst_opti_rcmd_rst definition
 
-CREATE TABLE `inst_opti_rcmd_rst` (
+CREATE TABLE IF NOT EXISTS `inst_opti_rcmd_rst` (
                                       `create_dt` timestamp NOT NULL,
                                       `resource_id` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                       `csp_type` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -130,7 +130,7 @@ CREATE TABLE `inst_opti_rcmd_rst` (
 
 -- cost.monthly_summation definition
 
-CREATE TABLE `monthly_summation` (
+CREATE TABLE IF NOT EXISTS `monthly_summation` (
                                      `year_month` varchar(6) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                      `project_cd` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                      `csp` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -141,7 +141,7 @@ CREATE TABLE `monthly_summation` (
 
 -- cost.service_category definition
 
-CREATE TABLE `service_category` (
+CREATE TABLE IF NOT EXISTS `service_category` (
                                     `service_cd` varchar(100) NOT NULL COMMENT '서비스 코드',
                                     `service_nm` varchar(100) NOT NULL COMMENT '서비스 명',
                                     `service_type` varchar(100) NOT NULL COMMENT '서비스 타입',
@@ -150,7 +150,7 @@ CREATE TABLE `service_category` (
 
 -- cost.servicegroup_meta definition
 
-CREATE TABLE `servicegroup_meta` (
+CREATE TABLE IF NOT EXISTS `servicegroup_meta` (
                                      `csp_type` varchar(100) NOT NULL COMMENT 'CSP 종류',
                                      `csp_account` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT 'mcmpcostopti' COMMENT 'CSP 계정 ID',
                                      `csp_instanceid` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT 'common' COMMENT ' 인스턴스 구분코드',
@@ -171,7 +171,7 @@ CREATE TABLE `servicegroup_meta` (
 
 -- cost.tbl_table_billing_detail_202409 definition
 
-CREATE TABLE `tbl_table_billing_detail_202409` (
+CREATE TABLE IF NOT EXISTS `tbl_table_billing_detail_202409` (
                                                    `lineitem_usageaccountid` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
                                                    `lineitem_productcode` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
                                                    `lineitem_resourceid` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
@@ -199,7 +199,7 @@ CREATE TABLE `tbl_table_billing_detail_202409` (
 
 -- cost.temp_cmp_user_info definition
 
-CREATE TABLE `temp_cmp_user_info` (
+CREATE TABLE IF NOT EXISTS `temp_cmp_user_info` (
                                       `mcmp_user_id` varchar(100) DEFAULT NULL,
                                       `csp_type` varchar(10) DEFAULT NULL,
                                       `csp_account_id` varchar(100) DEFAULT NULL
@@ -207,14 +207,14 @@ CREATE TABLE `temp_cmp_user_info` (
 
 -- cost.temp_cmp_user_mail_receiver definition
 
-CREATE TABLE `temp_cmp_user_mail_receiver` (
+CREATE TABLE IF NOT EXISTS  `temp_cmp_user_mail_receiver` (
                                                `mcmp_user_id` varchar(100) DEFAULT NULL,
                                                `mcmp_mail_receiver` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 
 -- cost.temp_cmp_user_role_arn definition
 
-CREATE TABLE `temp_cmp_user_role_arn` (
+CREATE TABLE IF NOT EXISTS `temp_cmp_user_role_arn` (
                                           `mcmp_user_id` varchar(100) DEFAULT NULL,
                                           `csp` varchar(20) DEFAULT NULL,
                                           `bucket_nm` varchar(100) DEFAULT NULL,
@@ -223,7 +223,7 @@ CREATE TABLE `temp_cmp_user_role_arn` (
 
 -- cost.unused_batch_rst definition
 
-CREATE TABLE `unused_batch_rst` (
+CREATE TABLE IF NOT EXISTS `unused_batch_rst` (
                                     `create_dt` timestamp NOT NULL,
                                     `csp_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                     `csp_account` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -234,7 +234,7 @@ CREATE TABLE `unused_batch_rst` (
 
 -- cost.unused_collector definition
 
-CREATE TABLE `unused_collector` (
+CREATE TABLE IF NOT EXISTS `unused_collector` (
                                     `csp_resourceid` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                     `create_dt` timestamp NOT NULL,
                                     `instance_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
@@ -250,7 +250,7 @@ CREATE TABLE `unused_collector` (
 
 -- cost.unused_process_mart definition
 
-CREATE TABLE `unused_process_mart` (
+CREATE TABLE IF NOT EXISTS `unused_process_mart` (
                                        `create_dt` timestamp NOT NULL,
                                        `resource_id` varchar(200) NOT NULL,
                                        `collect_dt` timestamp NOT NULL,
