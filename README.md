@@ -107,7 +107,7 @@ Use "mcc infra [command] --help" for more information about a command.
 Simple usage examples for docker subcommand
 ```
 - ./mcc infra pull [-f ../conf/docker/docker-compose.yaml]
-- ./mcc infra run [-f ../conf/docker/docker-compose.yaml]
+- ./mcc infra run [-f ../conf/docker/docker-compose.yaml]  -d
 - ./mcc infra info
 - ./mcc infra stop [-f ../conf/docker/docker-compose.yaml]
 - ./mcc infra remove [-f ../conf/docker/docker-compose.yaml] -v -i

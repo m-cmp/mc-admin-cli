@@ -430,7 +430,7 @@ services:
     networks:
       - mc-cost-optimizer-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
       <<: *default-health-check
 
 
@@ -558,7 +558,6 @@ services:
     container_name: mc-data-manager-init-volumes
     command: ["sh", "-c", "chown -R ${UID:-0}:${GID:-0} /app/log"]
     volumes:
-      - ./tool/mcc:/app/tool/mcc
       - ./container-volume/mc-data-manager/log:/app/log/
     user: root
     env_file:
@@ -715,12 +714,12 @@ services:
       - ALLOW_EMPTY_PASSWORD=no
       - MYSQL_ROOT_PASSWORD=qwe1212!Q
       - MYSQL_USER=mc-agent
-      - MYSQL_DATABASE=mc-observability
+      - MYSQL_DATABASE=mc_observability
       - MYSQL_PASSWORD=mc-agent
     networks:
       - mc-observability-network
     healthcheck:
-      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      test: ["CMD", "healthcheck.sh", "--su-mc-agent", "--connect", "--innodb_initialized"]
       <<: *default-health-check
 
   mc-observability-influx:
@@ -762,6 +761,17 @@ services:
       test: ["CMD", "curl", "-f", "http://localhost:8888/chronograf/v1/health"]
       <<: *default-health-check
 
+  mc-observability-kapacitor-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-kapacitor-init-volumes
+    command: ["sh", "-c", "chown -R 999:999 /var/lib/kapacitor"]
+    volumes:
+      - ./container-volume/mc-observability/kapacitor:/var/lib/kapacitor
+    user: root
+    init: true
+    networks:
+      - mc-observability-network
+
   mc-observability-kapacitor:
     image: kapacitor:1.7.5
     container_name: mc-observability-kapacitor
@@ -776,10 +786,20 @@ services:
     networks:
       - mc-observability-network
     restart: unless-stopped
-    user: root
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9092/health"]
+      test: ["CMD", "curl", "-f", "http://localhost:9092/kapacitor/v1/ping"]
       <<: *default-health-check
+
+  mc-observability-opensearch-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-opensearch-init-volumes
+    command: ["sh", "-c", "chown -R 1000:1000 /usr/share/opensearch/data"]
+    volumes:
+      - ./container-volume/mc-observability/opensearch:/usr/share/opensearch/data
+    user: root
+    init: true
+    networks:
+      - mc-observability-network
 
   mc-observability-opensearch-node1:
     image: opensearchproject/opensearch:1.3.19
@@ -859,10 +879,12 @@ services:
       - TZ=Asia/Seoul
     networks:
       - mc-observability-network
+    user: "1000:1000"
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - /etc/localtime:/etc/localtime:ro
       - ./conf/mc-observability/scheduler/airflow-home:/usr/local/airflow
+      - ./container-volume/mc-observability/scheduler/logs:/usr/local/airflow/logs
     command: >
       /bin/bash -c "
         # Wait for MySQL
@@ -882,7 +904,7 @@ services:
         airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-observability-manager:18080/api/o11y
 
         airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
-        airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3308 mcmp_db
+        airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
         airflow connections add --conn-type http --conn-host mc-observability-manager --conn-port 18080 o11y-manager
         airflow connections add --conn-type influxdb --conn-host mc-observability-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
 
