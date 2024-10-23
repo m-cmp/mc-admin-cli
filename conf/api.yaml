@@ -31,7 +31,7 @@ services:
       type: bearer
 
   mc-observability:
-    version: main
+    version: 0.2.3
     baseurl: http://localhost:18080
     auth:
 
@@ -1666,166 +1666,218 @@ serviceActions:
       description: webValidate
 
   mc-observability:
-    GET_InfluxDBInfo:
-      method: get
-      resourcePath: /api/o11y/monitoring/influxdb/{influxDBSeq}/measurement
-      description: ""
-    ListUsingGET_5:
-      method: get
-      resourcePath: /api/o11y/trigger/policy/history
-      description: ""
-    ListUsingGET_4:
-      method: get
-      resourcePath: /api/o11y/trigger/policy
-      description: ""
-    CreateUsingPOST_2:
-      method: post
-      resourcePath: /api/o11y/trigger/policy
-      description: ""
-    SetTargetsUsingPUT:
-      method: put
-      resourcePath: /api/o11y/trigger/policy/{policySeq}/target
-      description: ""
-    GET_storages:
-      method: get
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage
-      description: ""
-    POST_storages:
+    Poststorage:
       method: post
       resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage
       description: ""
-    PUT_storages:
+    Getstorages:
+      method: get
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage
+      description: ""
+    Putstorage:
       method: put
       resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage
       description: ""
-    GetAllAnomalyDetectionTargets:
+    Getminingdbtags":
       method: get
-      resourcePath: /api/o11y/insight/anomaly-detection/settings
-      description: "Fetch the current settings for all anomaly detection targets."
-    RegisterAnomalyDetectionTarget:
-      method: post
-      resourcePath: /api/o11y/insight/anomaly-detection/settings
-      description: "Register a target for anomaly detection and automatically schedule detection tasks."
-    DeleteSlackUserUsingDELETE:
-      method: delete
-      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/slack/{seq}
+      resourcePath: /api/o11y/monitoring/miningdb/tag
       description: ""
-    GetPredictionOptions:
-      method: get
-      resourcePath: /api/o11y/insight/predictions/options
-      description: "Fetch the available target types, metric types, and prediction range options for the prediction API."
-    GetAnomalyDetectionResults:
-      method: get
-      resourcePath: /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history
-      description: "Fetch the results of anomaly detection for a specific target within a given time range."
-    DeleteAnomalyDetectionTarget:
-      method: delete
-      resourcePath: /api/o11y/insight/anomaly-detection/settings/{settingSeq}
-      description: "Remove a target from anomaly detection, stopping and removing any scheduled tasks."
-    UpdateAnomalyDetectionTarget:
-      method: put
-      resourcePath: /api/o11y/insight/anomaly-detection/settings/{settingSeq}
-      description: "Modify the settings for a specific anomaly detection target, including the monitoring metric and interval."
-    GET_InfluxDBTag:
-      method: get
-      resourcePath: /api/o11y/monitoring/influxdb/{influxDBSeq}/tag
-      description: ""
-    GetEmailUserListUsingGET:
-      method: get
-      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email
-      description: ""
-    CreateEmailUserUsingPOST:
-      method: post
-      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email
-      description: ""
-    GetSlackUserListUsingGET:
-      method: get
-      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/slack
-      description: ""
-    CreateSlackUserUsingPOST:
-      method: post
-      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/slack
-      description: ""
-    GET_Metric:
-      method: post
-      resourcePath: /api/o11y/monitoring/influxdb/{influxDBSeq}/metric
-      description: ""
-    DELETE_storages:
-      method: delete
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage/{storageSeq}
-      description: ""
-    GET_InfluxDBs:
-      method: get
-      resourcePath: /api/o11y/monitoring/influxdb
-      description: ""
-    GetAnomalyDetectionOptions:
-      method: get
-      resourcePath: /api/o11y/insight/anomaly-detection/options
-      description: "Fetch the available target types, metric types, and interval options for the anomaly detection API."
-    PredictMetrics:
-      method: post
-      resourcePath: /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}
-      description: "Predict future metrics (CPU, MEM, Disk, System Load) for a given VM or MCI group."
-    DELETE_items:
-      method: delete
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}
-      description: ""
-    DeleteEmailUserUsingDELETE:
-      method: delete
-      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email/{seq}
-      description: ""
-    ListUsingGET_5:
-      method: get
-      resourcePath: /api/o11y/trigger/policy/target
-      description: ""
-    GetSpecificAnomalyDetectionTarget:
+    Gettargetanomalydetectionsettings:
       method: get
       resourcePath: /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}
       description: "Fetch the current settings for a specific anomaly detection target."
-    GET_plugins:
+    Postanomalydetection:
+      method: post
+      resourcePath: /api/o11y/insight/anomaly-detection/{settingSeq}
+      description: "Request anomaly detection"
+    Getpredictionoptions:
       method: get
-      resourcePath: /api/o11y/monitoring/plugins
+      resourcePath: /api/o11y/insight/predictions/options
+      description: "Fetch the available target types, metric types, and prediction range options for the prediction API."
+    Gettargetsnsmci:
+      method: get
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target
       description: ""
-    GET_targets:
+    Putitem:
+      method: put
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
+      description: ""
+    Postitem:
+      method: post
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
+      description: ""
+    Getitems:
+      method: get
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
+      description: ""
+    Gettriggeralertslackuseralllist:
+      method: get
+      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/slack
+      description: ""
+    Createtriggeralertslackuser:
+      method: post
+      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/slack
+      description: ""
+    Deletetriggeralertslackuser:
+      method: delete
+      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/slack/{seq}
+      description: ""
+    Getminingdbs:
+      method: get
+      resourcePath: /api/o11y/monitoring/miningdb
+      description: ""
+    Putminingdb:
+      method: put
+      resourcePath: /api/o11y/monitoring/miningdb
+      description: ""
+    Gettargets:
       method: get
       resourcePath: /api/o11y/monitoring/target
       description: ""
-    UpdateUsingPATCH_3:
+    Deletestorage:
+      method: delete
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage/{storageSeq}
+      description: ""
+    Deleterequesttriggerpolicy:
+      method: delete
+      resourcePath: /api/o11y/trigger/policy/{policySeq}
+      description: ""
+    Updaterequesttriggerpolicy:
       method: patch
       resourcePath: /api/o11y/trigger/policy/{policySeq}
       description: ""
-    DeleteUsingDELETE_2:
-      method: delete
-      resourcePath: /api/o11y/trigger/policy/{policySeq}
-      description: ""
-    POST_target:
-      method: post
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
-      description: ""
-    PUT_target:
-      method: put
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
-      description: ""
-    DELETE_target:
-      method: delete
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
-      description: ""
-    POST_items:
-      method: post
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
-      description: ""
-    PUT_items:
-      method: put
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
-      description: ""
-    GET_items:
+    Getreadyz:
       method: get
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
+      resourcePath: /api/o11y/readyz
       description: ""
-    GetPredictionHistory:
+    Getplugins:
+      method: get
+      resourcePath: /api/o11y/monitoring/plugins
+      description: ""
+    Getopensearchlogs:
+      method: post
+      resourcePath: /api/o11y/monitoring/opensearch/logs
+      description: ""
+    Gettriggerpolicyalllist:
+      method: get
+      resourcePath: /api/o11y/trigger/policy
+      description: ""
+    Createrequesttriggerpolicy:
+      method: post
+      resourcePath: /api/o11y/trigger/policy
+      description: "The values that require Base64 encoding:\ndescription, name, threshold\n"
+    Getallanomalydetectionsettings:
+      method: get
+      resourcePath: /api/o11y/insight/anomaly-detection/settings
+      description: "Fetch the current settings for all anomaly detection targets."
+    Postanomalydetectionsettings:
+      method: post
+      resourcePath: /api/o11y/insight/anomaly-detection/settings
+      description: "Register a target for anomaly detection and automatically schedule detection tasks.  \n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent\n"
+    Getnss:
+      method: get
+      resourcePath: /api/o11y/monitoring/ns
+      description: ""
+    Getinfluxdbmetrics:
+      method: post
+      resourcePath: /api/o11y/monitoring/influxdb/metric
+      description: ""
+    Putanomalydetectionsettings:
+      method: put
+      resourcePath: /api/o11y/insight/anomaly-detection/settings/{settingSeq}
+      description: "Modify the settings for a specific anomaly detection target, including the monitoring metric and interval."
+    Deleteanomalydetectionsettings:
+      method: delete
+      resourcePath: /api/o11y/insight/anomaly-detection/settings/{settingSeq}
+      description: "Remove a target from anomaly detection, stopping and removing any scheduled tasks."
+    Deleteitem:
+      method: delete
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}
+      description: ""
+    Getinfluxdbmeasurements:
+      method: get
+      resourcePath: /api/o11y/monitoring/influxdb/measurement
+      description: ""
+    Gettriggerhistoryalllist:
+      method: get
+      resourcePath: /api/o11y/trigger/policy/history
+      description: "Base64 Encoded value:  \nname\n"
+    Postprediction:
+      method: post
+      resourcePath: /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}
+      description: "Predict future metrics (cpu, mem, disk, system) for a given vm or mci group.\n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent  \ndisk : used_percent  \nsystem : load1\n"
+    Getpredictionhistory:
       method: get
       resourcePath: /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}/history
-      description: "Get previously stored prediction data for a specific VM or MCI group."
+      description: "Get previously stored prediction data for a specific vm or mci group."
+    Getinfluxdbtags:
+      method: get
+      resourcePath: /api/o11y/monitoring/influxdb/tag
+      description: ""
+    Getcsp:
+      method: get
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/csp/{measurement}
+      description: ""
+    Puttriggertarget:
+      method: put
+      resourcePath: /api/o11y/trigger/policy/{policySeq}/target
+      description: ""
+    Deletetriggeralertemailuser:
+      method: delete
+      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email/{seq}
+      description: ""
+    Getanomalydetectionoptions:
+      method: get
+      resourcePath: /api/o11y/insight/anomaly-detection/options
+      description: "Fetch the available target types, metric types, and interval options for the anomaly detection API."
+    Gettriggertargetalllist:
+      method: get
+      resourcePath: /api/o11y/trigger/policy/target
+      description: ""
+    Gettriggeralertemailuseralllist:
+      method: get
+      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email
+      description: ""
+    Createtriggeralertemailuser:
+      method: post
+      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email
+      description: ""
+    Getanomalydetectionhistory:
+      method: get
+      resourcePath: /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history
+      description: "Fetch the results of anomaly detection for a specific target within a given time range."
+    Gettarget:
+      method: get
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
+      description: ""
+    Puttarget:
+      method: put
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
+      description: ""
+    Posttarget:
+      method: post
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
+      description: ""
+    Deletetarget:
+      method: delete
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
+      description: ""
+    Getminingdbmetrics:
+      method: post
+      resourcePath: /api/o11y/monitoring/miningdb/metric
+      description: ""
+    Getminingdbmeasurements:
+      method: get
+      resourcePath: /api/o11y/monitoring/miningdb/measurement
+      description: ""
+    Getopensearches:
+      method: get
+      resourcePath: /api/o11y/monitoring/opensearch
+      description: ""
+    Getinfluxdbs:
+      method: get
+      resourcePath: /api/o11y/monitoring/influxdb
+      description: ""
   
   mc-application-manager:
     GetCatalogDetailUsingGET:
