@@ -112,7 +112,7 @@ CREATE TABLE IF NOT EXISTS `mc_o11y_mining_db` (
 
 -- 테이블 데이터 mc_observability.mc_o11y_mining_db:~0 rows (대략적) 내보내기
 INSERT INTO `mc_o11y_mining_db` (`URL`, `DATABASE`, `RETENTION_POLICY`, `USERNAME`, `PASSWORD`) VALUES
-    ('http://mc-o11y-influx:8086', 'mc-mining', 'autogen', 'mc-agent', 'mc-agent');
+    ('http://mc-observability-influx:8086', 'downsampling', 'autogen', 'mc-agent', 'mc-agent');
 
 -- 테이블 mc_observability.mc_o11y_trigger_alert_email 구조 내보내기
 CREATE TABLE IF NOT EXISTS `mc_o11y_trigger_alert_email` (
@@ -213,7 +213,7 @@ CREATE TABLE `mc_o11y_insight_anomaly_setting` (
   `NAMESPACE_ID` varchar(100) NOT NULL,
   `TARGET_ID` varchar(100) NOT NULL,
   `TARGET_TYPE` varchar(100) NOT NULL,
-  `METRIC_TYPE` varchar(100) NOT NULL,
+  `MEASUREMENT` varchar(100) NOT NULL,
   `EXECUTION_INTERVAL` varchar(100) NOT NULL,
   `LAST_EXECUTION` timestamp NOT NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
   `REGDATE` timestamp NOT NULL DEFAULT '0000-00-00 00:00:00',
