@@ -687,6 +687,8 @@ services:
       - SPIDER_URL=http://mc-infra-connector:1024
       - DATABASE_HOST=mc-observability-maria
       - INSIGHT_URL=http://mc-observability-insight:9001
+      - SPIDER_MONITORING_INFLUXDB_URL="http://mc-observability-influx:8086"
+      - AGENT_MANAGER_IP="http://mc-observability-manager:18080"
     env_file:
       - ./conf/mc-observability/manager/.env
     volumes:
@@ -702,7 +704,7 @@ services:
     container_name: mc-observability-maria
     ports:
       - target: 3306
-        published: 3308
+        published: 3306
         protocol: tcp 
     volumes:
       - ./conf/mc-observability/mariadb/maria_init.sql:/docker-entrypoint-initdb.d/maria_init.sql
@@ -801,9 +803,9 @@ services:
     networks:
       - mc-observability-network
 
-  mc-observability-opensearch-node1:
+  opensearch-node1:
     image: opensearchproject/opensearch:1.3.19
-    container_name: mc-observability-opensearch-node1
+    container_name: opensearch-node1
     environment:
       - cluster.name=opensearch-cluster
       - node.name=opensearch-node1
@@ -842,7 +844,7 @@ services:
         published: 5601
         protocol: tcp
     environment:
-      - 'OPENSEARCH_HOSTS=["http://mc-observability-opensearch-node1:9200"]'
+      - 'OPENSEARCH_HOSTS=["http://opensearch-node1:9200"]'
       - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true"
     networks:
       - mc-observability-network
