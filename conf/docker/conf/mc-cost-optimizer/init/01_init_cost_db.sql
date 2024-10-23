@@ -2,7 +2,7 @@ CREATE DATABASE IF NOT EXISTS cost;
 
 USE cost;
 -- cost.asset_compute_metric definition
-CREATE TABLE `asset_compute_metric` (
+CREATE TABLE IF NOT EXISTS `asset_compute_metric` (
                                         `csp_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                         `csp_account` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                         `csp_instanceid` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -16,7 +16,7 @@ CREATE TABLE `asset_compute_metric` (
 
 -- cost.asset_rsopt_settings definition
 
-CREATE TABLE `asset_rsopt_settings` (
+CREATE TABLE IF NOT EXISTS `asset_rsopt_settings` (
                                         `csp_type` varchar(100) DEFAULT NULL,
                                         `metric_type` varchar(100) DEFAULT NULL,
                                         `regress_duration` int DEFAULT NULL,
@@ -26,7 +26,7 @@ CREATE TABLE `asset_rsopt_settings` (
 
 -- cost.cur_origin definition
 
-CREATE TABLE `cur_origin` (
+CREATE TABLE IF NOT EXISTS `cur_origin` (
                               `lineitem_usageaccountid` varchar(100) NOT NULL COMMENT 'AWS 서브계정 구분 ID',
                               `lineitem_productcode` varchar(100) NOT NULL COMMENT '서비스구분코드',
                               `lineitem_resourceid` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL COMMENT '인스턴스 구분 코드',
@@ -45,7 +45,7 @@ CREATE TABLE `cur_origin` (
 
 -- cost.service_category definition
 
-CREATE TABLE `service_category` (
+CREATE TABLE IF NOT EXISTS `service_category` (
                                     `service_cd` varchar(100) NOT NULL COMMENT '서비스 코드',
                                     `service_nm` varchar(100) NOT NULL COMMENT '서비스 명',
                                     `service_type` varchar(100) NOT NULL COMMENT '서비스 타입',
@@ -54,7 +54,7 @@ CREATE TABLE `service_category` (
 
 -- cost.servicegroup_meta definition
 
-CREATE TABLE `servicegroup_meta` (
+CREATE TABLE IF NOT EXISTS `servicegroup_meta` (
                                      `csp_type` varchar(100) NOT NULL COMMENT 'CSP 종류',
                                      `csp_account` varchar(100) NOT NULL COMMENT 'CSP 계정 ID',
                                      `csp_instanceid` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT 'common' COMMENT ' 인스턴스 구분코드',
@@ -67,7 +67,7 @@ CREATE TABLE `servicegroup_meta` (
 
 -- cost.unused_batch_rst definition
 
-CREATE TABLE `unused_batch_rst` (
+CREATE TABLE IF NOT EXISTS `unused_batch_rst` (
                                     `create_dt` timestamp NOT NULL,
                                     `csp_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                     `csp_account` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -78,7 +78,7 @@ CREATE TABLE `unused_batch_rst` (
 
 -- cost.unused_collector definition
 
-CREATE TABLE `unused_collector` (
+CREATE TABLE IF NOT EXISTS `unused_collector` (
                                     `csp_resourceid` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
                                     `create_dt` timestamp NOT NULL,
                                     PRIMARY KEY (`csp_resourceid`,`create_dt`)
@@ -86,7 +86,7 @@ CREATE TABLE `unused_collector` (
 
 -- cost.unused_process_mart definition
 
-CREATE TABLE `unused_process_mart` (
+CREATE TABLE IF NOT EXISTS  `unused_process_mart` (
                                        `create_dt` timestamp NOT NULL,
                                        `resource_id` varchar(200) NOT NULL,
                                        `collect_dt` timestamp NOT NULL,
@@ -97,7 +97,7 @@ CREATE TABLE `unused_process_mart` (
 
 -- cost.workspace_meta definition
 
-CREATE TABLE `workspace_meta` (
+CREATE TABLE IF NOT EXISTS `workspace_meta` (
                                   `workspace_cd` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL COMMENT 'WorkSpace 코드',
                                   `workspace_nm` varchar(100) DEFAULT NULL COMMENT 'WorkSpace 이름',
                                   `csp_type` varchar(100) NOT NULL COMMENT 'CSP 유형',
