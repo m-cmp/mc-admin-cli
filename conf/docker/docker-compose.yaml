@@ -153,7 +153,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: sehyeong0108/mc-iam-manager:20241015
+    image: cloudbaristaorg/mc-iam-manager:edge
     pull_policy: missing
     platform: linux/amd64
     networks:
