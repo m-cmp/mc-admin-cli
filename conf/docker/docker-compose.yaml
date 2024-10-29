@@ -620,6 +620,14 @@ services:
     container_name: mc-web-console-api
     depends_on:
       - mc-web-console-db
+      - mc-infra-connector
+      - mc-infra-manager
+      - mc-iam-manager
+      - mc-observability-manager
+      - mc-workflow-manager
+      - mc-data-manager
+      - mc-application-manager
+      - mc-cost-optimizer-be
     ports:
       - target: 3000
         published: 3000
