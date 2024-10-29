@@ -25,6 +25,6 @@ ENV KC_DB_USERNAME=mciamadmin
 
 ENV KC_DB_PASSWORD=mciammanagerpassword
 
-ENV KC_HOSTNAME=localhost
+ENV KC_HOSTNAME=127.0.0.1
 
 ENTRYPOINT ["/opt/keycloak/bin/kc.sh"]
