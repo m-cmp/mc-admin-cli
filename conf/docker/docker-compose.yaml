@@ -650,6 +650,7 @@ services:
       DATABASE_URL: postgres://${CONSOLE_POSTGRES_USER}:${CONSOLE_POSTGRES_PASSWORD}@mc-web-console-db:5432/${CONSOLE_POSTGRES_DB}
       MCIAM_USE: true
       MCIAM_TICKET_USE: false
+      IFRAME_TARGET_IS_HOST: true
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-web-console/api/conf/:/conf/
