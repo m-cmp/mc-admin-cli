@@ -240,9 +240,11 @@ services:
   mc-cost-optimizer-fe:
     restart: on-failure
     container_name: mc-cost-optimizer-fe
-    image: cloudbaristaorg/mc-costopti-ui:edge
+    image: cloudbaristaorg/mc-costopti-ui:0.3.0
     networks:
       - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
       - mc-web-console-network
     ports:
       - target: 80
@@ -259,9 +261,10 @@ services:
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: cloudbaristaorg/mc-costopti-api:edge
+    image: cloudbaristaorg/mc-costopti-api:0.3.0
     networks:
       - mc-cost-optimizer-network
+      - mc-observability-network
       - mc-infra-manager-network
       - mc-web-console-network
     ports:
@@ -286,9 +289,11 @@ services:
   mc-cost-optimizer-cost-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
-    image: cloudbaristaorg/mc-costopti-costcollector:edge
+    image: cloudbaristaorg/mc-costopti-costcollector:0.3.0
     networks:
       - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
       - mc-web-console-network
     ports:
       - target: 8081
@@ -315,9 +320,11 @@ services:
   mc-cost-optimizer-cost-processor:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
-    image: cloudbaristaorg/mc-costopti-costprocessor:edge
+    image: cloudbaristaorg/mc-costopti-costprocessor:0.3.0
     networks:
       - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
       - mc-web-console-network
     ports:
       - target: 8082
@@ -342,9 +349,11 @@ services:
   mc-cost-optimizer-cost-selector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
-    image: cloudbaristaorg/mc-costopti-costselector:edge
+    image: cloudbaristaorg/mc-costopti-costselector:0.3.0
     networks:
       - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
       - mc-web-console-network
     ports:
       - target: 8083
@@ -366,9 +375,11 @@ services:
   mc-cost-optimizer-alarm-service:
     restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
-    image: cloudbaristaorg/mc-costopti-alarm:edge
+    image: cloudbaristaorg/mc-costopti-alarm:0.3.0
     networks:
       - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
       - mc-web-console-network
     ports:
       - target: 9000
@@ -395,9 +406,11 @@ services:
   mc-cost-optimizer-asset-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-asset-collector
-    image: cloudbaristaorg/mc-costopti-assetcollector:edge
+    image: cloudbaristaorg/mc-costopti-assetcollector:0.3.0
     networks:
       - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
       - mc-web-console-network
     ports:
       - target: 8091
@@ -436,7 +449,7 @@ services:
       - mc-cost-optimizer-network
       - mc-web-console-network
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
+      test: ["CMD", "healthcheck.sh", "--su-mcmpcostopti", "--connect", "--innodb_initialized"]
       <<: *default-health-check
 
 
@@ -684,7 +697,7 @@ services:
 ##### MC-OBSERVABILITY #########################################################################################################################
 
   mc-observability-manager:
-    image: cloudbaristaorg/mc-observability:edge
+    image: cloudbaristaorg/mc-observability:0.3.0
     container_name: mc-observability-manager
     ports:
       - target: 18080
@@ -695,7 +708,9 @@ services:
         protocol: tcp
     networks:
       - mc-observability-network
+      - mc-cost-optimizer-network
       - mc-infra-manager-network
+      - mc-infra-connector-network
       - mc-web-console-network
     environment:
       - TUMBLEBUG_URL=http://mc-infra-manager:1323
@@ -872,7 +887,7 @@ services:
       <<: *default-health-check
 
   mc-observability-insight:
-    image: sehyeong0108/mc-observability-insight:20241031
+    image: cloudbaristaorg/mc-o11y-insight:0.3.0
     container_name: mc-observability-insight
     ports:
       - target: 9001
@@ -890,7 +905,7 @@ services:
       <<: *default-health-check
 
   mc-observability-insight-scheduler:
-    image: sehyeong0108/mc-observability-scheduler:20241031
+    image: cloudbaristaorg/mc-o11y-insight-scheduler:0.3.0
     container_name: mc-observability-insight-scheduler
     ports:
       - target: 9002
