@@ -15,13 +15,36 @@ If you have any difficulties in using mcc, please let us know.
 
 ## mcc Overview
 - Management tool that supports the installation, execution, status information provision, termination, and API calls of the M-CMP system.
-- Currently, only the Docker Compose mode is supported.
-  - [Docker Compose mode](./docs/mcc-docker-compose-mode.md)
+- Currently, infra subcommand is only support docker compose base infra install and management.
+  - [infra subcommand](./docs/mc-admin-cli-infra.md)
+- If you want to checkout how to run the whole subsystem on the single instance on CSP Instance, see [this document](./docs/mc-admin-cli-infra.md).
+
+## Development & Test Environment
+- Go 1.23
+- Docker version 27.3.1
+- Docker Compose version v2.29
 
 ## Install Docker & Docker Compose V2
+
 - [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
-- Tested version: Docker version 24.0.7, build afdd53b
-- Tested version: Docker Compose version v2.21.0
+
+checkout the commands down below.
+
+```shell
+sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
+
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo apt-key add -
+
+sudo add-apt-repository "deb [arch=amd64] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable"
+
+sudo apt-get update
+
+sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
+```
+
+
+
+---
 
 # Command to build the operator from souce code
 ```Shell
@@ -34,7 +57,7 @@ mc-admin-cli/src$ go get -u
 (Build a binary for mcc)
 mc-admin-cli/src$ go build -o mcc
 
-(Build a binary for mcc using Makerfile depends on your machine's os type)
+**Build a binary for mcc using Makerfile depends on your machine\'s os type**
 mc-admin-cli/src$ make
 mc-admin-cli/src$ make win
 mc-admin-cli/src$ make mac
@@ -55,7 +78,7 @@ Usage:
 
 Available Commands:
   api         Call the M-CMP system's Open APIs as services and actions
-  docker      A tool to operate M-CMP system
+  infra       A tool to operate M-CMP system
   help        Help about any command
   rest        rest api call
 
@@ -66,7 +89,7 @@ Use "mcc [command] --help" for more information about a command.
 ```
 
 For more detailed explanations, see the articles below.   
-- [docker sub-command guide](./docs/mc-admin-cli-docker-compose-mode.md)
+- [infra sub-command guide](./docs/mc-admin-cli-infra.md)
 - [rest sub-command guide](./docs/mc-admin-cli-rest.md)
 
 ## docker-compose.yaml
@@ -76,11 +99,11 @@ The necessary service information for the M-CMP System configuration is defined 
 If you want to change the information for each container you want to deploy, modify the mc-admin-cli/docker-compose-mode-files/docker-compose.yaml file or use the -f option.
 ```
 
-## docker subcommand
-For more information, check out [the docker subcommand document.](./docs/mc-admin-cli-docker-compose-mode.md)
+## infra subcommand
+For more information, check out [the infra subcommand document.](./docs/mc-admin-cli-infra.md)
 
 
-For now, it supports docker's run/stop/info/pull/remove commands.
+For now, it supports infra's run/stop/info/pull/remove commands.
 
 Use the -h option at the end of the sub-command requiring assistance, or executing 'mcc' without any options will display the help manual.
 
@@ -98,13 +121,13 @@ Available Commands:
   stop        Stop M-CMP System
 
 Flags:
-  -h, --help   help for docker
+  -h, --help   help for infra
 
 Use "mcc infra [command] --help" for more information about a command.
 ```
 
 ## infra subcommand examples
-Simple usage examples for docker subcommand
+Simple usage examples for infra subcommand
 ```
 - ./mcc infra pull [-f ../conf/docker/docker-compose.yaml]
 - ./mcc infra run [-f ../conf/docker/docker-compose.yaml]  -d
@@ -114,7 +137,7 @@ Simple usage examples for docker subcommand
 
 ```
 ## k8s subcommand
-K8S is not currently supported and will be supported in the near future.
+**K8S is not currently supported and will be supported in the near future.**
 
 ## rest subcommand
 The rest subcommands are developed around the basic features of REST to make it easy to use the open APIs of M-CMP-related frameworks from the CLI.
