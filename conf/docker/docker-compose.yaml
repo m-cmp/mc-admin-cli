@@ -51,7 +51,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.9.19
+    image: cloudbaristaorg/cb-tumblebug:0.9.22
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
@@ -240,7 +240,7 @@ services:
   mc-cost-optimizer-fe:
     restart: on-failure
     container_name: mc-cost-optimizer-fe
-    image: sehyeong0108/mc-cost-optimizer:fe-20241015
+    image: cloudbaristaorg/mc-costopti-ui:edge
     networks:
       - mc-cost-optimizer-network
       - mc-web-console-network
@@ -259,7 +259,7 @@ services:
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: sehyeong0108/mc-cost-optimizer:be-20241015
+    image: cloudbaristaorg/mc-costopti-api:edge
     networks:
       - mc-cost-optimizer-network
       - mc-infra-manager-network
@@ -286,9 +286,10 @@ services:
   mc-cost-optimizer-cost-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
-    image: sehyeong0108/mc-cost-optimizer:cost-collector-20241015
+    image: cloudbaristaorg/mc-costopti-costcollector:edge
     networks:
       - mc-cost-optimizer-network
+      - mc-web-console-network
     ports:
       - target: 8081
         published: 8081
@@ -314,9 +315,10 @@ services:
   mc-cost-optimizer-cost-processor:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
-    image: sehyeong0108/mc-cost-optimizer:cost-processor-20241015
+    image: cloudbaristaorg/mc-costopti-costprocessor:edge
     networks:
       - mc-cost-optimizer-network
+      - mc-web-console-network
     ports:
       - target: 8082
         published: 18082
@@ -340,9 +342,10 @@ services:
   mc-cost-optimizer-cost-selector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
-    image: sehyeong0108/mc-cost-optimizer:cost-selector-20241015
+    image: cloudbaristaorg/mc-costopti-costselector:edge
     networks:
       - mc-cost-optimizer-network
+      - mc-web-console-network
     ports:
       - target: 8083
         published: 8083
@@ -363,9 +366,10 @@ services:
   mc-cost-optimizer-alarm-service:
     restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
-    image: sehyeong0108/mc-cost-optimizer:alarm-service-20241015
+    image: cloudbaristaorg/mc-costopti-alarm:edge
     networks:
       - mc-cost-optimizer-network
+      - mc-web-console-network
     ports:
       - target: 9000
         published: 9000
@@ -391,9 +395,10 @@ services:
   mc-cost-optimizer-asset-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-asset-collector
-    image: sehyeong0108/mc-cost-optimizer:asset-collector-20241015
+    image: cloudbaristaorg/mc-costopti-assetcollector:edge
     networks:
       - mc-cost-optimizer-network
+      - mc-web-console-network
     ports:
       - target: 8091
         published: 8091
@@ -429,6 +434,7 @@ services:
       - ./container-volume/mc-cost-optimizer/mysql/:/var/lib/mysql/
     networks:
       - mc-cost-optimizer-network
+      - mc-web-console-network
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
       <<: *default-health-check
@@ -442,6 +448,7 @@ services:
     platform: linux/amd64
     networks:
       - mc-application-manager-network
+      - mc-web-console-network
     ports:
       - target: 8080
         published: 9800
@@ -463,6 +470,7 @@ services:
     platform: linux/amd64
     networks:
       - mc-application-manager-network
+      - mc-web-console-network
     ports:
       - target: 8081
         published: 8881
@@ -480,7 +488,7 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:edge
+    image: cloudbaristaorg/mc-application-manager:0.3.0
     container_name: mc-application-manager
     networks:
       - mc-application-manager-network
@@ -528,7 +536,7 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:edge
+    image: cloudbaristaorg/mc-workflow-manager:0.3.0
     container_name: mc-workflow-manager
     platform: linux/amd64
     networks:
@@ -567,7 +575,7 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: cloudbaristaorg/mc-data-manager:edge
+    image: cloudbaristaorg/mc-data-manager:0.2.11
     container_name: mc-data-manager
     depends_on:
       - mc-data-manager-init-volumes
@@ -766,6 +774,7 @@ services:
     volumes:
       - ./container-volume/mc-observability/chronograf/chronograf_data:/var/lib/chronograf
     networks:
+      - mc-web-console-network
       - mc-observability-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8888/chronograf/v1/health"]
@@ -855,13 +864,14 @@ services:
       - 'OPENSEARCH_HOSTS=["http://opensearch-node1:9200"]'
       - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true"
     networks:
+      - mc-web-console-network
       - mc-observability-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:5601/api/status"]
       <<: *default-health-check
 
   mc-observability-insight:
-    image: sehyeong0108/mc-observability-insight:20241015
+    image: sehyeong0108/mc-observability-insight:20241031
     container_name: mc-observability-insight
     ports:
       - target: 9001
@@ -879,7 +889,7 @@ services:
       <<: *default-health-check
 
   mc-observability-insight-scheduler:
-    image: sehyeong0108/mc-observability-scheduler:20241015
+    image: sehyeong0108/mc-observability-scheduler:20241031
     container_name: mc-observability-insight-scheduler
     ports:
       - target: 9002
