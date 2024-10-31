@@ -299,7 +299,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 8081
-        published: 8081
+        published: 8881
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -488,7 +488,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 8081
-        published: 8881
+        published: 8081
         protocol: tcp
       - target: 5000
         published: 5500
