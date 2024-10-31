@@ -747,7 +747,7 @@ services:
       - ./container-volume/mc-observability/maria/log:/var/log/maria
     environment:
       - TZ="Asia/Seoul"
-      - ALLOW_EMPTY_PASSWORD=no
+      - ALLOW_EMPTY_PASSWORD=yes
       - MYSQL_ROOT_PASSWORD=qwe1212!Q
       - MYSQL_USER=mc-agent
       - MYSQL_DATABASE=mc_observability
