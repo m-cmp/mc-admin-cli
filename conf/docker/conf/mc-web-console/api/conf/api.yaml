@@ -29,7 +29,7 @@ services:
 
   mc-observability:
     version: 0.2.3
-    baseurl: http://mc-observability:18080
+    baseurl: http://mc-observability-manager:18080
     auth:
 
   mc-application-manager:
