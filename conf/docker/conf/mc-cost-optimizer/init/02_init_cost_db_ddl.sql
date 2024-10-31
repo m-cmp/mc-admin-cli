@@ -1,3 +1,4 @@
+
 CREATE DATABASE IF NOT EXISTS cost;
 
 USE cost;
@@ -157,15 +158,15 @@ CREATE TABLE IF NOT EXISTS `servicegroup_meta` (
                                      `service_cd` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL COMMENT '서비스 코드',
                                      `service_nm` varchar(100) DEFAULT NULL COMMENT '서비스 명',
                                      `service_type` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT 'project' COMMENT '서비스 타입',
-                                     `workspace_cd` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT 'testWs' COMMENT 'WorkSpace 코드',
+                                     `workspace_cd` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT 'undefined' COMMENT 'WorkSpace 코드',
                                      `service_uid` varchar(100) DEFAULT NULL,
-                                     `vm_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT 'testPrj',
+                                     `vm_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT 'undefined',
                                      `vm_uid` varchar(100) DEFAULT NULL,
                                      `vm_nm` varchar(100) DEFAULT NULL,
-                                     `mci_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT 'testPrj',
+                                     `mci_id` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL DEFAULT 'undefined',
                                      `mci_uid` varchar(100) DEFAULT NULL,
                                      `mci_nm` varchar(100) DEFAULT NULL,
-                                     `instance_running_status` varchar(1) DEFAULT 'Y',
+                                     `instance_running_status` varchar(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT 'N',
                                      PRIMARY KEY (`csp_type`,`csp_instanceid`,`service_cd`,`vm_id`,`mci_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 
@@ -207,7 +208,7 @@ CREATE TABLE IF NOT EXISTS `temp_cmp_user_info` (
 
 -- cost.temp_cmp_user_mail_receiver definition
 
-CREATE TABLE IF NOT EXISTS  `temp_cmp_user_mail_receiver` (
+CREATE TABLE IF NOT EXISTS `temp_cmp_user_mail_receiver` (
                                                `mcmp_user_id` varchar(100) DEFAULT NULL,
                                                `mcmp_mail_receiver` varchar(100) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
