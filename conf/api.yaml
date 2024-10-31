@@ -11,13 +11,13 @@ services:
       password: 
 
   mc-iam-manager:
-    version: 0.2.11
+    version: 0.2.14
     baseurl: http://localhost:5000
     auth:
       type: bearer
 
   mc-infra-manager:
-    version: 0.9.19
+    version: 0.9.22
     baseurl: http://localhost:1323/tumblebug
     auth:
       type: basic
@@ -36,22 +36,22 @@ services:
     auth:
 
   mc-application-manager:
-    version: main
+    version: 0.3.0
     baseurl: http://localhost:18084
     auth:
 
   mc-workflow-manager:
-    version: main
+    version: 0.3.0
     baseurl: http://localhost:18083
     auth:
 
   mc-cost-optimizer:
-    version: main
+    version: 0.2.1
     baseurl: http://localhost:9090
     auth:
 
   mc-data-manager:
-    version: main:20240923
+    version: main:20241031
     baseurl: http://localhost:3300
     auth:
   
@@ -1698,10 +1698,54 @@ serviceActions:
       description: webValidate
 
   mc-observability:
-    Poststorage:
-      method: post
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage
+    Getopensearches:
+      method: get
+      resourcePath: /api/o11y/monitoring/opensearch
       description: ""
+    Gettriggertargetalllist:
+      method: get
+      resourcePath: /api/o11y/trigger/policy/target
+      description: ""
+    Gettargetanomalydetectionsettings:
+      method: get
+      resourcePath: /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}
+      description: "Fetch the current settings for a specific anomaly detection target."
+    Deletestorage:
+      method: delete
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage/{storageSeq}
+      description: ""
+    Getinfluxdbmetrics:
+      method: post
+      resourcePath: /api/o11y/monitoring/influxdb/metric
+      description: ""
+    Getinfluxdbs:
+      method: get
+      resourcePath: /api/o11y/monitoring/influxdb
+      description: ""
+    Getinfluxdbmeasurements:
+      method: get
+      resourcePath: /api/o11y/monitoring/influxdb/measurement
+      description: ""
+    Gettriggerhistoryalllist:
+      method: get
+      resourcePath: /api/o11y/trigger/policy/history
+      description: "Base64 Encoded value:  \nname\n"
+    Gettriggerpolicyalllist:
+      method: get
+      resourcePath: /api/o11y/trigger/policy
+      description: ""
+    Createrequesttriggerpolicy:
+      method: post
+      resourcePath: /api/o11y/trigger/policy
+      description: "The values that require Base64 encoding:\ndescription, name, threshold\n"
+    Getanomalydetectionoptions:
+      method: get
+      resourcePath: /api/o11y/insight/anomaly-detection/options
+      description: "Fetch the available target types, metric types, and interval options for the anomaly detection API."
+    Getanomalydetectionhistory:
+      method: get
+      resourcePath: /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history
+      description: "Fetch the results of anomaly detection for a specific target within a given time range."
     Getstorages:
       method: get
       resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage
@@ -1710,37 +1754,117 @@ serviceActions:
       method: put
       resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage
       description: ""
-    Getminingdbtags":
-      method: get
-      resourcePath: /api/o11y/monitoring/miningdb/tag
-      description: ""
-    Gettargetanomalydetectionsettings:
-      method: get
-      resourcePath: /api/o11y/insight/anomaly-detection/settings/nsId/{nsId}/target/{targetId}
-      description: "Fetch the current settings for a specific anomaly detection target."
-    Postanomalydetection:
+    Poststorage:
       method: post
-      resourcePath: /api/o11y/insight/anomaly-detection/{settingSeq}
-      description: "Request anomaly detection"
-    Getpredictionoptions:
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage
+      description: ""
+    Deleterequesttriggerpolicy:
+      method: delete
+      resourcePath: /api/o11y/trigger/policy/{policySeq}
+      description: ""
+    Updaterequesttriggerpolicy:
+      method: patch
+      resourcePath: /api/o11y/trigger/policy/{policySeq}
+      description: ""
+    Gettriggeralertemailuseralllist:
       method: get
-      resourcePath: /api/o11y/insight/predictions/options
-      description: "Fetch the available target types, metric types, and prediction range options for the prediction API."
+      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email
+      description: ""
+    Createtriggeralertemailuser:
+      method: post
+      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email
+      description: ""
+    Getminingdbmeasurements:
+      method: get
+      resourcePath: /api/o11y/monitoring/miningdb/measurement
+      description: ""
+    Getcsp:
+      method: get
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/csp/{measurement}
+      description: ""
+    Puttriggertarget:
+      method: put
+      resourcePath: /api/o11y/trigger/policy/{policySeq}/target
+      description: ""
+    Getallanomalydetectionsettings:
+      method: get
+      resourcePath: /api/o11y/insight/anomaly-detection/settings
+      description: "Fetch the current settings for all anomaly detection targets."
+    Postanomalydetectionsettings:
+      method: post
+      resourcePath: /api/o11y/insight/anomaly-detection/settings
+      description: "Register a target for anomaly detection and automatically schedule detection tasks.  \n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent\n"
+    Deletetarget:
+      method: delete
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
+      description: ""
+    Gettarget:
+      method: get
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
+      description: ""
+    Puttarget:
+      method: put
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
+      description: ""
+    Posttarget:
+      method: post
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
+      description: ""
+    Getminingdbs:
+      method: get
+      resourcePath: /api/o11y/monitoring/miningdb
+      description: ""
+    Putminingdb:
+      method: put
+      resourcePath: /api/o11y/monitoring/miningdb
+      description: ""
     Gettargetsnsmci:
       method: get
       resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target
       description: ""
-    Putitem:
-      method: put
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
-      description: ""
-    Postitem:
-      method: post
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
-      description: ""
-    Getitems:
+    Gettargets:
       method: get
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
+      resourcePath: /api/o11y/monitoring/target
+      description: ""
+    Getminingdbmetrics:
+      method: post
+      resourcePath: /api/o11y/monitoring/miningdb/metric
+      description: ""
+    Getminingdbtags":
+      method: get
+      resourcePath: /api/o11y/monitoring/miningdb/tag
+      description: ""
+    Postanomalydetection:
+      method: post
+      resourcePath: /api/o11y/insight/anomaly-detection/{settingSeq}
+      description: "Request anomaly detection"
+    Getnss:
+      method: get
+      resourcePath: /api/o11y/monitoring/ns
+      description: ""
+    Deleteitem:
+      method: delete
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}
+      description: ""
+    Getinfluxdbtags:
+      method: get
+      resourcePath: /api/o11y/monitoring/influxdb/tag
+      description: ""
+    Postprediction:
+      method: post
+      resourcePath: /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}
+      description: "Predict future metrics (cpu, mem, disk, system) for a given vm or mci group.\n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent  \ndisk : used_percent  \nsystem : load1\n"
+    Getpredictionhistory:
+      method: get
+      resourcePath: /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}/history
+      description: "Get previously stored prediction data for a specific vm or mci group."
+    Getreadyz:
+      method: get
+      resourcePath: /api/o11y/readyz
+      description: ""
+    Getplugins:
+      method: get
+      resourcePath: /api/o11y/monitoring/plugins
       description: ""
     Gettriggeralertslackuseralllist:
       method: get
@@ -1754,65 +1878,29 @@ serviceActions:
       method: delete
       resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/slack/{seq}
       description: ""
-    Getminingdbs:
+    Getpredictionoptions:
       method: get
-      resourcePath: /api/o11y/monitoring/miningdb
+      resourcePath: /api/o11y/insight/predictions/options
+      description: "Fetch the available target types, metric types, and prediction range options for the prediction API."
+    Getitems:
+      method: get
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
       description: ""
-    Putminingdb:
+    Putitem:
       method: put
-      resourcePath: /api/o11y/monitoring/miningdb
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
       description: ""
-    Gettargets:
-      method: get
-      resourcePath: /api/o11y/monitoring/target
-      description: ""
-    Deletestorage:
-      method: delete
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/storage/{storageSeq}
-      description: ""
-    Deleterequesttriggerpolicy:
-      method: delete
-      resourcePath: /api/o11y/trigger/policy/{policySeq}
-      description: ""
-    Updaterequesttriggerpolicy:
-      method: patch
-      resourcePath: /api/o11y/trigger/policy/{policySeq}
-      description: ""
-    Getreadyz:
-      method: get
-      resourcePath: /api/o11y/readyz
-      description: ""
-    Getplugins:
-      method: get
-      resourcePath: /api/o11y/monitoring/plugins
+    Postitem:
+      method: post
+      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item
       description: ""
     Getopensearchlogs:
       method: post
       resourcePath: /api/o11y/monitoring/opensearch/logs
       description: ""
-    Gettriggerpolicyalllist:
-      method: get
-      resourcePath: /api/o11y/trigger/policy
-      description: ""
-    Createrequesttriggerpolicy:
-      method: post
-      resourcePath: /api/o11y/trigger/policy
-      description: "The values that require Base64 encoding:\ndescription, name, threshold\n"
-    Getallanomalydetectionsettings:
-      method: get
-      resourcePath: /api/o11y/insight/anomaly-detection/settings
-      description: "Fetch the current settings for all anomaly detection targets."
-    Postanomalydetectionsettings:
-      method: post
-      resourcePath: /api/o11y/insight/anomaly-detection/settings
-      description: "Register a target for anomaly detection and automatically schedule detection tasks.  \n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent\n"
-    Getnss:
-      method: get
-      resourcePath: /api/o11y/monitoring/ns
-      description: ""
-    Getinfluxdbmetrics:
-      method: post
-      resourcePath: /api/o11y/monitoring/influxdb/metric
+    Deletetriggeralertemailuser:
+      method: delete
+      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email/{seq}
       description: ""
     Putanomalydetectionsettings:
       method: put
@@ -1822,706 +1910,582 @@ serviceActions:
       method: delete
       resourcePath: /api/o11y/insight/anomaly-detection/settings/{settingSeq}
       description: "Remove a target from anomaly detection, stopping and removing any scheduled tasks."
-    Deleteitem:
-      method: delete
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/item/{itemSeq}
-      description: ""
-    Getinfluxdbmeasurements:
-      method: get
-      resourcePath: /api/o11y/monitoring/influxdb/measurement
-      description: ""
-    Gettriggerhistoryalllist:
-      method: get
-      resourcePath: /api/o11y/trigger/policy/history
-      description: "Base64 Encoded value:  \nname\n"
-    Postprediction:
-      method: post
-      resourcePath: /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}
-      description: "Predict future metrics (cpu, mem, disk, system) for a given vm or mci group.\n(measurememt : field) Relationships are as follows.  \ncpu : usage_idle  \nmem : used_percent  \ndisk : used_percent  \nsystem : load1\n"
-    Getpredictionhistory:
-      method: get
-      resourcePath: /api/o11y/insight/predictions/nsId/{nsId}/target/{targetId}/history
-      description: "Get previously stored prediction data for a specific vm or mci group."
-    Getinfluxdbtags:
-      method: get
-      resourcePath: /api/o11y/monitoring/influxdb/tag
-      description: ""
-    Getcsp:
-      method: get
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}/csp/{measurement}
-      description: ""
-    Puttriggertarget:
-      method: put
-      resourcePath: /api/o11y/trigger/policy/{policySeq}/target
-      description: ""
-    Deletetriggeralertemailuser:
-      method: delete
-      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email/{seq}
-      description: ""
-    Getanomalydetectionoptions:
-      method: get
-      resourcePath: /api/o11y/insight/anomaly-detection/options
-      description: "Fetch the available target types, metric types, and interval options for the anomaly detection API."
-    Gettriggertargetalllist:
-      method: get
-      resourcePath: /api/o11y/trigger/policy/target
-      description: ""
-    Gettriggeralertemailuseralllist:
-      method: get
-      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email
-      description: ""
-    Createtriggeralertemailuser:
-      method: post
-      resourcePath: /api/o11y/trigger/policy/{policySeq}/alert/email
-      description: ""
-    Getanomalydetectionhistory:
-      method: get
-      resourcePath: /api/o11y/insight/anomaly-detection/nsId/{nsId}/target/{targetId}/history
-      description: "Fetch the results of anomaly detection for a specific target within a given time range."
-    Gettarget:
-      method: get
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
-      description: ""
-    Puttarget:
-      method: put
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
-      description: ""
-    Posttarget:
-      method: post
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
-      description: ""
-    Deletetarget:
-      method: delete
-      resourcePath: /api/o11y/monitoring/{nsId}/{mciId}/target/{targetId}
-      description: ""
-    Getminingdbmetrics:
-      method: post
-      resourcePath: /api/o11y/monitoring/miningdb/metric
-      description: ""
-    Getminingdbmeasurements:
-      method: get
-      resourcePath: /api/o11y/monitoring/miningdb/measurement
-      description: ""
-    Getopensearches:
-      method: get
-      resourcePath: /api/o11y/monitoring/opensearch
-      description: ""
-    Getinfluxdbs:
-      method: get
-      resourcePath: /api/o11y/monitoring/influxdb
-      description: ""
   
   mc-application-manager:
-    GetCatalogDetailUsingGET:
+    Getosslistusingget:
       method: get
-      resourcePath: /catalog/software/{catalogIdx}
-      description: "software catalog 내용 확인(연결된 정보들까지)"
-    DeleteCatalogUsingDELETE:
-      method: delete
-      resourcePath: /catalog/software/{catalogIdx}
-      description: "software catalog 삭제"
-    CheckConnectionUsingPOST:
-      method: post
-      resourcePath: /oss/connection-check
+      resourcePath: /oss/list/{ossTypeName}
       description: ""
-    CreateComponentByTextUsingPOST:
+    Createcomponentbytextusingpost:
       method: post
       resourcePath: /oss/v1/components/{module}/create/{name}/text
       description: ""
-    DeleteRepositoryUsingDELETE:
-      method: delete
-      resourcePath: /oss/v1/repositories/{module}/delete/{name}
-      description: ""
-    UpdateRepositoryUsingPUT:
-      method: put
-      resourcePath: /oss/v1/repositories/{module}/update
-      description: ""
-    GenerateDeploymentYamlUsingPOST:
-      method: post
-      resourcePath: /yaml/deployment
-      description: ""
-    GeneratePodYamlUsingPOST:
-      method: post
-      resourcePath: /yaml/pod
-      description: ""
-    IsOssInfoDuplicatedUsingGET:
-      method: get
-      resourcePath: /oss/duplicate
-      description: ""
-    CreateComponentUsingPOST:
-      method: post
-      resourcePath: /oss/v1/components/{module}/create/{name}
-      description: ""
-    GetRepositoryListUsingGET:
-      method: get
-      resourcePath: /oss/v1/repositories/{module}/list
-      description: ""
-    DeleteOssTypeUsingDELETE:
-      method: delete
-      resourcePath: /ossType/{ossTypeIdx}
-      description: ""
-    UpdateOssTypeUsingPATCH:
-      method: patch
-      resourcePath: /ossType/{ossTypeIdx}
-      description: ""
-    DetailOssTypeUsingGET:
-      method: get
-      resourcePath: /ossType/{ossTypeIdx}
-      description: ""
-    GetRepositoryUsingGET:
-      method: get
-      resourcePath: /repository/{repositoryName}
-      description: ""
-    InsertRepositoryUsingPOST:
-      method: post
-      resourcePath: /repository/{repositoryName}
-      description: ""
-    OpenapiJsonUsingGET:
-      method: get
-      resourcePath: /v3/api-docs
-      description: ""
-    SaveManifestUsingGET:
-      method: get
-      resourcePath: /manifest/download/{manifestIdx}
-      description: ""
-    DeleteComponentUsingDELETE:
-      method: delete
-      resourcePath: /oss/v1/components/{module}/delete/{id}
-      description: ""
-    GenerateConfigmapYamlUsingPOST:
-      method: post
-      resourcePath: /yaml/configmap
-      description: ""
-    GetManifestUsingGET:
-      method: get
-      resourcePath: /manifest/
-      description: ""
-    CreateManifestUsingPOST:
-      method: post
-      resourcePath: /manifest/
-      description: ""
-    UpdateManifestUsingPUT:
-      method: put
-      resourcePath: /manifest/
-      description: ""
-    GetManifestDetailUsingGET:
-      method: get
-      resourcePath: /manifest/{manifestIdx}
-      description: ""
-    UpdateManifestUsingDELETE:
-      method: delete
-      resourcePath: /manifest/{manifestIdx}
-      description: ""
-    GetOssListUsingGET_1:
-      method: get
-      resourcePath: /oss/list
-      description: ""
-    GetRepositoryDetailByNameUsingGET:
-      method: get
-      resourcePath: /oss/v1/repositories/{module}/detail/{name}
-      description: ""
-    RegistOssTypeUsingPOST:
-      method: post
-      resourcePath: /ossType
-      description: ""
-    GetRepositoryFileUsingGET:
-      method: get
-      resourcePath: /repository/file/{filename}
-      description: ""
-    DeleteRepositoryFileUsingDELETE:
-      method: delete
-      resourcePath: /repository/file/{filename}
-      description: ""
-    OpenapiJsonUsingGET_1:
-      method: get
-      resourcePath: /v3/api-docs/swagger-config
-      description: ""
-    GetCatalogListUsingGET:
-      method: get
-      resourcePath: /catalog/software/
-      description: "software catalog 리스트 불러오기"
-    CreateCatalogUsingPOST:
-      method: post
-      resourcePath: /catalog/software/
-      description: "software catalog 등록"
-    UpdateCatalogUsingPUT:
-      method: put
-      resourcePath: /catalog/software/
-      description: "software catalog 수정"
-    DeleteCatalogRefWorkflowUsingDELETE:
-      method: delete
-      resourcePath: /catalog/software/ref/{catalogIdx}/{catalogRefIdx}
-      description: ""
-    GetComponentDetailByNameUsingGET:
-      method: get
-      resourcePath: /oss/v1/components/{module}/detail/{id}
-      description: ""
-    GenerateHPAYamlUsingPOST:
-      method: post
-      resourcePath: /yaml/hpa
-      description: ""
-    ExecWorkflowUsingPOST:
-      method: post
-      resourcePath: /catalog/software/ref/workflow
-      description: ""
-    GetCatalogReferenceUsingGET:
-      method: get
-      resourcePath: /catalog/software/ref/{catalogIdx}
-      description: ""
-    CreateCatalogRefUsingPOST:
-      method: post
-      resourcePath: /catalog/software/ref/{catalogIdx}
-      description: "software catalog 관련정보 등록(webpage, workflow 등)"
-    GetManifestDetailTxtUsingGET:
-      method: get
-      resourcePath: /manifest/{manifestIdx}/txt
-      description: ""
-    DetailOssUsingGET:
-      method: get
-      resourcePath: /oss/{ossIdx}
-      description: ""
-    DeleteOssUsingDELETE:
-      method: delete
-      resourcePath: /oss/{ossIdx}
-      description: ""
-    UpdateOssUsingPATCH:
-      method: patch
-      resourcePath: /oss/{ossIdx}
-      description: ""
-    GetOssTypeListUsingGET:
-      method: get
-      resourcePath: /ossType/list
-      description: ""
-    GetDockerHubListUsingGET:
-      method: get
-      resourcePath: /search/dockerhub/{keyword}
-      description: ""
-    GenerateServiceYamlUsingPOST:
-      method: post
-      resourcePath: /yaml/service
-      description: ""
-    ErrorHtmlUsingHEAD:
-      method: head
-      resourcePath: /error
-      description: ""
-    ErrorHtmlUsingPOST:
-      method: post
-      resourcePath: /error
-      description: ""
-    ErrorHtmlUsingPUT:
-      method: put
-      resourcePath: /error
-      description: ""
-    ErrorHtmlUsingDELETE:
-      method: delete
-      resourcePath: /error
-      description: ""
-    ErrorHtmlUsingOPTIONS:
-      method: options
-      resourcePath: /error
-      description: ""
-    ErrorHtmlUsingPATCH:
-      method: patch
-      resourcePath: /error
-      description: ""
-    ErrorHtmlUsingGET:
-      method: get
-      resourcePath: /error
-      description: ""
-    RegistOssUsingPOST:
-      method: post
-      resourcePath: /oss
-      description: ""
-    GetOssListUsingGET:
-      method: get
-      resourcePath: /oss/list/{ossTypeName}
-      description: ""
-    UploadFilesUsingPOST:
-      method: post
-      resourcePath: /repository/file/
-      description: "file upload"
-    RedirectToUiUsingGET:
-      method: get
-      resourcePath: /swagger-ui.html
-      description: ""
-    OpenapiYamlUsingGET:
-      method: get
-      resourcePath: /v3/api-docs.yaml
-      description: ""
-    GetComponentListUsingGET:
+    Getcomponentlistusingget:
       method: get
       resourcePath: /oss/v1/components/{module}/list/{name}
       description: ""
-    CreateRepositoryUsingPOST:
-      method: post
-      resourcePath: /oss/v1/repositories/{module}/create
+    Getrepositorylistusingget_1:
+      method: get
+      resourcePath: /repository/
       description: ""
-    CreateRepositoryUsingPOST_1:
+    Createrepositoryusingpost_1:
       method: post
       resourcePath: /repository/
       description: ""
-    UpdateRepositoryUsingPUT_1:
+    Updaterepositoryusingput_1:
       method: put
       resourcePath: /repository/
       description: ""
-    DeleteRepositoryUsingDELETE_1:
+    Deleterepositoryusingdelete_1:
       method: delete
       resourcePath: /repository/
       description: ""
-    GetRepositoryListUsingGET_1:
+    Getrepositorylistusingget:
       method: get
-      resourcePath: /repository/
+      resourcePath: /oss/v1/repositories/{module}/list
       description: ""
-    GetArtifactHubListUsingGET:
-      method: get
-      resourcePath: /search/artifacthub/{keyword}
+    Updaterepositoryusingput:
+      method: put
+      resourcePath: /oss/v1/repositories/{module}/update
       description: ""
-  
-  mc-workflow-manager:
-    IsWorkflowNameDuplicatedUsingGET:
-      method: get
-      resourcePath: /workflow/name/duplicate
-      description: ""
-    GetWorkflowParamListUsingGET:
-      method: get
-      resourcePath: /workflow/param/list
-      description: ""
-    RegistWorkflowStageUsingPOST:
-      method: post
-      resourcePath: /workflowStage
-      description: ""
-    DetailEventListenerUsingGET:
-      method: get
-      resourcePath: /eventlistener/{eventListenerIdx}
-      description: ""
-    DeleteEventListnerUsingDELETE:
-      method: delete
-      resourcePath: /eventlistener/{eventListenerIdx}
-      description: ""
-    UpdateEventListnerUsingPATCH:
-      method: patch
-      resourcePath: /eventlistener/{eventListenerIdx}
-      description: ""
-    DetailOssTypeUsingGET:
-      method: get
-      resourcePath: /ossType/{ossTypeIdx}
-      description: ""
-    DeleteOssTypeUsingDELETE:
+    Deleteosstypeusingdelete:
       method: delete
       resourcePath: /ossType/{ossTypeIdx}
       description: ""
-    UpdateOssTypeUsingPATCH:
+    Updateosstypeusingpatch:
       method: patch
       resourcePath: /ossType/{ossTypeIdx}
       description: ""
-    OpenapiYamlUsingGET:
+    Detailosstypeusingget:
+      method: get
+      resourcePath: /ossType/{ossTypeIdx}
+      description: ""
+    Openapiyamlusingget:
       method: get
       resourcePath: /v3/api-docs.yaml
       description: ""
-    OpenapiJsonUsingGET_1:
+    Openapijsonusingget_1:
       method: get
       resourcePath: /v3/api-docs/swagger-config
       description: ""
-    GetWorkflowHistoryListUsingGET:
+    Getmanifestusingget:
       method: get
-      resourcePath: /workflow/history/{workflowIdx}
+      resourcePath: /manifest/
       description: ""
-    DetailOssUsingGET:
-      method: get
-      resourcePath: /oss/{ossIdx}
-      description: ""
-    DeleteOssUsingDELETE:
-      method: delete
-      resourcePath: /oss/{ossIdx}
-      description: ""
-    UpdateOssUsingPATCH:
-      method: patch
-      resourcePath: /oss/{ossIdx}
-      description: ""
-    RegistOssTypeUsingPOST:
+    Createmanifestusingpost:
       method: post
-      resourcePath: /ossType
+      resourcePath: /manifest/
       description: ""
-    OpenapiJsonUsingGET:
-      method: get
-      resourcePath: /v3/api-docs
+    Updatemanifestusingput:
+      method: put
+      resourcePath: /manifest/
       description: ""
-    RunWorkflowGetUsingGET:
-      method: get
-      resourcePath: /workflow/run/{workflowIdx}
-      description: ""
-    DetailWorkflowStageUsingGET:
-      method: get
-      resourcePath: /workflowStage/{workflowStageIdx}
-      description: ""
-    DeleteWorkflowStageUsingDELETE:
-      method: delete
-      resourcePath: /workflowStage/{workflowStageIdx}
-      description: ""
-    UpdateWorkflowStageUsingPATCH:
-      method: patch
-      resourcePath: /workflowStage/{workflowStageIdx}
-      description: ""
-    GetEventListenerListUsingGET:
-      method: get
-      resourcePath: /eventlistener/list
-      description: ""
-    RegistWorkflowUsingPOST:
-      method: post
-      resourcePath: /workflow
-      description: ""
-    GetWorkflowStageListUsingGET:
-      method: get
-      resourcePath: /workflow/workflowStageList
-      description: ""
-    GetWorkflowUsingGET:
-      method: get
-      resourcePath: /workflow/{workflowIdx}
-      description: ""
-    DeleteWorkflowUsingDELETE:
-      method: delete
-      resourcePath: /workflow/{workflowIdx}
-      description: ""
-    UpdateWorkflowUsingPATCH:
-      method: patch
-      resourcePath: /workflow/{workflowIdx}
-      description: ""
-    GetDefaultWorkflowStageUsingGET:
-      method: get
-      resourcePath: /workflowStage/default/script/{workflowStageTypeName}
-      description: ""
-    RegistEventListnerUsingPOST:
-      method: post
-      resourcePath: /eventlistener
-      description: ""
-    CheckConnectionUsingPOST:
-      method: post
-      resourcePath: /oss/connection-check
-      description: ""
-    GetWorkflowListUsingGET:
-      method: get
-      resourcePath: /workflow/list
-      description: ""
-    GetWorkflowTemplateUsingGET:
-      method: get
-      resourcePath: /workflow/template/{workflowName}
-      description: ""
-    RedirectToUiUsingGET:
-      method: get
-      resourcePath: /swagger-ui.html
-      description: ""
-    RegistWorkflowStageUsingPOST_1:
-      method: post
-      resourcePath: /workflowStageType
-      description: ""
-    GetWorkflowStageListUsingGET_2:
-      method: get
-      resourcePath: /workflowStageType/list
-      description: ""
-    GetOssListUsingGET_1:
-      method: get
-      resourcePath: /oss/list
-      description: ""
-    GetOssTypeListUsingGET:
-      method: get
-      resourcePath: /ossType/list
-      description: ""
-    IsWorkflowStageNameDuplicatedUsingGET:
-      method: get
-      resourcePath: /workflowStage/duplicate
-      description: ""
-    DetailWorkflowStageTypeUsingGET:
-      method: get
-      resourcePath: /workflowStageType/{workflowStageTypeIdx}
-      description: ""
-    DeleteWorkflowStageTypeUsingDELETE:
-      method: delete
-      resourcePath: /workflowStageType/{workflowStageTypeIdx}
-      description: ""
-    UpdateWorkflowStageTypeUsingPATCH:
-      method: patch
-      resourcePath: /workflowStageType/{workflowStageTypeIdx}
-      description: ""
-    GetWorkflowStageListUsingGET_1:
-      method: get
-      resourcePath: /workflowStage/list
-      description: ""
-    RunEventListenerUsingGET:
-      method: get
-      resourcePath: /eventlistener/run/{eventListenerIdx}
-      description: ""
-    RegistOssUsingPOST:
+    Registossusingpost:
       method: post
       resourcePath: /oss
       description: ""
-    IsOssInfoDuplicatedUsingGET:
+    Checkconnectionusingpost:
+      method: post
+      resourcePath: /oss/connection-check
+      description: ""
+    Createcomponentusingpost:
+      method: post
+      resourcePath: /oss/v1/components/{module}/create/{name}
+      description: ""
+    Getartifacthublistusingget:
+      method: get
+      resourcePath: /search/artifacthub/{keyword}
+      description: ""
+    Detailossusingget:
+      method: get
+      resourcePath: /oss/{ossIdx}
+      description: ""
+    Deleteossusingdelete:
+      method: delete
+      resourcePath: /oss/{ossIdx}
+      description: ""
+    Updateossusingpatch:
+      method: patch
+      resourcePath: /oss/{ossIdx}
+      description: ""
+    Registosstypeusingpost:
+      method: post
+      resourcePath: /ossType
+      description: ""
+    Getosstypelistusingget:
+      method: get
+      resourcePath: /ossType/list
+      description: ""
+    Getdockerhublistusingget:
+      method: get
+      resourcePath: /search/dockerhub/{keyword}
+      description: ""
+    Createrepositoryusingpost:
+      method: post
+      resourcePath: /oss/v1/repositories/{module}/create
+      description: ""
+    Getrepositoryfileusingget:
+      method: get
+      resourcePath: /repository/file/{filename}
+      description: ""
+    Deleterepositoryfileusingdelete:
+      method: delete
+      resourcePath: /repository/file/{filename}
+      description: ""
+    Redirecttouiusingget:
+      method: get
+      resourcePath: /swagger-ui.html
+      description: ""
+    Updatecatalogusingput:
+      method: put
+      resourcePath: /catalog/software/
+      description: "software catalog 수정"
+    Getcataloglistusingget:
+      method: get
+      resourcePath: /catalog/software/
+      description: "software catalog 리스트 불러오기"
+    Createcatalogusingpost:
+      method: post
+      resourcePath: /catalog/software/
+      description: "software catalog 등록"
+    Getcatalogreferenceusingget:
+      method: get
+      resourcePath: /catalog/software/ref/{catalogIdx}
+      description: ""
+    Createcatalogrefusingpost:
+      method: post
+      resourcePath: /catalog/software/ref/{catalogIdx}
+      description: "software catalog 관련정보 등록(webpage, workflow 등)"
+    Savemanifestusingget:
+      method: get
+      resourcePath: /manifest/download/{manifestIdx}
+      description: ""
+    Getmanifestdetailtxtusingget:
+      method: get
+      resourcePath: /manifest/{manifestIdx}/txt
+      description: ""
+    Getosslistusingget_1:
+      method: get
+      resourcePath: /oss/list
+      description: ""
+    Openapijsonusingget:
+      method: get
+      resourcePath: /v3/api-docs
+      description: ""
+    Generateconfigmapyamlusingpost:
+      method: post
+      resourcePath: /yaml/configmap
+      description: ""
+    Generatedeploymentyamlusingpost:
+      method: post
+      resourcePath: /yaml/deployment
+      description: ""
+    Errorhtmlusinghead:
+      method: head
+      resourcePath: /error
+      description: ""
+    Errorhtmlusingpost:
+      method: post
+      resourcePath: /error
+      description: ""
+    Errorhtmlusingput:
+      method: put
+      resourcePath: /error
+      description: ""
+    Errorhtmlusingdelete:
+      method: delete
+      resourcePath: /error
+      description: ""
+    Errorhtmlusingoptions:
+      method: options
+      resourcePath: /error
+      description: ""
+    Errorhtmlusingpatch:
+      method: patch
+      resourcePath: /error
+      description: ""
+    Errorhtmlusingget:
+      method: get
+      resourcePath: /error
+      description: ""
+    Getmanifestdetailusingget:
+      method: get
+      resourcePath: /manifest/{manifestIdx}
+      description: ""
+    Updatemanifestusingdelete:
+      method: delete
+      resourcePath: /manifest/{manifestIdx}
+      description: ""
+    Deletecomponentusingdelete:
+      method: delete
+      resourcePath: /oss/v1/components/{module}/delete/{id}
+      description: ""
+    Getcomponentdetailbynameusingget:
+      method: get
+      resourcePath: /oss/v1/components/{module}/detail/{id}
+      description: ""
+    Generatehpayamlusingpost:
+      method: post
+      resourcePath: /yaml/hpa
+      description: ""
+    Deleterepositoryusingdelete:
+      method: delete
+      resourcePath: /oss/v1/repositories/{module}/delete/{name}
+      description: ""
+    Getrepositorydetailbynameusingget:
+      method: get
+      resourcePath: /oss/v1/repositories/{module}/detail/{name}
+      description: ""
+    Getrepositoryusingget:
+      method: get
+      resourcePath: /repository/{repositoryName}
+      description: ""
+    Insertrepositoryusingpost:
+      method: post
+      resourcePath: /repository/{repositoryName}
+      description: ""
+    Generatepodyamlusingpost:
+      method: post
+      resourcePath: /yaml/pod
+      description: ""
+    Generateserviceyamlusingpost:
+      method: post
+      resourcePath: /yaml/service
+      description: ""
+    Execworkflowusingpost:
+      method: post
+      resourcePath: /catalog/software/ref/workflow
+      description: ""
+    Deletecatalogrefworkflowusingdelete:
+      method: delete
+      resourcePath: /catalog/software/ref/{catalogIdx}/{catalogRefIdx}
+      description: ""
+    Getcatalogdetailusingget:
+      method: get
+      resourcePath: /catalog/software/{catalogIdx}
+      description: "software catalog 내용 확인(연결된 정보들까지)"
+    Deletecatalogusingdelete:
+      method: delete
+      resourcePath: /catalog/software/{catalogIdx}
+      description: "software catalog 삭제"
+    Isossinfoduplicatedusingget:
       method: get
       resourcePath: /oss/duplicate
       description: ""
-    GetOssListUsingGET:
+    Uploadfilesusingpost:
+      method: post
+      resourcePath: /repository/file/
+      description: "file upload"
+
+  mc-workflow-manager:
+    Getworkflowlogusingget:
       method: get
-      resourcePath: /oss/list/{ossTypeName}
+      resourcePath: /workflow/log/{workflowIdx}
       description: ""
-    RunWorkflowPostUsingPOST:
+    Runworkflowpostusingpost:
       method: post
       resourcePath: /workflow/run
       description: ""
-  
+    Getdefaultworkflowstageusingget:
+      method: get
+      resourcePath: /workflowStage/default/script/{workflowStageTypeName}
+      description: ""
+    Detailworkflowstagetypeusingget:
+      method: get
+      resourcePath: /workflowStageType/{workflowStageTypeIdx}
+      description: ""
+    Deleteworkflowstagetypeusingdelete:
+      method: delete
+      resourcePath: /workflowStageType/{workflowStageTypeIdx}
+      description: ""
+    Updateworkflowstagetypeusingpatch:
+      method: patch
+      resourcePath: /workflowStageType/{workflowStageTypeIdx}
+      description: ""
+    Geteventlistenerlistusingget:
+      method: get
+      resourcePath: /eventlistener/list
+      description: ""
+    Detaileventlistenerusingget:
+      method: get
+      resourcePath: /eventlistener/{eventListenerIdx}
+      description: ""
+    Deleteeventlistnerusingdelete:
+      method: delete
+      resourcePath: /eventlistener/{eventListenerIdx}
+      description: ""
+    Updateeventlistnerusingpatch:
+      method: patch
+      resourcePath: /eventlistener/{eventListenerIdx}
+      description: ""
+    Checkconnectionusingpost:
+      method: post
+      resourcePath: /oss/connection-check
+      description: ""
+    Getworkflowhistorylistusingget:
+      method: get
+      resourcePath: /workflow/history/{workflowIdx}
+      description: ""
+    Detailworkflowstageusingget:
+      method: get
+      resourcePath: /workflowStage/{workflowStageIdx}
+      description: ""
+    Deleteworkflowstageusingdelete:
+      method: delete
+      resourcePath: /workflowStage/{workflowStageIdx}
+      description: ""
+    Updateworkflowstageusingpatch:
+      method: patch
+      resourcePath: /workflowStage/{workflowStageIdx}
+      description: ""
+    Registworkflowstageusingpost_1:
+      method: post
+      resourcePath: /workflowStageType
+      description: ""
+    Isossinfoduplicatedusingget:
+      method: get
+      resourcePath: /oss/duplicate
+      description: ""
+    Getosslistusingget:
+      method: get
+      resourcePath: /oss/list/{ossTypeName}
+      description: ""
+    Openapiyamlusingget:
+      method: get
+      resourcePath: /v3/api-docs.yaml
+      description: ""
+    Getworkflowstagehistorylistusingget:
+      method: get
+      resourcePath: /workflow/stageHistory/{workflowIdx}
+      description: ""
+    Getosslistusingget_1:
+      method: get
+      resourcePath: /oss/list
+      description: ""
+    Checkconnectionusingget:
+      method: get
+      resourcePath: /readyz
+      description: ""
+    Getworkflowusingget:
+      method: get
+      resourcePath: /workflow/{workflowIdx}
+      description: ""
+    Deleteworkflowusingdelete:
+      method: delete
+      resourcePath: /workflow/{workflowIdx}
+      description: ""
+    Updateworkflowusingpatch:
+      method: patch
+      resourcePath: /workflow/{workflowIdx}
+      description: ""
+    Getworkflowstagelistusingget_2:
+      method: get
+      resourcePath: /workflowStageType/list
+      description: ""
+    Isworkflowstagenameduplicatedusingget:
+      method: get
+      resourcePath: /workflowStage/duplicate
+      description: ""
+    Errorusinghead:
+      method: head
+      resourcePath: /error
+      description: ""
+    Errorusingpost:
+      method: post
+      resourcePath: /error
+      description: ""
+    Errorusingput:
+      method: put
+      resourcePath: /error
+      description: ""
+    Errorusingdelete:
+      method: delete
+      resourcePath: /error
+      description: ""
+    Errorusingoptions:
+      method: options
+      resourcePath: /error
+      description: ""
+    Errorusingpatch:
+      method: patch
+      resourcePath: /error
+      description: ""
+    Errorusingget:
+      method: get
+      resourcePath: /error
+      description: ""
+    Registossusingpost:
+      method: post
+      resourcePath: /oss
+      description: ""
+    Openapijsonusingget_1:
+      method: get
+      resourcePath: /v3/api-docs/swagger-config
+      description: ""
+    Getworkflowrunhistorylistusingget:
+      method: get
+      resourcePath: /workflow/runHistory/{workflowIdx}
+      description: ""
+    Getworkflowtemplateusingget:
+      method: get
+      resourcePath: /workflow/template/{workflowName}
+      description: ""
+    Getworkflowstagelistusingget_1:
+      method: get
+      resourcePath: /workflowStage/list
+      description: ""
+    Runeventlistenerusingget:
+      method: get
+      resourcePath: /eventlistener/run/{eventListenerIdx}
+      description: ""
+    Getworkflowlistusingget:
+      method: get
+      resourcePath: /eventlistener/workflowList/{eventListenerYn}
+      description: ""
+    Getosstypelistusingget:
+      method: get
+      resourcePath: /ossType/list
+      description: ""
+    Openapijsonusingget:
+      method: get
+      resourcePath: /v3/api-docs
+      description: ""
+    Redirecttouiusingget:
+      method: get
+      resourcePath: /swagger-ui.html
+      description: ""
+    Isworkflownameduplicatedusingget:
+      method: get
+      resourcePath: /workflow/name/duplicate
+      description: ""
+    Getworkflowparamlistusingget:
+      method: get
+      resourcePath: /workflow/param/list
+      description: ""
+    Runworkflowgetusingget:
+      method: get
+      resourcePath: /workflow/run/{workflowIdx}
+      description: ""
+    Iseventlistenerduplicatedusingget:
+      method: get
+      resourcePath: /eventlistener/duplicate
+      description: ""
+    Getworkflowdetailusingget:
+      method: get
+      resourcePath: /eventlistener/workflowDetail/{workflowIdx}/{evnetListenerYn}
+      description: ""
+    Getosstypefilteredlistusingget:
+      method: get
+      resourcePath: /ossType/filter/list
+      description: ""
+    Deleteosstypeusingdelete:
+      method: delete
+      resourcePath: /ossType/{ossTypeIdx}
+      description: ""
+    Updateosstypeusingpatch:
+      method: patch
+      resourcePath: /ossType/{ossTypeIdx}
+      description: ""
+    Detailosstypeusingget:
+      method: get
+      resourcePath: /ossType/{ossTypeIdx}
+      description: ""
+    Registworkflowstageusingpost:
+      method: post
+      resourcePath: /workflowStage
+      description: ""
+    Registeventlistnerusingpost:
+      method: post
+      resourcePath: /eventlistener
+      description: ""
+    Registosstypeusingpost:
+      method: post
+      resourcePath: /ossType
+      description: ""
+    Registworkflowusingpost:
+      method: post
+      resourcePath: /workflow
+      description: ""
+    Getworkflowlistusingget_1:
+      method: get
+      resourcePath: /workflow/list
+      description: ""
+    Detailossusingget:
+      method: get
+      resourcePath: /oss/{ossIdx}
+      description: ""
+    Deleteossusingdelete:
+      method: delete
+      resourcePath: /oss/{ossIdx}
+      description: ""
+    Updateossusingpatch:
+      method: patch
+      resourcePath: /oss/{ossIdx}
+      description: ""
+    Getworkflowstagelistusingget:
+      method: get
+      resourcePath: /workflow/workflowStageList
+      description: ""
+
   mc-cost-optimizer:
-    GetProjects:
-      method: get
-      resourcePath: /api/v2/getProjects
-      description: "워크스페이스에 속한 프로젝트 목록을 조회합니다."
-    GetUnusedRec:
+    Getinvoice:
       method: post
-      resourcePath: /api/v2/opti/unusedRec
-      description: "이번달 CSP별 요약된 빌링 인보이스를 확인한다."
-    GetSummary:
-      method: post
-      resourcePath: /api/v2/invoice/getSummary
-      description: "CSP별 빌링 인보이스 비용을 날짜별로 확인한다."
-    GetInvoice:
-      method: post
-      resourcePath: /api/v2/invoice/getInvoice
+      resourcePath: /api/costopti/be/invoice/getInvoice
       description: "이번달 빌링 인보이스 내역을 확인한다."
-    GetBillingBaseInfo:
+    Gettop5bill:
       method: post
-      resourcePath: /api/v2/invoice/getBillingBaseInfo
-      description: "이번달 CSP별 요약된 빌링 인보이스를 확인한다."
-    GetTop5Bill:
-      method: post
-      resourcePath: /api/v2/getTop5Bill
+      resourcePath: /api/costopti/be/getTop5Bill
       description: "이번달에 사용한 비용 상위 5개의 리소스와 비용을 확인합니다."
-    GetCurMonthBill:
+    Getalarmhistory:
       method: post
-      resourcePath: /api/v2/getCurMonthBill
+      resourcePath: /api/costopti/be/alarm/history
+      description: "최근 7일간 발생한 최적화 알람을 조회한다."
+    Getinstoptisizercmd:
+      method: post
+      resourcePath: /api/costopti/be/opti/instOptiSizeRcmd
+      description: "사용중인 인스턴스의 추천 사이즈를 확인한다."
+    Getcurmonthbill:
+      method: post
+      resourcePath: /api/costopti/be/getCurMonthBill
       description: "지난달 대비 이번달 비용을 확인합니다."
-    GetBillAsset:
-      method: post
-      resourcePath: /api/v2/getBillAsset
-      description: "이번달 사용한 리소스의 unit과 비용을 확인합니다."
-    GetWorkspaces:
+    Getreadyz:
       method: get
-      resourcePath: /api/v2/getWorkspaces
+      resourcePath: /api/costopti/be/readyz
+      description: "어플리케이션의 상태를 조회합니다."
+    Getworkspaces:
+      method: get
+      resourcePath: /api/costopti/be/getWorkspaces
       description: "워크스페이스 목록을 조회합니다."
+    Getabrnormalrcmd:
+      method: post
+      resourcePath: /api/costopti/be/opti/abnormalRcmd
+      description: "최근 24시간동안 과금이 발생한 서비스들의 이상 비용 여부를 확인한다."
+    Getbillingbaseinfo:
+      method: post
+      resourcePath: /api/costopti/be/invoice/getBillingBaseInfo
+      description: "이번달 CSP별 요약된 빌링 인보이스를 확인한다."
+    Getbillasset:
+      method: post
+      resourcePath: /api/costopti/be/getBillAsset
+      description: "이번달 사용한 서비스(VM, DB 등) 단위의 비용을 확인합니다."
+    Updatetbbrscmeta:
+      method: get
+      resourcePath: /api/costopti/be/updateRscMeta
+      description: ""
+    Getunusedrcmd:
+      method: post
+      resourcePath: /api/costopti/be/opti/unusedRcmd
+      description: "최근 24시간동안 과금이 발생한 리소스에 대하여 미사용 자원을 추천한다."
+    Getsummary:
+      method: post
+      resourcePath: /api/costopti/be/invoice/getSummary
+      description: "CSP별 빌링 인보이스 비용을 월별로 확인한다."
+    Getprojects:
+      method: get
+      resourcePath: /api/costopti/be/getProjects
+      description: "워크스페이스에 속한 프로젝트 목록을 조회합니다."
 
   mc-data-manager:
-    GenerateWindows:
-      method: post
-      resourcePath: /generate/windows
-      description: "Generate test data on on-premise Windows."
-    MigrationDynamodbFirestore:
-      method: post
-      resourcePath: /migration/dynamodb/firestore
-      description: "Migrate data stored in AWS DynamoDB to Google Cloud Firestore."
-    MigrationLinuxNcp:
-      method: post
-      resourcePath: /migration/linux/ncp
-      description: "Migrate data stored in a Linux-based system to NCP Object Storage."
-    MigrationNcpLinux:
-      method: post
-      resourcePath: /migration/ncp/linux
-      description: "Migrate data stored in NCP Object Storage to a Linux-based system."
-    MigrationNcpWindows:
-      method: post
-      resourcePath: /migration/ncp/windows
-      description: "Migrate data stored in NCP Object Storage to a Windows-based system."
-    MigrationGcpWindows:
-      method: post
-      resourcePath: /migration/gcp/windows
-      description: "Migrate data stored in GCP Cloud Storage to a Windows-based system."
-    MigrationLinuxS3:
-      method: post
-      resourcePath: /migration/linux/s3
-      description: "Migrate data stored in a Linux-based system to AWS S3."
-    MigrationNcpS3:
-      method: post
-      resourcePath: /migration/ncp/s3
-      description: "Migrate data stored in NCP Object Storage to AWS S3."
-    MigrationS3Windows:
-      method: post
-      resourcePath: /migration/s3/windows
-      description: "Migrate data stored in AWS S3 to a Windows-based system."
-    GenerateDynamodb:
-      method: post
-      resourcePath: /generate/dynamodb
-      description: "Generate test data on AWS DynamoDB."
-    MigrationDynamodbMongodb:
-      method: post
-      resourcePath: /migration/dynamodb/mongodb
-      description: "Migrate data stored in AWS DynamoDB to Naver Cloud MongoDB."
-    MigrationLinuxGcp:
-      method: post
-      resourcePath: /migration/linux/gcp
-      description: "Migrate data stored in a Linux-based system to GCP Cloud Storage."
-    MigrationMysql:
-      method: post
-      resourcePath: /migration/mysql
-      description: "Migrate data from one MySQL database to another MySQL database."
-    MigrationWindowsS3:
-      method: post
-      resourcePath: /migration/windows/s3
-      description: "Migrate data stored in a Windows-based system to AWS S3."
-    GenerateFirestore:
-      method: post
-      resourcePath: /generate/firestore
-      description: "Generate test data on GCP Firestore."
-    GenerateMongodb:
-      method: post
-      resourcePath: /generate/mongodb
-      description: "Generate test data on NCP MongoDB."
-    MigrationFirestoreMongodb:
-      method: post
-      resourcePath: /migration/firestore/mongodb
-      description: "Migrate data stored in Google Cloud Firestore to Naver Cloud MongoDB."
-    MigrationS3Linux:
-      method: post
-      resourcePath: /migration/s3/linux
-      description: "Migrate data stored in AWS S3 to a Linux-based system."
-    GenerateGcp:
-      method: post
-      resourcePath: /generate/gcp
-      description: "Generate test data on GCP Cloud Storage."
-    GenerateMysql:
-      method: post
-      resourcePath: /generate/mysql
-      description: "Generate test data on MySQL."
-    MigrationFirestoreDynamodb:
-      method: post
-      resourcePath: /migration/firestore/dynamodb
-      description: "Migrate data stored in Google Cloud Firestore to AWS DynamoDB."
-    MigrationGcpNcp:
-      method: post
-      resourcePath: /migration/gcp/ncp
-      description: "Migrate data stored in GCP Cloud Storage to NCP Object Storage."
-    MigrationNcpGcp:
-      method: post
-      resourcePath: /migration/ncp/gcp
-      description: "Migrate data stored in NCP Object Storage to GCP Cloud Storage."
-    GenerateLinux:
-      method: post
-      resourcePath: /generate/linux
-      description: "Generate test data on on-premise Linux."
-    GenerateNcp:
-      method: post
-      resourcePath: /generate/ncp
-      description: "Generate test data on NCP Object Storage."
-    MigrationGcpS3:
-      method: post
-      resourcePath: /migration/gcp/s3
-      description: "Migrate data stored in GCP Cloud Storage to AWS S3."
-    MigrationMongodbDynamodb:
-      method: post
-      resourcePath: /migration/mongodb/dynamodb
-      description: "Migrate data stored in Naver Cloud MongoDB to AWS DynamoDB."
-    GenerateS3:
-      method: post
-      resourcePath: /generate/s3
-      description: "Generate test data on AWS S3."
-    MigrationS3Gcp:
-      method: post
-      resourcePath: /migration/s3/gcp
-      description: "Migrate data stored in AWS S3 to Google Cloud Storage."
     MigrationS3Ncp:
       method: post
       resourcePath: /migration/s3/ncp
@@ -2530,15 +2494,131 @@ serviceActions:
       method: post
       resourcePath: /migration/gcp/linux
       description: "Migrate data stored in GCP Cloud Storage to a Linux-based system."
-    MigrationMongodbFirestore:
+    MigrationNcpLinux:
       method: post
-      resourcePath: /migration/mongodb/firestore
-      description: "Migrate data stored in Naver Cloud MongoDB to Google Cloud Firestore."
+      resourcePath: /migration/ncp/linux
+      description: "Migrate data stored in NCP Object Storage to a Linux-based system."
+    MigrationS3Gcp:
+      method: post
+      resourcePath: /migration/s3/gcp
+      description: "Migrate data stored in AWS S3 to Google Cloud Storage."
+    GenerateMongodb:
+      method: post
+      resourcePath: /generate/mongodb
+      description: "Generate test data on NCP MongoDB."
+    MigrationS3Linux:
+      method: post
+      resourcePath: /migration/s3/linux
+      description: "Migrate data stored in AWS S3 to a Linux-based system."
     MigrationWindowsGcp:
       method: post
       resourcePath: /migration/windows/gcp
       description: "Migrate data stored in a Windows-based system to GCP Cloud Storage."
+    MigrationDynamodbFirestore:
+      method: post
+      resourcePath: /migration/dynamodb/firestore
+      description: "Migrate data stored in AWS DynamoDB to Google Cloud Firestore."
+    MigrationLinuxS3:
+      method: post
+      resourcePath: /migration/linux/s3
+      description: "Migrate data stored in a Linux-based system to AWS S3."
+    MigrationNcpWindows:
+      method: post
+      resourcePath: /migration/ncp/windows
+      description: "Migrate data stored in NCP Object Storage to a Windows-based system."
+    GenerateWindows:
+      method: post
+      resourcePath: /generate/windows
+      description: "Generate test data on on-premise Windows."
+    MigrationDynamodbMongodb:
+      method: post
+      resourcePath: /migration/dynamodb/mongodb
+      description: "Migrate data stored in AWS DynamoDB to Naver Cloud MongoDB."
+    MigrationGcpS3:
+      method: post
+      resourcePath: /migration/gcp/s3
+      description: "Migrate data stored in GCP Cloud Storage to AWS S3."
+    MigrationLinuxGcp:
+      method: post
+      resourcePath: /migration/linux/gcp
+      description: "Migrate data stored in a Linux-based system to GCP Cloud Storage."
+    MigrationMysql:
+      method: post
+      resourcePath: /migration/mysql
+      description: "Migrate data from one MySQL database to another MySQL database."
+    GenerateFirestore:
+      method: post
+      resourcePath: /generate/firestore
+      description: "Generate test data on GCP Firestore."
+    GenerateMysql:
+      method: post
+      resourcePath: /generate/mysql
+      description: "Generate test data on MySQL."
+    GenerateNcp:
+      method: post
+      resourcePath: /generate/ncp
+      description: "Generate test data on NCP Object Storage."
+    MigrationS3Windows:
+      method: post
+      resourcePath: /migration/s3/windows
+      description: "Migrate data stored in AWS S3 to a Windows-based system."
+    MigrationLinuxNcp:
+      method: post
+      resourcePath: /migration/linux/ncp
+      description: "Migrate data stored in a Linux-based system to NCP Object Storage."
+    MigrationNcpGcp:
+      method: post
+      resourcePath: /migration/ncp/gcp
+      description: "Migrate data stored in NCP Object Storage to GCP Cloud Storage."
+    MigrationNcpS3:
+      method: post
+      resourcePath: /migration/ncp/s3
+      description: "Migrate data stored in NCP Object Storage to AWS S3."
+    GenerateGcp:
+      method: post
+      resourcePath: /generate/gcp
+      description: "Generate test data on GCP Cloud Storage."
+    GenerateLinux:
+      method: post
+      resourcePath: /generate/linux
+      description: "Generate test data on on-premise Linux."
+    MigrationFirestoreMongodb:
+      method: post
+      resourcePath: /migration/firestore/mongodb
+      description: "Migrate data stored in Google Cloud Firestore to Naver Cloud MongoDB."
+    MigrationWindowsS3:
+      method: post
+      resourcePath: /migration/windows/s3
+      description: "Migrate data stored in a Windows-based system to AWS S3."
+    MigrationFirestoreDynamodb:
+      method: post
+      resourcePath: /migration/firestore/dynamodb
+      description: "Migrate data stored in Google Cloud Firestore to AWS DynamoDB."
+    MigrationGcpNcp:
+      method: post
+      resourcePath: /migration/gcp/ncp
+      description: "Migrate data stored in GCP Cloud Storage to NCP Object Storage."
     MigrationWindowsNcp:
       method: post
       resourcePath: /migration/windows/ncp
       description: "Migrate data stored in a Windows-based system to NCP Object Storage."
+    MigrationGcpWindows:
+      method: post
+      resourcePath: /migration/gcp/windows
+      description: "Migrate data stored in GCP Cloud Storage to a Windows-based system."
+    MigrationMongodbFirestore:
+      method: post
+      resourcePath: /migration/mongodb/firestore
+      description: "Migrate data stored in Naver Cloud MongoDB to Google Cloud Firestore."
+    GenerateDynamodb:
+      method: post
+      resourcePath: /generate/dynamodb
+      description: "Generate test data on AWS DynamoDB."
+    GenerateS3:
+      method: post
+      resourcePath: /generate/s3
+      description: "Generate test data on AWS S3."
+    MigrationMongodbDynamodb:
+      method: post
+      resourcePath: /migration/mongodb/dynamodb
+      description: "Migrate data stored in Naver Cloud MongoDB to AWS DynamoDB."
