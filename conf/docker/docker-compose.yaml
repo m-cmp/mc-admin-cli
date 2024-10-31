@@ -153,7 +153,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: cloudbaristaorg/mc-iam-manager:edge
+    image: cloudbaristaorg/mc-iam-manager:0.3.0
     pull_policy: missing
     platform: linux/amd64
     networks:
@@ -216,6 +216,9 @@ services:
       KC_DB_USERNAME: ${IAM_POSTGRES_USER}
       KC_DB_PASSWORD: ${IAM_POSTGRES_PASSWORD}
       KC_HOSTNAME_PORT: 8080
+      KC_HOSTNAME: 127.0.0.1
+      KC_HOSTNAME_STRICT: false
+      KC_HOSTNAME_STRICT_HTTPS: false
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-iam-manager/realm-import.json:/opt/keycloak/data/import/realm-import.json

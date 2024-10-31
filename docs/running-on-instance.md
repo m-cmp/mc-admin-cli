@@ -87,6 +87,26 @@ sed -i 's|MCIAMMANAGER_PLATFORMADMIN_PASSWORD=|MCIAMMANAGER_PLATFORMADMIN_PASSWO
 Execute the IAM auto-initialization script:
 ```bash
 ./initauto.sh -f
+
+
+# Login successful.
+# Role created successfully: admin
+# First Role ID saved as ROLE_ID: d291b29a-2d36-41e7-b50d-cac7df88dde3
+# Role created successfully: operator
+# Role created successfully: viewer
+# Role created successfully: billadmin
+# Role created successfully: billviewer
+# Downloaded mcwebconsoleMenu.yaml successfully.
+# Uploaded mcwebconsoleMenu.yaml successfully.
+# Downloaded permission.csv successfully.
+# Uploaded permission.csv successfully.
+# {"id":"95d97e4e-5882-4782-b6ce-d17bf949a43f","name":"workspace1","description":"workspace1 desc","created_at":"2024-10-31T07:27:36.533011Z","updated_at":"2024-10-31T07:27:36.533011Z"} 200
+# Workspace created successfully. ID: 95d97e4e-5882-4782-b6ce-d17bf949a43f
+# {"id":"ed17c0a7-2317-40c3-b4f1-6b7f224fc681","ns_id":"project1","name":"project1","description":"project1 desc","created_at":"2024-10-31T07:27:36.572527Z","updated_at":"2024-10-31T07:27:36.572527Z"} 200
+# Project created successfully. ID: ed17c0a7-2317-40c3-b4f1-6b7f224fc681
+# {"workspace":{"id":"95d97e4e-5882-4782-b6ce-d17bf949a43f","name":"workspace1","description":"workspace1 desc","created_at":"2024-10-31T07:27:36.533011Z","updated_at":"2024-10-31T07:27:36.533011Z"},"projects":[{"id":"ed17c0a7-2317-40c3-b4f1-6b7f224fc681","ns_id":"project1","name":"project1","description":"project1 desc","created_at":"2024-10-31T07:27:36.572527Z","updated_at":"2024-10-31T07:27:36.572527Z"}]} 200
+# Project Worksapce mapping created successfully.
+# User role assigned to workspace successfully
 ```
 
 
@@ -94,6 +114,21 @@ Execute the IAM auto-initialization script:
 Execute the IAM auto-add-user script:
 ```bash
 ./add_demo_user.sh -f
+
+# Login successful.
+# {"id":"eric","password":"changeMe!","firstName":"Eric","lastName":"Schmidt","email":"eric@mcmpemail.com","description":"ericDesc"} {"id":"elon","password":"changeMe!","firstName":"Elon","lastName":"Musk","email":"elon@mcmpemail.com","description":"elonDesc"} {"id":"jeffrey","password":"changeMe!","firstName":"Jeffrey","lastName":"PrestonBezos","email":"jeffrey@mcmpemail.com","description":"jeffreyDesc"} {"id":"gates","password":"changeMe!","firstName":"Bill","lastName":"Gates","email":"gates@mcmpemail.com","description":"gatesDesc"}
+# {"id":"eric","password":"changeMe!","firstName":"Eric","lastName":"Schmidt","email":"eric@mcmpemail.com","description":"ericDesc"}
+# User created successfully: eric
+# User activated successfully: eric
+# {"id":"elon","password":"changeMe!","firstName":"Elon","lastName":"Musk","email":"elon@mcmpemail.com","description":"elonDesc"}
+# User created successfully: elon
+# User activated successfully: elon
+# {"id":"jeffrey","password":"changeMe!","firstName":"Jeffrey","lastName":"PrestonBezos","email":"jeffrey@mcmpemail.com","description":"jeffreyDesc"}
+# User created successfully: jeffrey
+# User activated successfully: jeffrey
+# {"id":"gates","password":"changeMe!","firstName":"Bill","lastName":"Gates","email":"gates@mcmpemail.com","description":"gatesDesc"}
+# User created successfully: gates
+# User activated successfully: gates
 ```
 
 ## Step 7: Access the MCMP Platform
