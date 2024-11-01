@@ -48,7 +48,7 @@ services:
     auth:
 
   mc-data-manager:
-    version: main:20241031
+    version: 0.3.0
     baseurl: http://mc-data-manager:3300
     auth:
   
@@ -2483,139 +2483,179 @@ serviceActions:
       description: "워크스페이스에 속한 프로젝트 목록을 조회합니다."
 
   mc-data-manager:
-    MigrationS3Ncp:
+    Getbackuphandler:
+      method: get
+      resourcePath: /backup/{id}
+      description: "Get the details of a Task using its ID."
+    Updatebackuphandler:
+      method: put
+      resourcePath: /backup/{id}
+      description: "Update the details of an existing Task using its ID."
+    Deletebackupkhandler:
+      method: delete
+      resourcePath: /backup/{id}
+      description: "Delete an existing Task using its ID."
+    Generateobjectstorageposthandler:
       method: post
-      resourcePath: /migration/s3/ncp
-      description: "Migrate data stored in AWS S3 to Naver Cloud Object Storage."
-    MigrationGcpLinux:
+      resourcePath: /generate/objectstorage
+      description: "Generate test data on Object Storage"
+    Migrationrdbmsposthandler:
       method: post
-      resourcePath: /migration/gcp/linux
-      description: "Migrate data stored in GCP Cloud Storage to a Linux-based system."
-    MigrationNcpLinux:
+      resourcePath: /migrate/rdbms
+      description: "Migrate data from RDBMS to RDBMS."
+    Restorenrdbposthandler:
       method: post
-      resourcePath: /migration/ncp/linux
-      description: "Migrate data stored in NCP Object Storage to a Linux-based system."
-    MigrationS3Gcp:
+      resourcePath: /restore/nrdbms
+      description: "Restore NoSQL from SQL files to a NoSQL database"
+    Updaterestorehandler:
+      method: put
+      resourcePath: /restore/{id}
+      description: "Update the details of an existing Task using its ID."
+    Deleterestorekhandler:
+      method: delete
+      resourcePath: /restore/{id}
+      description: "Delete an existing Task using its ID."
+    Getrestorehandler:
+      method: get
+      resourcePath: /restore/{id}
+      description: "Get the details of a Task using its ID."
+    Createtaskhandler:
       method: post
-      resourcePath: /migration/s3/gcp
-      description: "Migrate data stored in AWS S3 to Google Cloud Storage."
-    GenerateMongodb:
+      resourcePath: /task
+      description: "Create a new Task and store it in the system."
+    Getalltaskshandler:
+      method: get
+      resourcePath: /task
+      description: "Retrieve a list of all Tasks in the system."
+    Getallbackuphandler:
+      method: get
+      resourcePath: /backup
+      description: "Retrieve a list of all Tasks in the system."
+    Backuposposthandler:
       method: post
-      resourcePath: /generate/mongodb
-      description: "Generate test data on NCP MongoDB."
-    MigrationS3Linux:
-      method: post
-      resourcePath: /migration/s3/linux
-      description: "Migrate data stored in AWS S3 to a Linux-based system."
-    MigrationWindowsGcp:
-      method: post
-      resourcePath: /migration/windows/gcp
-      description: "Migrate data stored in a Windows-based system to GCP Cloud Storage."
-    MigrationDynamodbFirestore:
-      method: post
-      resourcePath: /migration/dynamodb/firestore
-      description: "Migrate data stored in AWS DynamoDB to Google Cloud Firestore."
-    MigrationLinuxS3:
-      method: post
-      resourcePath: /migration/linux/s3
-      description: "Migrate data stored in a Linux-based system to AWS S3."
-    MigrationNcpWindows:
-      method: post
-      resourcePath: /migration/ncp/windows
-      description: "Migrate data stored in NCP Object Storage to a Windows-based system."
-    GenerateWindows:
-      method: post
-      resourcePath: /generate/windows
-      description: "Generate test data on on-premise Windows."
-    MigrationDynamodbMongodb:
-      method: post
-      resourcePath: /migration/dynamodb/mongodb
-      description: "Migrate data stored in AWS DynamoDB to Naver Cloud MongoDB."
-    MigrationGcpS3:
-      method: post
-      resourcePath: /migration/gcp/s3
-      description: "Migrate data stored in GCP Cloud Storage to AWS S3."
-    MigrationLinuxGcp:
-      method: post
-      resourcePath: /migration/linux/gcp
-      description: "Migrate data stored in a Linux-based system to GCP Cloud Storage."
-    MigrationMysql:
-      method: post
-      resourcePath: /migration/mysql
-      description: "Migrate data from one MySQL database to another MySQL database."
-    GenerateFirestore:
-      method: post
-      resourcePath: /generate/firestore
-      description: "Generate test data on GCP Firestore."
-    GenerateMysql:
-      method: post
-      resourcePath: /generate/mysql
-      description: "Generate test data on MySQL."
-    GenerateNcp:
-      method: post
-      resourcePath: /generate/ncp
-      description: "Generate test data on NCP Object Storage."
-    MigrationS3Windows:
-      method: post
-      resourcePath: /migration/s3/windows
-      description: "Migrate data stored in AWS S3 to a Windows-based system."
-    MigrationLinuxNcp:
-      method: post
-      resourcePath: /migration/linux/ncp
-      description: "Migrate data stored in a Linux-based system to NCP Object Storage."
-    MigrationNcpGcp:
-      method: post
-      resourcePath: /migration/ncp/gcp
-      description: "Migrate data stored in NCP Object Storage to GCP Cloud Storage."
-    MigrationNcpS3:
-      method: post
-      resourcePath: /migration/ncp/s3
-      description: "Migrate data stored in NCP Object Storage to AWS S3."
-    GenerateGcp:
-      method: post
-      resourcePath: /generate/gcp
-      description: "Generate test data on GCP Cloud Storage."
-    GenerateLinux:
+      resourcePath: /backup/objectstorage
+      description: "Export data from a objectstorage  to files."
+    Generatelinuxposthandler:
       method: post
       resourcePath: /generate/linux
       description: "Generate test data on on-premise Linux."
-    MigrationFirestoreMongodb:
+    Generatewindowsposthandler:
       method: post
-      resourcePath: /migration/firestore/mongodb
-      description: "Migrate data stored in Google Cloud Firestore to Naver Cloud MongoDB."
-    MigrationWindowsS3:
+      resourcePath: /generate/windows
+      description: "Generate test data on on-premise Windows."
+    Destroyresourcehandler:
+      method: delete
+      resourcePath: /service/destroy
+      description: "Execute the destroy.sh script to destroy resources."
+    Backuprdbposthandler:
       method: post
-      resourcePath: /migration/windows/s3
-      description: "Migrate data stored in a Windows-based system to AWS S3."
-    MigrationFirestoreDynamodb:
+      resourcePath: /backup/rdbms
+      description: "Export data from a MySQL database to SQL files."
+    Getallrestorehandler:
+      method: get
+      resourcePath: /restore
+      description: "Retrieve a list of all Tasks in the system."
+    Getmigratehandler:
+      method: get
+      resourcePath: /migrate/{id}
+      description: "Get the details of a Task using its ID."
+    Updatemigratehandler:
+      method: put
+      resourcePath: /migrate/{id}
+      description: "Update the details of an existing Task using its ID."
+    Deletemigratekhandler:
+      method: delete
+      resourcePath: /migrate/{id}
+      description: "Delete an existing Task using its ID."
+    Createschedulehandler:
       method: post
-      resourcePath: /migration/firestore/dynamodb
-      description: "Migrate data stored in Google Cloud Firestore to AWS DynamoDB."
-    MigrationGcpNcp:
+      resourcePath: /schedule
+      description: "Create a new Schedule and store it in the system."
+    Getallscheduleshandler:
+      method: get
+      resourcePath: /schedule
+      description: "Retrieve a list of all Schedules in the system."
+    Generaterdbmsposthandler:
       method: post
-      resourcePath: /migration/gcp/ncp
-      description: "Migrate data stored in GCP Cloud Storage to NCP Object Storage."
-    MigrationWindowsNcp:
+      resourcePath: /generate/rdbms
+      description: "Generate test data on RDBMS"
+    Deletegeneratekhandler:
+      method: delete
+      resourcePath: /generate/{id}
+      description: "Delete an existing Task using its ID."
+    Getgeneratehandler:
+      method: get
+      resourcePath: /generate/{id}
+      description: "Get the details of a Task using its ID."
+    Updategeneratehandler:
+      method: put
+      resourcePath: /generate/{id}
+      description: "Update the details of an existing Task using its ID."
+    Applyresourcehandler:
       method: post
-      resourcePath: /migration/windows/ncp
-      description: "Migrate data stored in a Windows-based system to NCP Object Storage."
-    MigrationGcpWindows:
+      resourcePath: /service/apply
+      description: "Execute the apply.sh script to set up resources."
+    Gettaskhandler:
+      method: get
+      resourcePath: /task/{id}
+      description: "Get the details of a Task using its ID."
+    Updatetaskhandler:
+      method: put
+      resourcePath: /task/{id}
+      description: "Update the details of an existing Task using its ID."
+    Deletetaskhandler:
+      method: delete
+      resourcePath: /task/{id}
+      description: "Delete an existing Task using its ID."
+    Backupnrdbposthandler:
       method: post
-      resourcePath: /migration/gcp/windows
-      description: "Migrate data stored in GCP Cloud Storage to a Windows-based system."
-    MigrationMongodbFirestore:
+      resourcePath: /backup/nrdbms
+      description: "Export data from a MySQL database to SQL files."
+    Getallmigratehandler:
+      method: get
+      resourcePath: /migrate
+      description: "Retrieve a list of all Tasks in the system."
+    Getsystemreadyhandler:
+      method: get
+      resourcePath: /readyZ
+      description: "Get System Ready"
+    Deleteserviceandtaskallhandler:
+      method: delete
+      resourcePath: /service/clearAll
+      description: "Delete an All Service and Task."
+    Restoreosposthandler:
       method: post
-      resourcePath: /migration/mongodb/firestore
-      description: "Migrate data stored in Naver Cloud MongoDB to Google Cloud Firestore."
-    GenerateDynamodb:
+      resourcePath: /restore/objectstorage
+      description: "Restore objectstorage from files to a objectstorage"
+    Restorerdbposthandler:
       method: post
-      resourcePath: /generate/dynamodb
-      description: "Generate test data on AWS DynamoDB."
-    GenerateS3:
+      resourcePath: /restore/rdbms
+      description: "Restore MySQL from MySQL files to a MySQL database"
+    Getschedulehandler:
+      method: get
+      resourcePath: /schedule/{id}
+      description: "Get the details of a Schedule using its ID."
+    Updateschedulehandler:
+      method: put
+      resourcePath: /schedule/{id}
+      description: "Update the details of an existing Schedule using its ID."
+    Deleteschedulehandler:
+      method: delete
+      resourcePath: /schedule/{id}
+      description: "Delete an existing Schedule using its ID."
+    Getallgeneratehandler:
+      method: get
+      resourcePath: /generate
+      description: "Retrieve a list of all Tasks in the system."
+    Generatenrdbmsposthandler:
       method: post
-      resourcePath: /generate/s3
-      description: "Generate test data on AWS S3."
-    MigrationMongodbDynamodb:
+      resourcePath: /generate/nrdbms
+      description: "Generate test data on Object Storage"
+    Migrationnrdbmsposthandler:
       method: post
-      resourcePath: /migration/mongodb/dynamodb
-      description: "Migrate data stored in Naver Cloud MongoDB to AWS DynamoDB."
+      resourcePath: /migrate/nrdbms
+      description: "Migrate data from NRDBMS to NRDBMS."
+    Migrationobjectstorageposthandler:
+      method: post
+      resourcePath: /migrate/objectstorage
+      description: "Migrate data from ObjectStorage to ObjectStorage."
