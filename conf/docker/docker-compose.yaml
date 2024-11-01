@@ -579,9 +579,9 @@ services:
   mc-data-manager-init-volumes:
     image: busybox:stable
     container_name: mc-data-manager-init-volumes
-    command: ["sh", "-c", "chown -R ${UID:-0}:${GID:-0} /app/log"]
+    command: ["sh", "-c", "chown -R ${UID:-0}:${GID:-0} /app/data"]
     volumes:
-      - ./container-volume/mc-data-manager/log:/app/log/
+      - ./conf/mc-data-manager/data:/app/data/
     user: root
     env_file:
       - ./conf/mc-data-manager/.env
@@ -602,8 +602,8 @@ services:
     restart: on-failure
     user: root
     volumes:
-      - ./tool/mcc:/app/tool/mcc
-      - ./container-volume/mc-data-manager/log:/app/log/
+      - ./conf/mc-data-manager/data:/app/data/
+      - ./conf/mc-data-manager/scripts:/app/scripts/
       - /etc/localtime:/etc/localtime:ro
     env_file:
       - ./conf/mc-data-manager/.env
@@ -611,7 +611,7 @@ services:
       - mc-data-manager-network
       - mc-web-console-network
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:3300/readyz" ]
+      test: [ "CMD", "curl", "-f", "http://localhost:3300/readyZ" ]
       <<: *default-health-check
 
 
