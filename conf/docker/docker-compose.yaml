@@ -639,7 +639,7 @@ services:
       <<: *default-health-check
     
   mc-web-console-api:
-    image: sehyeong0108/mc-web-console-api:20241031
+    image: sehyeong0108/mc-web-console-api:20241101
     container_name: mc-web-console-api
     depends_on:
       - mc-web-console-db
@@ -674,7 +674,7 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    image: sehyeong0108/mc-web-console-front:20241031
+    image: sehyeong0108/mc-web-console-front:20241101
     container_name: mc-web-console-front
     depends_on:
       - mc-web-console-api
