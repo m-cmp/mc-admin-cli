@@ -48,7 +48,7 @@ services:
     auth:
 
   mc-data-manager:
-    version: main:20241031
+    version: 0.3.0
     baseurl: http://mc-data-manager:3300
     auth:
   
@@ -689,26 +689,54 @@ serviceActions:
       description: "Delete a specified CSP MyImage."
 
   mc-iam-manager:
-    Searchrolesbyname:
+    Getworkspaceuserrolemappinglistorderbyworkspace:
       method: get
-      resourcePath: /api/role/name/{roleName}
-      description: "role 검색"
-    Logout:
+      resourcePath: /api/wsuserrole
+      description: "workspace - user - role mapping 목록 workspace 기준 전체 조회"
+    Createworkspaceuserrolemappingbyname:
       method: post
-      resourcePath: /api/auth/logout
-      description: "AccessToken및 RefreshToken을 받아 해당 토큰 파기"
-    Deleteresourcepermissionpolicesbyoperationid:
-      method: delete
-      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}/remove
+      resourcePath: /api/wsuserrole
+      description: "workspace - user - role mapping 생성"
+    Updateresourcepermissionbyoperationid:
+      method: put
+      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}
       description: "권한을 OperationId를 기반으로 리소스 권한을 업데이트합니다."
-    Getprojectlist:
+    Getpermission:
       method: get
-      resourcePath: /api/prj
-      description: "project 목록 조회"
-    Createproject:
+      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}
+      description: "권한을 검색합니다."
+    Appendresourcepermissionpolicesbyoperationid:
+      method: put
+      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}/append
+      description: "권한을 OperationId를 기반으로 리소스 권한을 업데이트합니다."
+    Updaterolebyid:
+      method: put
+      resourcePath: /api/role/id/{roleId}
+      description: "role 수정"
+    Deleterolebyid:
+      method: delete
+      resourcePath: /api/role/id/{roleId}
+      description: "role 삭제"
+    Getrolebyid:
+      method: get
+      resourcePath: /api/role/id/{roleId}
+      description: "role 단건 조회"
+    Activeuser:
       method: post
-      resourcePath: /api/prj
-      description: "project 생성"
+      resourcePath: /api/user/active
+      description: "권한 있는 사용자가 해당 유저를 활성화합니다."
+    Deactiveuser:
+      method: post
+      resourcePath: /api/user/deactive
+      description: "권한 있는 사용자가 해당 유저를 비활성화합니다."
+    Login:
+      method: post
+      resourcePath: /api/auth/login
+      description: "ID/Password를 받아 JWT 세션 토큰을 반환"
+    Getdependentpermissionsbypolicyid:
+      method: get
+      resourcePath: /api/permission/policyid/{policyid}
+      description: "권한을 검색합니다."
     Getresources:
       method: get
       resourcePath: /api/resource
@@ -717,6 +745,146 @@ serviceActions:
       method: post
       resourcePath: /api/resource
       description: "리소스를 생성합니다."
+    Deleteuser:
+      method: delete
+      resourcePath: /api/user/id/{userid}
+      description: "사용자를 삭제합니다."
+    Updateuser:
+      method: put
+      resourcePath: /api/user/id/{userid}
+      description: "사용자 정보를 업데이트 합니다."
+    Readyz:
+      method: get
+      resourcePath: /readyz
+      description: "mc-iam-manager가 정상적으로 작동중인지 단순 확인합니다."
+    Getuserinfo:
+      method: get
+      resourcePath: /api/auth/userinfo
+      description: "유저 정보 조회"
+    Updateuseinfonotuse:
+      method: put
+      resourcePath: /api/auth/userinfo
+      description: "유저 정보 조회"
+    Getprojectlist:
+      method: get
+      resourcePath: /api/prj
+      description: "project 목록 조회"
+    Createproject:
+      method: post
+      resourcePath: /api/prj
+      description: "project 생성"
+    Resetmenuresource:
+      method: delete
+      resourcePath: /api/resource/reset/menu
+      description: "모든 메뉴 리소스를 삭제합니다."
+    Searchrolesbyname:
+      method: get
+      resourcePath: /api/role/name/{roleName}
+      description: "role 검색"
+    Logout:
+      method: post
+      resourcePath: /api/auth/logout
+      description: "AccessToken및 RefreshToken을 받아 해당 토큰 파기"
+    Getallavailablemenus:
+      method: get
+      resourcePath: /api/ticket/framework/{framework}/menus
+      description: "해당 프레임워크 사용자에게 할당된 메뉴 리스트를 반환합니다."
+    Syncprojectlistwithmcinfra:
+      method: get
+      resourcePath: /api/tool/mcinfra/sync
+      description: "연결된 TB(mcinframanager)의 NS 리스트를 Project List 로 등록.  \n  \n기존 등록된 project 와 중복이 발생하면 오류 발생. 새로운 환경에서 첫 회 실행하는 것을 추천."
+    Getusers:
+      method: get
+      resourcePath: /api/user
+      description: "사용자를 ID로 검색합니다."
+    Createuser:
+      method: post
+      resourcePath: /api/user
+      description: "유저를 등록합니다."
+    Getworkspaceuserrolemappingbyid:
+      method: get
+      resourcePath: /api/wsuserrole/workspace/id/{workspaceId}/user/id/{userId}
+      description: "workspace - user - role mapping 목록 workspace 와 user 로 role 조회"
+    Deleteworkspaceuserrolemapping:
+      method: delete
+      resourcePath: /api/wsuserrole/workspace/id/{workspaceId}/user/id/{userId}
+      description: "workspace - user - role mapping 목록 workspace 와 user 로 mapping 삭제"
+    Searchworkspacesbyname:
+      method: get
+      resourcePath: /api/ws/workspace/{workspaceName}
+      description: "workspace 검색"
+    Createwpmapping:
+      method: post
+      resourcePath: /api/wsprj
+      description: "workspace - projects mapping 생성"
+    Updatewpmappings:
+      method: put
+      resourcePath: /api/wsprj
+      description: "workspace - projects mapping 수정\n\n새로 입력되는 projects 와 기존 projects 를 비교하여, 없는 project 는 삭제하고, 신규 projects 는 새로 mapping 한다."
+    Getwpmappinglistorderbyworkspace:
+      method: get
+      resourcePath: /api/wsprj
+      description: "workspace - projects mapping workspace 기준 모든 목록 조회"
+    Deleteworkspaceprojectmappingbyid:
+      method: delete
+      resourcePath: /api/wsprj/workspace/id/{workspaceId}/project/id/{projectId}
+      description: "workspace - projects mapping 단건 삭제"
+    Deleteprojectbyid:
+      method: delete
+      resourcePath: /api/prj/project/id/{projectId}
+      description: "project 삭제"
+    Getprojectbyid:
+      method: get
+      resourcePath: /api/prj/project/id/{projectId}
+      description: "project 단건 조회"
+    Updateprojectbyid:
+      method: put
+      resourcePath: /api/prj/project/id/{projectId}
+      description: "project 수정"
+    Searchprojectsbyname:
+      method: get
+      resourcePath: /api/prj/project/{projectName}
+      description: "project 목록 검색"
+    Deleteresource:
+      method: delete
+      resourcePath: /api/resource/id/{id}
+      description: "리소스를 삭제합니다."
+    Updateresource:
+      method: put
+      resourcePath: /api/resource/id/{id}
+      description: "리소스를 업데이트 합니다."
+    Getmenuresources:
+      method: get
+      resourcePath: /api/resource/menus
+      description: "메뉴 리소스를 검색합니다."
+    Getallpermissions:
+      method: get
+      resourcePath: /api/ticket
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Getpermissionticket:
+      method: post
+      resourcePath: /api/ticket
+      description: "사용자는 uma_protection Role 을 가져야 한다."
+    Getworkspaceuserrolemappinglistbyuserid:
+      method: get
+      resourcePath: /api/wsuserrole/user/id/{userId}
+      description: "workspace - user - role mapping 목록 user 기준 조회"
+    Getworkspaceuserrolemappinglistbyworkspaceid:
+      method: get
+      resourcePath: /api/wsuserrole/workspace/id/{workspaceId}
+      description: "workspace - user - role mapping 목록 workspace 기준 조회"
+    Loginrefresh:
+      method: post
+      resourcePath: /api/auth/login/refresh
+      description: "refresh_token과 기존 JWT를 받아, 새로운 JWT 토큰 발급"
+    Getcurrentpermissioncsv:
+      method: get
+      resourcePath: /api/permission/file/framework/{framework}
+      description: "현재 권한을 CSV 형태로 가져옵니다."
+    Importpermissionbycsv:
+      method: post
+      resourcePath: /api/permission/file/framework/{framework}
+      description: "CSV 기반으로 권한을 업데이트 합니다."
     Getrolelist:
       method: get
       resourcePath: /api/role
@@ -729,58 +897,34 @@ serviceActions:
       method: get
       resourcePath: /api/tool/keycloak/role/sync
       description: "연결된 TB(mcinframanager)의 NS 리스트를 Project List 로 등록.  \n  \n기존 등록된 project 와 중복이 발생하면 오류 발생. 새로운 환경에서 첫 회 실행하는 것을 추천."
-    Searchworkspacesbyname:
+    Getwpmappinglistbyworkspaceid:
       method: get
-      resourcePath: /api/ws/workspace/{workspaceName}
-      description: "workspace 검색"
-    Readyz:
+      resourcePath: /api/wsprj/workspace/id/{workspaceId}
+      description: "workspace - projects mapping workspace 기준 단건 목록 조회"
+    Getpermissions:
       method: get
-      resourcePath: /readyz
-      description: "mc-iam-manager가 정상적으로 작동중인지 단순 확인합니다."
-    Getwpmappinglistorderbyworkspace:
-      method: get
-      resourcePath: /api/wsprj
-      description: "workspace - projects mapping workspace 기준 모든 목록 조회"
-    Createwpmapping:
+      resourcePath: /api/permission
+      description: "모든 권한을 가져옵니다."
+    Createapiresourcesbyapiyaml:
       method: post
-      resourcePath: /api/wsprj
-      description: "workspace - projects mapping 생성"
-    Updatewpmappings:
-      method: put
-      resourcePath: /api/wsprj
-      description: "workspace - projects mapping 수정\n\n새로 입력되는 projects 와 기존 projects 를 비교하여, 없는 project 는 삭제하고, 신규 projects 는 새로 mapping 한다."
-    Getworkspaceuserrolemappinglistbyworkspaceid:
-      method: get
-      resourcePath: /api/wsuserrole/workspace/id/{workspaceId}
-      description: "workspace - user - role mapping 목록 workspace 기준 조회"
-    Login:
-      method: post
-      resourcePath: /api/auth/login
-      description: "ID/Password를 받아 JWT 세션 토큰을 반환"
-    Gettokeninfo:
-      method: get
-      resourcePath: /api/auth/tokeninfo
-      description: "유저 정보 조회"
-    Getcurrentpermissioncsv:
-      method: get
-      resourcePath: /api/permission/file/framework/{framework}
-      description: "현재 권한을 CSV 형태로 가져옵니다."
-    Importpermissionbycsv:
-      method: post
-      resourcePath: /api/permission/file/framework/{framework}
-      description: "CSV 기반으로 권한을 업데이트 합니다."
-    Getprojectbyid:
-      method: get
-      resourcePath: /api/prj/project/id/{projectId}
-      description: "project 단건 조회"
-    Updateprojectbyid:
-      method: put
-      resourcePath: /api/prj/project/id/{projectId}
-      description: "project 수정"
-    Deleteprojectbyid:
+      resourcePath: /api/resource/file/framework/{framework}
+      description: "mc-admin-cli 에서 생성한 api yaml을 바탕으로 모든 리소스를 등록합니다.  \n리소스가 중복될시 오류를 반환하고 업데이트 하지 않습니다."
+    Resetresource:
       method: delete
-      resourcePath: /api/prj/project/id/{projectId}
-      description: "project 삭제"
+      resourcePath: /api/resource/reset
+      description: "모든 리소스를 삭제합니다."
+    Getrolebypolicyidnotuse:
+      method: get
+      resourcePath: /api/role/policyid/{policyid}
+      description: "role 단건 조회"
+    Getworkspacelist:
+      method: get
+      resourcePath: /api/ws
+      description: "workspace 목록 조회"
+    Createworkspace:
+      method: post
+      resourcePath: /api/ws
+      description: "workspace 생성"
     Deleteworkspacebyid:
       method: delete
       resourcePath: /api/ws/workspace/id/{workspaceId}
@@ -797,166 +941,22 @@ serviceActions:
       method: get
       resourcePath: /api/auth/certs
       description: "유저 토큰의 사용가능 유무"
+    Gettokeninfo:
+      method: get
+      resourcePath: /api/auth/tokeninfo
+      description: "유저 정보 조회"
     Authgetuservalidate:
       method: get
       resourcePath: /api/auth/validate
       description: "유저 토큰의 사용가능 유무"
-    Getpermission:
-      method: get
-      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}
-      description: "권한을 검색합니다."
-    Updateresourcepermissionbyoperationid:
-      method: put
-      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}
+    Deleteresourcepermissionpolicesbyoperationid:
+      method: delete
+      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}/remove
       description: "권한을 OperationId를 기반으로 리소스 권한을 업데이트합니다."
-    Activeuser:
-      method: post
-      resourcePath: /api/user/active
-      description: "권한 있는 사용자가 해당 유저를 활성화합니다."
-    Getworkspaceuserrolemappinglistorderbyworkspace:
-      method: get
-      resourcePath: /api/wsuserrole
-      description: "workspace - user - role mapping 목록 workspace 기준 전체 조회"
-    Createworkspaceuserrolemappingbyname:
-      method: post
-      resourcePath: /api/wsuserrole
-      description: "workspace - user - role mapping 생성"
-    Getallavailablemenus:
-      method: get
-      resourcePath: /api/ticket/framework/{framework}/menus
-      description: "해당 프레임워크 사용자에게 할당된 메뉴 리스트를 반환합니다."
-    Deleteuser:
-      method: delete
-      resourcePath: /api/user/id/{userid}
-      description: "사용자를 삭제합니다."
-    Updateuser:
-      method: put
-      resourcePath: /api/user/id/{userid}
-      description: "사용자 정보를 업데이트 합니다."
-    Createworkspace:
-      method: post
-      resourcePath: /api/ws
-      description: "workspace 생성"
-    Getworkspacelist:
-      method: get
-      resourcePath: /api/ws
-      description: "workspace 목록 조회"
-    Getpermissions:
-      method: get
-      resourcePath: /api/permission
-      description: "모든 권한을 가져옵니다."
-    Appendresourcepermissionpolicesbyoperationid:
-      method: put
-      resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}/append
-      description: "권한을 OperationId를 기반으로 리소스 권한을 업데이트합니다."
-    Updateresource:
-      method: put
-      resourcePath: /api/resource/id/{id}
-      description: "리소스를 업데이트 합니다."
-    Deleteresource:
-      method: delete
-      resourcePath: /api/resource/id/{id}
-      description: "리소스를 삭제합니다."
-    Getmenuresources:
-      method: get
-      resourcePath: /api/resource/menus
-      description: "메뉴 리소스를 검색합니다."
-    Getallpermissions:
-      method: get
-      resourcePath: /api/ticket
-      description: "사용자는 uma_protection Role 을 가져야 한다."
-    Getpermissionticket:
-      method: post
-      resourcePath: /api/ticket
-      description: "사용자는 uma_protection Role 을 가져야 한다."
-    Getwpmappinglistbyworkspaceid:
-      method: get
-      resourcePath: /api/wsprj/workspace/id/{workspaceId}
-      description: "workspace - projects mapping workspace 기준 단건 목록 조회"
-    Getworkspaceuserrolemappinglistbyuserid:
-      method: get
-      resourcePath: /api/wsuserrole/user/id/{userId}
-      description: "workspace - user - role mapping 목록 user 기준 조회"
-    Deleteworkspaceuserrolemapping:
-      method: delete
-      resourcePath: /api/wsuserrole/workspace/id/{workspaceId}/user/id/{userId}
-      description: "workspace - user - role mapping 목록 workspace 와 user 로 mapping 삭제"
-    Getworkspaceuserrolemappingbyid:
-      method: get
-      resourcePath: /api/wsuserrole/workspace/id/{workspaceId}/user/id/{userId}
-      description: "workspace - user - role mapping 목록 workspace 와 user 로 role 조회"
-    Loginrefresh:
-      method: post
-      resourcePath: /api/auth/login/refresh
-      description: "refresh_token과 기존 JWT를 받아, 새로운 JWT 토큰 발급"
-    Getuserinfo:
-      method: get
-      resourcePath: /api/auth/userinfo
-      description: "유저 정보 조회"
-    Updateuseinfonotuse:
-      method: put
-      resourcePath: /api/auth/userinfo
-      description: "유저 정보 조회"
-    Createapiresourcesbyapiyaml:
-      method: post
-      resourcePath: /api/resource/file/framework/{framework}
-      description: "mc-admin-cli 에서 생성한 api yaml을 바탕으로 모든 리소스를 등록합니다.  \n리소스가 중복될시 오류를 반환하고 업데이트 하지 않습니다."
-    Resetresource:
-      method: delete
-      resourcePath: /api/resource/reset
-      description: "모든 리소스를 삭제합니다."
-    Syncprojectlistwithmcinfra:
-      method: get
-      resourcePath: /api/tool/mcinfra/sync
-      description: "연결된 TB(mcinframanager)의 NS 리스트를 Project List 로 등록.  \n  \n기존 등록된 project 와 중복이 발생하면 오류 발생. 새로운 환경에서 첫 회 실행하는 것을 추천."
-    Getdependentpermissionsbypolicyid:
-      method: get
-      resourcePath: /api/permission/policyid/{policyid}
-      description: "권한을 검색합니다."
-    Searchprojectsbyname:
-      method: get
-      resourcePath: /api/prj/project/{projectName}
-      description: "project 목록 검색"
-    Resetmenuresource:
-      method: delete
-      resourcePath: /api/resource/reset/menu
-      description: "모든 메뉴 리소스를 삭제합니다."
-    Deleterolebyid:
-      method: delete
-      resourcePath: /api/role/id/{roleId}
-      description: "role 삭제"
-    Getrolebyid:
-      method: get
-      resourcePath: /api/role/id/{roleId}
-      description: "role 단건 조회"
-    Updaterolebyid:
-      method: put
-      resourcePath: /api/role/id/{roleId}
-      description: "role 수정"
-    Getrolebypolicyidnotuse:
-      method: get
-      resourcePath: /api/role/policyid/{policyid}
-      description: "role 단건 조회"
     Createmenuresourcesbymenuyaml:
       method: post
       resourcePath: /api/resource/file/framework/{framework}/menu
       description: "mc-web-console 등 menu yaml을 사용해서 메뉴 리소스를 등록합니다."
-    Getusers:
-      method: get
-      resourcePath: /api/user
-      description: "사용자를 ID로 검색합니다."
-    Createuser:
-      method: post
-      resourcePath: /api/user
-      description: "유저를 등록합니다."
-    Deactiveuser:
-      method: post
-      resourcePath: /api/user/deactive
-      description: "권한 있는 사용자가 해당 유저를 비활성화합니다."
-    Deleteworkspaceprojectmappingbyid:
-      method: delete
-      resourcePath: /api/wsprj/workspace/id/{workspaceId}/project/id/{projectId}
-      description: "workspace - projects mapping 단건 삭제"
   
   mc-infra-manager:
     Putchangek8snodegroupautoscalesize:
@@ -2483,139 +2483,179 @@ serviceActions:
       description: "워크스페이스에 속한 프로젝트 목록을 조회합니다."
 
   mc-data-manager:
-    MigrationS3Ncp:
+    Getbackuphandler:
+      method: get
+      resourcePath: /backup/{id}
+      description: "Get the details of a Task using its ID."
+    Updatebackuphandler:
+      method: put
+      resourcePath: /backup/{id}
+      description: "Update the details of an existing Task using its ID."
+    Deletebackupkhandler:
+      method: delete
+      resourcePath: /backup/{id}
+      description: "Delete an existing Task using its ID."
+    Generateobjectstorageposthandler:
       method: post
-      resourcePath: /migration/s3/ncp
-      description: "Migrate data stored in AWS S3 to Naver Cloud Object Storage."
-    MigrationGcpLinux:
+      resourcePath: /generate/objectstorage
+      description: "Generate test data on Object Storage"
+    Migrationrdbmsposthandler:
       method: post
-      resourcePath: /migration/gcp/linux
-      description: "Migrate data stored in GCP Cloud Storage to a Linux-based system."
-    MigrationNcpLinux:
+      resourcePath: /migrate/rdbms
+      description: "Migrate data from RDBMS to RDBMS."
+    Restorenrdbposthandler:
       method: post
-      resourcePath: /migration/ncp/linux
-      description: "Migrate data stored in NCP Object Storage to a Linux-based system."
-    MigrationS3Gcp:
+      resourcePath: /restore/nrdbms
+      description: "Restore NoSQL from SQL files to a NoSQL database"
+    Updaterestorehandler:
+      method: put
+      resourcePath: /restore/{id}
+      description: "Update the details of an existing Task using its ID."
+    Deleterestorekhandler:
+      method: delete
+      resourcePath: /restore/{id}
+      description: "Delete an existing Task using its ID."
+    Getrestorehandler:
+      method: get
+      resourcePath: /restore/{id}
+      description: "Get the details of a Task using its ID."
+    Createtaskhandler:
       method: post
-      resourcePath: /migration/s3/gcp
-      description: "Migrate data stored in AWS S3 to Google Cloud Storage."
-    GenerateMongodb:
+      resourcePath: /task
+      description: "Create a new Task and store it in the system."
+    Getalltaskshandler:
+      method: get
+      resourcePath: /task
+      description: "Retrieve a list of all Tasks in the system."
+    Getallbackuphandler:
+      method: get
+      resourcePath: /backup
+      description: "Retrieve a list of all Tasks in the system."
+    Backuposposthandler:
       method: post
-      resourcePath: /generate/mongodb
-      description: "Generate test data on NCP MongoDB."
-    MigrationS3Linux:
-      method: post
-      resourcePath: /migration/s3/linux
-      description: "Migrate data stored in AWS S3 to a Linux-based system."
-    MigrationWindowsGcp:
-      method: post
-      resourcePath: /migration/windows/gcp
-      description: "Migrate data stored in a Windows-based system to GCP Cloud Storage."
-    MigrationDynamodbFirestore:
-      method: post
-      resourcePath: /migration/dynamodb/firestore
-      description: "Migrate data stored in AWS DynamoDB to Google Cloud Firestore."
-    MigrationLinuxS3:
-      method: post
-      resourcePath: /migration/linux/s3
-      description: "Migrate data stored in a Linux-based system to AWS S3."
-    MigrationNcpWindows:
-      method: post
-      resourcePath: /migration/ncp/windows
-      description: "Migrate data stored in NCP Object Storage to a Windows-based system."
-    GenerateWindows:
-      method: post
-      resourcePath: /generate/windows
-      description: "Generate test data on on-premise Windows."
-    MigrationDynamodbMongodb:
-      method: post
-      resourcePath: /migration/dynamodb/mongodb
-      description: "Migrate data stored in AWS DynamoDB to Naver Cloud MongoDB."
-    MigrationGcpS3:
-      method: post
-      resourcePath: /migration/gcp/s3
-      description: "Migrate data stored in GCP Cloud Storage to AWS S3."
-    MigrationLinuxGcp:
-      method: post
-      resourcePath: /migration/linux/gcp
-      description: "Migrate data stored in a Linux-based system to GCP Cloud Storage."
-    MigrationMysql:
-      method: post
-      resourcePath: /migration/mysql
-      description: "Migrate data from one MySQL database to another MySQL database."
-    GenerateFirestore:
-      method: post
-      resourcePath: /generate/firestore
-      description: "Generate test data on GCP Firestore."
-    GenerateMysql:
-      method: post
-      resourcePath: /generate/mysql
-      description: "Generate test data on MySQL."
-    GenerateNcp:
-      method: post
-      resourcePath: /generate/ncp
-      description: "Generate test data on NCP Object Storage."
-    MigrationS3Windows:
-      method: post
-      resourcePath: /migration/s3/windows
-      description: "Migrate data stored in AWS S3 to a Windows-based system."
-    MigrationLinuxNcp:
-      method: post
-      resourcePath: /migration/linux/ncp
-      description: "Migrate data stored in a Linux-based system to NCP Object Storage."
-    MigrationNcpGcp:
-      method: post
-      resourcePath: /migration/ncp/gcp
-      description: "Migrate data stored in NCP Object Storage to GCP Cloud Storage."
-    MigrationNcpS3:
-      method: post
-      resourcePath: /migration/ncp/s3
-      description: "Migrate data stored in NCP Object Storage to AWS S3."
-    GenerateGcp:
-      method: post
-      resourcePath: /generate/gcp
-      description: "Generate test data on GCP Cloud Storage."
-    GenerateLinux:
+      resourcePath: /backup/objectstorage
+      description: "Export data from a objectstorage  to files."
+    Generatelinuxposthandler:
       method: post
       resourcePath: /generate/linux
       description: "Generate test data on on-premise Linux."
-    MigrationFirestoreMongodb:
+    Generatewindowsposthandler:
       method: post
-      resourcePath: /migration/firestore/mongodb
-      description: "Migrate data stored in Google Cloud Firestore to Naver Cloud MongoDB."
-    MigrationWindowsS3:
+      resourcePath: /generate/windows
+      description: "Generate test data on on-premise Windows."
+    Destroyresourcehandler:
+      method: delete
+      resourcePath: /service/destroy
+      description: "Execute the destroy.sh script to destroy resources."
+    Backuprdbposthandler:
       method: post
-      resourcePath: /migration/windows/s3
-      description: "Migrate data stored in a Windows-based system to AWS S3."
-    MigrationFirestoreDynamodb:
+      resourcePath: /backup/rdbms
+      description: "Export data from a MySQL database to SQL files."
+    Getallrestorehandler:
+      method: get
+      resourcePath: /restore
+      description: "Retrieve a list of all Tasks in the system."
+    Getmigratehandler:
+      method: get
+      resourcePath: /migrate/{id}
+      description: "Get the details of a Task using its ID."
+    Updatemigratehandler:
+      method: put
+      resourcePath: /migrate/{id}
+      description: "Update the details of an existing Task using its ID."
+    Deletemigratekhandler:
+      method: delete
+      resourcePath: /migrate/{id}
+      description: "Delete an existing Task using its ID."
+    Createschedulehandler:
       method: post
-      resourcePath: /migration/firestore/dynamodb
-      description: "Migrate data stored in Google Cloud Firestore to AWS DynamoDB."
-    MigrationGcpNcp:
+      resourcePath: /schedule
+      description: "Create a new Schedule and store it in the system."
+    Getallscheduleshandler:
+      method: get
+      resourcePath: /schedule
+      description: "Retrieve a list of all Schedules in the system."
+    Generaterdbmsposthandler:
       method: post
-      resourcePath: /migration/gcp/ncp
-      description: "Migrate data stored in GCP Cloud Storage to NCP Object Storage."
-    MigrationWindowsNcp:
+      resourcePath: /generate/rdbms
+      description: "Generate test data on RDBMS"
+    Deletegeneratekhandler:
+      method: delete
+      resourcePath: /generate/{id}
+      description: "Delete an existing Task using its ID."
+    Getgeneratehandler:
+      method: get
+      resourcePath: /generate/{id}
+      description: "Get the details of a Task using its ID."
+    Updategeneratehandler:
+      method: put
+      resourcePath: /generate/{id}
+      description: "Update the details of an existing Task using its ID."
+    Applyresourcehandler:
       method: post
-      resourcePath: /migration/windows/ncp
-      description: "Migrate data stored in a Windows-based system to NCP Object Storage."
-    MigrationGcpWindows:
+      resourcePath: /service/apply
+      description: "Execute the apply.sh script to set up resources."
+    Gettaskhandler:
+      method: get
+      resourcePath: /task/{id}
+      description: "Get the details of a Task using its ID."
+    Updatetaskhandler:
+      method: put
+      resourcePath: /task/{id}
+      description: "Update the details of an existing Task using its ID."
+    Deletetaskhandler:
+      method: delete
+      resourcePath: /task/{id}
+      description: "Delete an existing Task using its ID."
+    Backupnrdbposthandler:
       method: post
-      resourcePath: /migration/gcp/windows
-      description: "Migrate data stored in GCP Cloud Storage to a Windows-based system."
-    MigrationMongodbFirestore:
+      resourcePath: /backup/nrdbms
+      description: "Export data from a MySQL database to SQL files."
+    Getallmigratehandler:
+      method: get
+      resourcePath: /migrate
+      description: "Retrieve a list of all Tasks in the system."
+    Getsystemreadyhandler:
+      method: get
+      resourcePath: /readyZ
+      description: "Get System Ready"
+    Deleteserviceandtaskallhandler:
+      method: delete
+      resourcePath: /service/clearAll
+      description: "Delete an All Service and Task."
+    Restoreosposthandler:
       method: post
-      resourcePath: /migration/mongodb/firestore
-      description: "Migrate data stored in Naver Cloud MongoDB to Google Cloud Firestore."
-    GenerateDynamodb:
+      resourcePath: /restore/objectstorage
+      description: "Restore objectstorage from files to a objectstorage"
+    Restorerdbposthandler:
       method: post
-      resourcePath: /generate/dynamodb
-      description: "Generate test data on AWS DynamoDB."
-    GenerateS3:
+      resourcePath: /restore/rdbms
+      description: "Restore MySQL from MySQL files to a MySQL database"
+    Getschedulehandler:
+      method: get
+      resourcePath: /schedule/{id}
+      description: "Get the details of a Schedule using its ID."
+    Updateschedulehandler:
+      method: put
+      resourcePath: /schedule/{id}
+      description: "Update the details of an existing Schedule using its ID."
+    Deleteschedulehandler:
+      method: delete
+      resourcePath: /schedule/{id}
+      description: "Delete an existing Schedule using its ID."
+    Getallgeneratehandler:
+      method: get
+      resourcePath: /generate
+      description: "Retrieve a list of all Tasks in the system."
+    Generatenrdbmsposthandler:
       method: post
-      resourcePath: /generate/s3
-      description: "Generate test data on AWS S3."
-    MigrationMongodbDynamodb:
+      resourcePath: /generate/nrdbms
+      description: "Generate test data on Object Storage"
+    Migrationnrdbmsposthandler:
       method: post
-      resourcePath: /migration/mongodb/dynamodb
-      description: "Migrate data stored in Naver Cloud MongoDB to AWS DynamoDB."
+      resourcePath: /migrate/nrdbms
+      description: "Migrate data from NRDBMS to NRDBMS."
+    Migrationobjectstorageposthandler:
+      method: post
+      resourcePath: /migrate/objectstorage
+      description: "Migrate data from ObjectStorage to ObjectStorage."
