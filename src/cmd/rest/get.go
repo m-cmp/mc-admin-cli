@@ -2,6 +2,7 @@ package rest
 
 import (
 	"fmt"
+	"os"
 
 	"github.com/spf13/cobra"
 )
@@ -35,11 +36,13 @@ var restGetCmd = &cobra.Command{
 		resp, err := req.Get(url)
 		if err != nil {
 			fmt.Println("Error:", err)
-			return
+			os.Exit(1)
+			//return
 		}
 
 		// 응답 출력
 		ProcessResultInfo(resp)
+		ProcessOsExitcode(resp) // for docker compose healthy check
 	},
 }
 
