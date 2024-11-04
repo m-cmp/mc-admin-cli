@@ -6,6 +6,7 @@ package rest
 import (
 	"fmt"
 	"io/ioutil"
+	"os"
 
 	"strings"
 
@@ -150,6 +151,18 @@ func ProcessResultInfo(resp *resty.Response) {
 		}
 
 		fmt.Println(string(resp.Body()))
+	}
+}
+
+// Handles OS exit code for docker-compose's healthy checks.
+func ProcessOsExitcode(resp *resty.Response) {
+	// Checking response status codes
+	if resp.StatusCode() != 200 {
+		if isVerbose {
+			fmt.Fprintf(os.Stderr, "Received non-200 response: %d\n", resp.StatusCode())
+		}
+		exitCode := resp.StatusCode() / 100 // First digit (2xx, 3xx, 4xx, 5xx)
+		os.Exit(exitCode)                   // One of 0, 3, 4, or 5
 	}
 }
 
