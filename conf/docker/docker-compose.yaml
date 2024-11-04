@@ -458,7 +458,8 @@ services:
 ##### MC-APPLICATION-MANAGER #########################################################################################################################
 
   mc-application-manager-jenkins:
-    image: jenkins/jenkins:jdk17
+    image: bitnami/jenkins:2.462.3
+    user: root
     container_name: mc-application-manager-jenkins
     platform: linux/amd64
     networks:
@@ -471,13 +472,39 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker
-      - ./container-volume/mc-application-manager/jenkins/:/var/jenkins_home/:rw
+      - ./container-volume/mc-application-manager/jenkins/:/bitnami/jenkins/home:rw
     environment:
-      - PROJECT=mcmp
-    user: root
+      JENKINS_USERNAME: admin
+      JENKINS_PASSWORD: 123456 # Please CHANGE ME
+      JENKINS_PLUGINS: >-
+        workflow-api,
+        swarm,
+        authorize-project,
+        antisamy-markup-formatter,
+        pipeline-github-lib,
+        pipeline-rest-api,
+        git,
+        github-branch-source,
+        gradle,
+        pipeline-model-definition,
+        pipeline-build-step,
+        workflow-aggregator,
+        matrix-project,
+        email-ext,
+        durable-task,
+        checks-api,
+        build-timeout,
+        timestamper,
+        ws-cleanup,
+        ssh-slaves,
+        ssh-agent,
+        publish-over-ssh
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
-      <<: *default-health-check
+      test: [ "CMD", "curl", "-f", "http://localhost:8080/login" ]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
 
   mc-application-manager-sonatype-nexus:
     image: sonatype/nexus3:latest
@@ -496,7 +523,8 @@ services:
     volumes:
       - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
     environment:
-      - PROJECT=mcmp
+      NEXUS_SECURITY_RANDOMPASSWORD: 'false'
+      NEXUS_SECURITY_INITIAL_PASSWORD: 123456 # Please CHANGE ME
     user: root
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081"]
@@ -518,8 +546,8 @@ services:
     user: root
     environment:
       - DDL_AUTO=create-drop
-      - DB_USER=application
-      - DB_PASS=application!23
+      - DB_USER=application # Please CHANGE ME
+      - DB_PASS=application!23 # Please CHANGE ME
       - SQL_DATA_INIT=always
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18084/readyz" ]
@@ -529,7 +557,7 @@ services:
 ##### MC-WORKFLOW-MANAGER #########################################################################################################################
 
   mc-workflow-manager-jenkins:
-    image: jenkins/jenkins:jdk17
+    image: bitnami/jenkins:2.462.3
     container_name: mc-workflow-manager-jenkins
     platform: linux/amd64
     networks:
@@ -541,9 +569,33 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker
-      - ./container-volume/mc-workflow-manager/jenkins/:/var/jenkins_home/:rw
+      - ./container-volume/mc-workflow-manager/jenkins/:/bitnami/jenkins/home:rw
     environment:
-      - PROJECT=mcmp
+      JENKINS_USERNAME: admin
+      JENKINS_PASSWORD: 123456 # Please CHANGE ME
+      JENKINS_PLUGINS: >-
+        workflow-api,
+        swarm,
+        authorize-project,
+        antisamy-markup-formatter,
+        pipeline-github-lib,
+        pipeline-rest-api,
+        git,
+        github-branch-source,
+        gradle,
+        pipeline-model-definition,
+        pipeline-build-step,
+        workflow-aggregator,
+        matrix-project,
+        email-ext,
+        durable-task,
+        checks-api,
+        build-timeout,
+        timestamper,
+        ws-cleanup,
+        ssh-slaves,
+        ssh-agent,
+        publish-over-ssh
     user: root
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
@@ -566,8 +618,8 @@ services:
       - ./conf/mc-workflow-manager/document/:/document/
     environment:
       - DB_INIT_YN=create
-      - DB_ID=workflow
-      - DB_PW=workflow!23
+      - DB_ID=workflow # Please CHANGE ME
+      - DB_PW=workflow!23 # Please CHANGE ME
       - SQL_DATA_INIT=always
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18083/readyz" ]
