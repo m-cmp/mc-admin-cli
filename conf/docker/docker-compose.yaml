@@ -715,6 +715,7 @@ services:
       - mc-infra-connector-network
       - mc-web-console-network
     environment:
+      - TARGET_ID=mc-o11y
       - TUMBLEBUG_URL=http://mc-infra-manager:1323
       - TUMBLEBUG_ID=default
       - TUMBLEBUG_PW=default
@@ -728,7 +729,8 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - /var/log/syslog:/var/log/syslog:ro
-      - ./container-volume/mc-observability/mc-observability-manager/manager-conf:/etc/mc-observability-agent:rw
+      - ./conf/mc-observability/manager/manager-conf/c_1.conf:/etc/mc-observability-agent/conf/c_1.conf:ro
+      - ./conf/mc-observability/manager/manager-conf/c_2.conf:/etc/mc-observability-agent/conf/c_2.conf:ro
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18080/readyz" ]
       <<: *default-health-check
@@ -742,6 +744,7 @@ services:
         protocol: tcp 
     volumes:
       - ./conf/mc-observability/mariadb/maria_init.sql:/docker-entrypoint-initdb.d/maria_init.sql
+      - ./conf/mc-observability/mariadb/99-max-connections.cnf:/etc/mysql/mariadb.conf.d/99-max-connections.cnf
       - ./container-volume/mc-observability/maria/mysql/conf.d:/etc/mysql/conf.d:ro
       - ./container-volume/mc-observability/maria/mysql:/var/lib/mysql
       - ./container-volume/mc-observability/maria/log:/var/log/maria
@@ -775,7 +778,7 @@ services:
     volumes:
       - ./conf/mc-observability/influxdb/influxdb_init:/docker-entrypoint-initdb.d
       - ./container-volume/mc-observability/influxdb/config:/etc/influxdb
-      - ./container-volume/mc-observability/influxdb:/var/lib/influxdb
+      - ./container-volume/mc-observability/influxdb:/root/.influxdb
     networks:
       - mc-observability-network
     healthcheck:
