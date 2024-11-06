@@ -545,10 +545,14 @@ services:
       - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
     user: root
     environment:
-      - DDL_AUTO=create-drop
+      - DDL_AUTO=update
       - DB_USER=application # Please CHANGE ME
       - DB_PASS=application!23 # Please CHANGE ME
-      - SQL_DATA_INIT=always
+      - SQL_DATA_INIT=never
+      - TUMBLEBUG_URL=mc-infra-manager
+      - TUMBLEBUG_PORT=1323
+      - TUMBLEBUG_ID=default
+      - TUMBLEBUG_PASSWORD=default
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18084/readyz" ]
       <<: *default-health-check
