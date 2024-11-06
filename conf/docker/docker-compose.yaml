@@ -603,7 +603,7 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:0.3.0
+    image: cloudbaristaorg/mc-workflow-manager:0.3.1
     container_name: mc-workflow-manager
     platform: linux/amd64
     networks:
