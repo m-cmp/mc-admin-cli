@@ -273,8 +273,8 @@ services:
       - target: 9090
         published: 9090
         protocol: tcp
-    # depends_on:
-    #   - mc-cost-optimizer-db
+    depends_on:
+      - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
@@ -306,8 +306,8 @@ services:
       - target: 8081
         published: 8881
         protocol: tcp
-    # depends_on:
-    #   - mc-cost-optimizer-db
+    depends_on:
+      - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
@@ -334,8 +334,8 @@ services:
       - target: 8082
         published: 18082
         protocol: tcp
-    # depends_on:
-    #   - mc-cost-optimizer-db
+    depends_on:
+      - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
@@ -360,8 +360,8 @@ services:
       - target: 8083
         published: 8083
         protocol: tcp
-    # depends_on:
-    #   - mc-cost-optimizer-db
+    depends_on:
+      - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
@@ -383,8 +383,8 @@ services:
       - target: 9000
         published: 9000
         protocol: tcp
-    # depends_on:
-    #   - mc-cost-optimizer-db
+    depends_on:
+      - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
@@ -411,8 +411,8 @@ services:
       - target: 8091
         published: 8091
         protocol: tcp
-    # depends_on:
-    #   - mc-cost-optimizer-db
+    depends_on:
+      - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
@@ -438,7 +438,7 @@ services:
         published: 3307
         protocol: tcp
     volumes:
-      - ./conf/mc-cost-optimizer/init/:/docker-entrypoint-initdb.d/:ro
+      - ./conf/mc-cost-optimizer/init/:/docker-entrypoint-initdb.d
       - ./container-volume/mc-cost-optimizer/mysql/:/var/lib/mysql/
     networks:
       - mc-cost-optimizer-network
