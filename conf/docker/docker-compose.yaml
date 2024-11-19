@@ -63,7 +63,7 @@ services:
       - target: 1323
         published: 1323
         protocol: tcp
-    depends_on: 
+    depends_on:
       - mc-infra-manager-etcd
       - mc-infra-connector
     volumes:
@@ -78,10 +78,10 @@ services:
       # - TB_ETCD_AUTH_ENABLED=true
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
-      # - TB_SQLITE_URL=localhost:3306 
-      # - TB_SQLITE_DATABASE=cb_tumblebug 
-      # - TB_SQLITE_USER=cb_tumblebug 
-      # - TB_SQLITE_PASSWORD=cb_tumblebug 
+      # - TB_SQLITE_URL=localhost:3306
+      # - TB_SQLITE_DATABASE=cb_tumblebug
+      # - TB_SQLITE_USER=cb_tumblebug
+      # - TB_SQLITE_PASSWORD=cb_tumblebug
       # - TB_ALLOW_ORIGINS=*
       # - TB_AUTH_ENABLED=true
       # - TB_API_USERNAME=default
@@ -115,7 +115,7 @@ services:
       - target: 2380
         published: 2380
         protocol: tcp
-    volumes: 
+    volumes:
       - ./container-volume/mc-infra-manager/etcd/data:/etcd-data
     entrypoint: /usr/local/bin/etcd
     command:
@@ -177,7 +177,7 @@ services:
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:5000/readyz"]
       <<: *default-health-check
-    
+
   mc-iam-manager-db:
     container_name: mc-iam-manager-db
     image: postgres:14-alpine
@@ -226,23 +226,23 @@ services:
       - ./conf/mc-iam-manager/.env
     depends_on:
       - mc-iam-manager-db
-    command: 
-      - start-dev 
-      - --import-realm 
-      - --verbose 
-      - --features=token-exchange  
+    command:
+      - start-dev
+      - --import-realm
+      - --verbose
+      - --features=token-exchange
       - --https-key-store-file=/opt/keycloak/conf/server.keystore
       - --https-key-store-password=password123
     healthcheck:
       test: ["CMD", "/app/tool/mcc", "rest", "get","http://localhost:8080"]
       <<: *default-health-check
 
-##### MC-COST-OPTIMIZER #########################################################################################################################
+  ##### MC-COST-OPTIMIZER #########################################################################################################################
 
   mc-cost-optimizer-fe:
     restart: on-failure
     container_name: mc-cost-optimizer-fe
-    image: cloudbaristaorg/mc-costopti-ui:0.3.0
+    image: cloudbaristaorg/mc-costopti-ui:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -259,11 +259,11 @@ services:
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:80" ]
       <<: *default-health-check
-    
+
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: cloudbaristaorg/mc-costopti-api:0.3.0
+    image: cloudbaristaorg/mc-costopti-api:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -273,25 +273,30 @@ services:
       - target: 9090
         published: 9090
         protocol: tcp
-    depends_on:
-      - mc-cost-optimizer-db
+    # depends_on:
+    #   - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
       spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
       spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
-      tumblebug.url: http://mc-infra-manager:1323
+      tumblebug.url: http://mc-infra-manager:1323/tumblebug
       tumblebug.username: default
       tumblebug.password: default
+      costopti.alarmservice.url: ${CO_ALARM_URL}
+      costopti.assetcollector.url: ${CO_COST_ASSET_COLLECTOR_URL}
+      costopti.costcollector.url: ${CO_COST_COLLECTOR_URL}
+      costopti.costprocessor.url: ${CO_COST_PROCESSOR_URL}
+      costopti.costselector.url: ${CO_COST_SELECTOR_URL}
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get",  "http://localhost:9090/readyz" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get",  "http://localhost:9090/api/costopti/be/readyz" ]
       <<: *default-health-check
-  
+
   mc-cost-optimizer-cost-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
-    image: cloudbaristaorg/mc-costopti-costcollector:0.3.0
+    image: cloudbaristaorg/mc-costopti-costcollector:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -301,8 +306,8 @@ services:
       - target: 8081
         published: 8881
         protocol: tcp
-    depends_on:
-      - mc-cost-optimizer-db
+    # depends_on:
+    #   - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
@@ -315,14 +320,11 @@ services:
       aws.data.export.path.prefix: ${CO_AWS_CUR_EXPORT_PATH_PREFIX}
       AWS_ACCESS_KEY_ID: ${CO_AWS_ACCESS_KEY_ID}
       AWS_SECRET_ACCESS_KEY: ${CO_AWS_SECRET_ACCESS_KEY}
-    healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8081/readyz" ]
-      <<: *default-health-check
-  
+
   mc-cost-optimizer-cost-processor:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
-    image: cloudbaristaorg/mc-costopti-costprocessor:0.3.0
+    image: cloudbaristaorg/mc-costopti-costprocessor:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -332,8 +334,8 @@ services:
       - target: 8082
         published: 18082
         protocol: tcp
-    depends_on:
-      - mc-cost-optimizer-db
+    # depends_on:
+    #   - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
@@ -344,14 +346,11 @@ services:
       abnormalProcessCronSchedule: ${CO_COST_PROCESS_ABNORMAL_CRON_SCHEDULE}
       cost.selector.url: ${CO_COST_SELECTOR_URL}
       opti.alarm.url: ${CO_ALARM_URL}
-    healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8082/readyz" ]
-      <<: *default-health-check
-  
+
   mc-cost-optimizer-cost-selector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
-    image: cloudbaristaorg/mc-costopti-costselector:0.3.0
+    image: cloudbaristaorg/mc-costopti-costselector:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -361,8 +360,8 @@ services:
       - target: 8083
         published: 8083
         protocol: tcp
-    depends_on:
-      - mc-cost-optimizer-db
+    # depends_on:
+    #   - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
@@ -370,14 +369,11 @@ services:
       spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
       opti.alarm.url: ${CO_ALARM_URL}
-    healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8083/readyz" ]
-      <<: *default-health-check
-  
+
   mc-cost-optimizer-alarm-service:
     restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
-    image: cloudbaristaorg/mc-costopti-alarm:0.3.0
+    image: cloudbaristaorg/mc-costopti-alarm:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -387,8 +383,8 @@ services:
       - target: 9000
         published: 9000
         protocol: tcp
-    depends_on:
-      - mc-cost-optimizer-db
+    # depends_on:
+    #   - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
@@ -401,14 +397,11 @@ services:
       spring.datasource.hikari.history.jdbc-url: ${CO_COST_DB_URL}
       spring.datasource.hikari.history.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.history.password: ${CO_MYSQL_PASSWORD}
-    healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9000/readyz" ]
-      <<: *default-health-check
 
   mc-cost-optimizer-asset-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-asset-collector
-    image: cloudbaristaorg/mc-costopti-assetcollector:0.3.0
+    image: cloudbaristaorg/mc-costopti-assetcollector:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -418,19 +411,17 @@ services:
       - target: 8091
         published: 8091
         protocol: tcp
-    depends_on:
-      - mc-cost-optimizer-db
+    # depends_on:
+    #   - mc-cost-optimizer-db
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
       spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
       spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
+      costopti.be.url: ${CO_API_URL}
       asset.collect.url: ${CO_ASSET_MONITORING_SERVER}
       assetCollectBatchCronSchedule: ${CO_ASSET_COLLECT_BATCH_CRON_SCHEDULE}
-    healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8091/readyz" ]
-      <<: *default-health-check
 
   mc-cost-optimizer-db:
     image: mariadb:latest
@@ -440,10 +431,12 @@ services:
       - MYSQL_ROOT_PASSWORD=${CO_MYSQL_ROOT_PASSWORD}
       - MYSQL_USER=${CO_MYSQL_USER}
       - MYSQL_PASSWORD=${CO_MYSQL_PASSWORD}
+    command:
+      - --skip-character-set-client-handshake
     ports:
       - target: 3306
         published: 3307
-        protocol: tcp 
+        protocol: tcp
     volumes:
       - ./conf/mc-cost-optimizer/init/:/docker-entrypoint-initdb.d/:ro
       - ./container-volume/mc-cost-optimizer/mysql/:/var/lib/mysql/
@@ -453,7 +446,6 @@ services:
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
       <<: *default-health-check
-
 
 ##### MC-APPLICATION-MANAGER #########################################################################################################################
 
@@ -693,7 +685,7 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       <<: *default-health-check
-    
+
   mc-web-console-api:
     image: sehyeong0108/mc-web-console-api:20241101
     container_name: mc-web-console-api
@@ -797,7 +789,7 @@ services:
     ports:
       - target: 3306
         published: 3306
-        protocol: tcp 
+        protocol: tcp
     volumes:
       - ./conf/mc-observability/mariadb/maria_init.sql:/docker-entrypoint-initdb.d/maria_init.sql
       - ./conf/mc-observability/mariadb/99-max-connections.cnf:/etc/mysql/mariadb.conf.d/99-max-connections.cnf
@@ -823,10 +815,10 @@ services:
     ports:
       - target: 8086
         published: 8086
-        protocol: tcp 
+        protocol: tcp
       - target: 8082
         published: 8082
-        protocol: tcp 
+        protocol: tcp
     environment:
       - INFLUXDB_USER=mc-agent
       - INFLUXDB_PASSWORD=mc-agent
@@ -847,7 +839,7 @@ services:
     ports:
       - target: 8888
         published: 8888
-        protocol: tcp 
+        protocol: tcp
     volumes:
       - ./container-volume/mc-observability/chronograf/chronograf_data:/var/lib/chronograf
     networks:
