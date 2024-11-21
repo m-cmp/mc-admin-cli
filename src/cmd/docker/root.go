@@ -10,6 +10,9 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// ServiceName is used when you want to specify only a specific service
+var ServiceName string
+
 // restCmd represents the rest command
 var infraCmd = &cobra.Command{
 	Use:   "infra",
@@ -20,6 +23,7 @@ For example, you can setup and run, stop, and ... M-CMP runtimes.
 - ./mcc infra pull [-f ../conf/docker/docker-compose.yaml]
 - ./mcc infra run [-f ../conf/docker/docker-compose.yaml]
 - ./mcc infra info
+- ./mcc infra update
 - ./mcc infra stop [-f ../conf/docker/docker-compose.yaml]
 - ./mcc infra remove [-f ../conf/docker/docker-compose.yaml] -v -i
 
@@ -32,6 +36,8 @@ For example, you can setup and run, stop, and ... M-CMP runtimes.
 
 func init() {
 	cmd.RootCmd.AddCommand(infraCmd)
+	// ServiceName is used when you want to specify only a specific service
+	infraCmd.PersistentFlags().StringVarP(&ServiceName, "service", "s", "", "Want to target specific services only(Default : all)")
 
 	// Here you will define your flags and configuration settings.
 
