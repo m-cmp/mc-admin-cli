@@ -84,6 +84,11 @@ go build -o ../bin/mcc main.go
 ../bin/mcc infra run -d  # background 모드에서 mcmp 플랫폼을 실행합니다.
 ```
 
+원하는 특정 서브 시스템만 실행
+```bash
+../bin/mcc infra run -s "서브시스템명"
+```
+
 ## M-CMP 실행상태 확인
 ```bash
 ../bin/mcc infra info
@@ -94,7 +99,7 @@ go build -o ../bin/mcc main.go
 ../bin/mcc infra update
 ```
 
-구축된 특정 서브 시스템만 최신 버전으로 업데이트
+원하는 특정 서브 시스템만 최신 버전으로 업데이트
 ```bash
 ../bin/mcc infra update -s "서브시스템명"
 ```
@@ -104,6 +109,12 @@ go build -o ../bin/mcc main.go
 ```bash
 ../bin/mcc infra stop
 ```
+
+원하는 특정 서브 시스템만 중단
+```bash
+../bin/mcc infra stop -s "서브시스템명"
+```
+
 
 ## M-CMP 삭제
 ```bash
