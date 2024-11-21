@@ -747,7 +747,7 @@ services:
 ##### MC-OBSERVABILITY #########################################################################################################################
 
   mc-observability-manager:
-    image: cloudbaristaorg/mc-observability:0.3.0
+    image: cloudbaristaorg/mc-observability:0.3.1
     container_name: mc-observability-manager
     ports:
       - target: 18080
@@ -770,8 +770,8 @@ services:
       - SPIDER_URL=http://mc-infra-connector:1024
       - DATABASE_HOST=mc-observability-maria
       - INSIGHT_URL=http://mc-observability-insight:9001
-      - SPIDER_MONITORING_INFLUXDB_URL="http://mc-observability-influx:8086"
-      - AGENT_MANAGER_IP="http://mc-observability-manager:18080"
+      - SPIDER_MONITORING_INFLUXDB_URL=http://mc-observability-influx:8086
+      - AGENT_MANAGER_IP=http://mc-observability-manager:18080
     env_file:
       - ./conf/mc-observability/manager/.env
     volumes:
@@ -940,7 +940,7 @@ services:
       <<: *default-health-check
 
   mc-observability-insight:
-    image: cloudbaristaorg/mc-o11y-insight:0.3.0
+    image: cloudbaristaorg/mc-o11y-insight:0.3.1
     container_name: mc-observability-insight
     ports:
       - target: 9001
@@ -958,7 +958,7 @@ services:
       <<: *default-health-check
 
   mc-observability-insight-scheduler:
-    image: cloudbaristaorg/mc-o11y-insight-scheduler:0.3.0
+    image: cloudbaristaorg/mc-o11y-insight-scheduler:0.3.1
     container_name: mc-observability-insight-scheduler
     ports:
       - target: 9002
@@ -966,13 +966,12 @@ services:
         protocol: tcp
     environment:
       - TZ=Asia/Seoul
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
     networks:
       - mc-observability-network
-    user: "1000:1000"
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - /etc/localtime:/etc/localtime:ro
-      - ./conf/mc-observability/scheduler/airflow-home:/usr/local/airflow
       - ./container-volume/mc-observability/scheduler/logs:/usr/local/airflow/logs
     command: >
       /bin/bash -c "
