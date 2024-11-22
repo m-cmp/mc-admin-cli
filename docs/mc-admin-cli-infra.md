@@ -14,6 +14,7 @@
 1. mc-admin-cli 소스코드 빌드
 1. mc-admin-cli 이용하여 M-CMP 실행
 1. M-CMP 실행상태 확인
+1. M-CMP 최신 컨테이너 버전으로 갱신
 1. [참고] 프레임워크별 컨테이너 구성 및 API Endpoint
 
 
@@ -83,9 +84,24 @@ go build -o ../bin/mcc main.go
 ../bin/mcc infra run -d  # background 모드에서 mcmp 플랫폼을 실행합니다.
 ```
 
+원하는 특정 서브 시스템만 실행
+```bash
+../bin/mcc infra run -s "서브시스템명"
+```
+
 ## M-CMP 실행상태 확인
 ```bash
 ../bin/mcc infra info
+```
+
+## M-CMP 최신 컨테이너 버전으로 갱신
+```bash
+../bin/mcc infra update
+```
+
+원하는 특정 서브 시스템만 최신 버전으로 업데이트
+```bash
+../bin/mcc infra update -s "서브시스템명"
 ```
 
 
@@ -93,6 +109,12 @@ go build -o ../bin/mcc main.go
 ```bash
 ../bin/mcc infra stop
 ```
+
+원하는 특정 서브 시스템만 중단
+```bash
+../bin/mcc infra stop -s "서브시스템명"
+```
+
 
 ## M-CMP 삭제
 ```bash
