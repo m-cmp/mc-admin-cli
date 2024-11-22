@@ -19,10 +19,10 @@ var runCmd = &cobra.Command{
 		if DockerFilePath == "" {
 			fmt.Println("--file (-f) argument is required but not provided.")
 		} else if detachFlag {
-			cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s up -d", ComposeProjectName, DockerFilePath)
+			cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s up -d %s", ComposeProjectName, DockerFilePath, ServiceName)
 			common.SysCall(cmdStr)
 		} else {
-			cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s up", ComposeProjectName, DockerFilePath)
+			cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s up %s", ComposeProjectName, DockerFilePath, ServiceName)
 			//fmt.Println(cmdStr)
 			common.SysCall(cmdStr)
 		}

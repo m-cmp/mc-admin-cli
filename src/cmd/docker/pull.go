@@ -20,7 +20,7 @@ var pullCmd = &cobra.Command{
 			fmt.Println("file is required")
 		} else {
 
-			cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s pull", ComposeProjectName, DockerFilePath)
+			cmdStr := fmt.Sprintf("COMPOSE_PROJECT_NAME=%s docker compose -f %s pull %s", ComposeProjectName, DockerFilePath, ServiceName)
 			//fmt.Println(cmdStr)
 			common.SysCall(cmdStr)
 		}

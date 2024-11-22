@@ -186,6 +186,7 @@ Simple usage examples for rest commands
 ```
 
 ## api subcommand
+For more information, check out [the infra subcommand document.](./docs/mc-admin-cli-api.md)
 The api subcommands are developed to make it easy to use the open APIs of M-CMP-related frameworks from the CLI.
 
 ```
