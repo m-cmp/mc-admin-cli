@@ -38,9 +38,8 @@ services:
     environment:
       DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
       EMAIL: ${EMAIL:-admin@localhost}
-    command: >
-      sh -c "certbot certonly --webroot --webroot-path=/var/www/certbot 
-             --email $EMAIL --agree-tos --no-eff-email -d $DOMAIN_NAME --non-interactive --config-dir=/etc/letsencrypt --work-dir=/etc/letsencrypt --logs-dir=/etc/letsencrypt"
+    entrypoint: ["certbot"]
+    command: ["certonly", "--webroot", "--webroot-path=/var/www/certbot", "--email", "$EMAIL", "--agree-tos", "--no-eff-email", "-d", "$DOMAIN_NAME", "--non-interactive"]
     depends_on:
       - nginx-cert
     networks:
