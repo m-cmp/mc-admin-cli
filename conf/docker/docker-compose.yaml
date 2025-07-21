@@ -19,7 +19,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.10.8
+    image: cloudbaristaorg/cb-spider:0.11.0
     pull_policy: missing
     container_name: mc-infra-connector
     platform: linux/amd64
@@ -51,7 +51,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.10.10
+    image: cloudbaristaorg/cb-tumblebug:0.11.0
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
@@ -167,7 +167,7 @@ services:
       # # Enable external network for outbound access (not ideal for security)
       # - external_network
     ports:
-      - 6432:6432
+      - 6432:5432
     volumes:
       - ./container-volume/mc-infra-manager/meta_db/postgres:/var/lib/postgresql/data
     environment:
@@ -270,7 +270,7 @@ services:
       test: ["CMD", "/app/tool/mcc", "rest", "get","http://localhost:8080"]
       <<: *default-health-check
 
-  ##### MC-COST-OPTIMIZER #########################################################################################################################
+##### MC-COST-OPTIMIZER #########################################################################################################################
 
   mc-cost-optimizer-fe:
     restart: on-failure
