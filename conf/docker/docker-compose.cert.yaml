@@ -40,7 +40,7 @@ services:
       EMAIL: ${EMAIL:-admin@localhost}
     command: >
       sh -c "certbot certonly --webroot --webroot-path=/var/www/certbot 
-             --email $EMAIL --agree-tos --no-eff-email -d $DOMAIN_NAME"
+             --email $EMAIL --agree-tos --no-eff-email -d $DOMAIN_NAME --non-interactive --config-dir=/etc/letsencrypt --work-dir=/etc/letsencrypt --logs-dir=/etc/letsencrypt"
     depends_on:
       - nginx-cert
     networks:
