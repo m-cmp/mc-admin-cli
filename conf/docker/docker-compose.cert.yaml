@@ -1,0 +1,48 @@
+# SSL Certificate Issuance Only
+# 인증서 발급만을 위한 최소 구성
+
+networks:
+  cert-network:
+
+services:
+  # 임시 nginx (인증서 발급용)
+  nginx-cert:
+    container_name: nginx-cert
+    build:
+      context: ./dockerfiles
+      dockerfile: Dockerfile.nginx
+    ports:
+      - "${NGINX_HTTP_PORT:-80}:80"
+      - "${NGINX_HTTPS_PORT:-443}:443"
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
+    volumes:
+      - ./container-volume/certs:/etc/nginx/certs:ro
+      - ./container-volume/certbot/www:/var/www/certbot:ro
+    networks:
+      - cert-network
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "--quiet", "--tries=1", "--spider", "http://localhost/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  # Certbot (인증서 발급)
+  certbot:
+    container_name: certbot
+    image: certbot/certbot:latest
+    volumes:
+      - ./container-volume/certs:/etc/letsencrypt
+      - ./container-volume/certbot/www:/var/www/certbot
+    environment:
+      DOMAIN_NAME: ${DOMAIN_NAME:-localhost}
+      EMAIL: ${EMAIL:-admin@localhost}
+    command: >
+      sh -c "certbot certonly --webroot --webroot-path=/var/www/certbot 
+             --email $EMAIL --agree-tos --no-eff-email -d $DOMAIN_NAME"
+    depends_on:
+      - nginx-cert
+    networks:
+      - cert-network
+    restart: unless-stopped 
