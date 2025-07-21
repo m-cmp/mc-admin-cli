@@ -46,17 +46,17 @@ echo ""
 
 # 인증서 발급
 echo "1. 임시 nginx와 certbot 시작..."
-docker-compose -f docker-compose.cert.yaml up -d
+docker compose -f docker-compose.cert.yaml up -d
 
 echo ""
 echo "2. 인증서 발급 대기 중... (최대 5분)"
 for i in {1..30}; do
-    if docker-compose -f docker-compose.cert.yaml logs certbot | grep -q "Congratulations"; then
+    if docker compose -f docker-compose.cert.yaml logs certbot | grep -q "Congratulations"; then
         echo "✅ 인증서 발급 완료!"
         break
-    elif docker-compose -f docker-compose.cert.yaml logs certbot | grep -q "error"; then
+    elif docker compose -f docker-compose.cert.yaml logs certbot | grep -q "error"; then
         echo "❌ 인증서 발급 실패"
-        echo "로그 확인: docker-compose -f docker-compose.cert.yaml logs certbot"
+        echo "로그 확인: docker compose -f docker-compose.cert.yaml logs certbot"
         exit 1
     fi
     echo "대기 중... ($i/30)"
@@ -65,11 +65,11 @@ done
 
 echo ""
 echo "3. 임시 서비스 정리..."
-docker-compose -f docker-compose.cert.yaml down
+docker compose -f docker-compose.cert.yaml down
 
 echo ""
 echo "✅ SSL 인증서 발급이 완료되었습니다!"
 echo ""
 echo "다음 명령어로 전체 서비스를 시작할 수 있습니다:"
-echo "  docker-compose -f docker-compose.yaml up -d"
+echo "  docker compose -f docker-compose.yaml up -d"
 echo "" 

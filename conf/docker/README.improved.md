@@ -63,26 +63,26 @@ export DOMAIN_NAME=your-domain.com
 
 ### 인증서 발급만
 ```bash
-docker-compose -f docker-compose.cert.yaml up -d
+docker compose -f docker-compose.cert.yaml up -d
 # 인증서 발급 완료 후
-docker-compose -f docker-compose.cert.yaml down
+docker compose -f docker-compose.cert.yaml down
 ```
 
 ### 전체 서비스
 ```bash
-docker-compose -f docker-compose.yaml up -d
+docker compose -f docker-compose.yaml up -d
 ```
 
 ## 서비스 정리
 
 ### 전체 정리
 ```bash
-docker-compose -f docker-compose.yaml down
+docker compose -f docker-compose.yaml down
 ```
 
 ### 인증서 서비스만 정리
 ```bash
-docker-compose -f docker-compose.cert.yaml down
+docker compose -f docker-compose.cert.yaml down
 ```
 
 ## 장점
@@ -108,7 +108,8 @@ docker-compose -f docker-compose.cert.yaml down
 ### 인증서 발급 실패
 ```bash
 # 로그 확인
-docker-compose -f docker-compose.cert.yaml logs certbot
+docker compose -f docker-compose.cert.yaml logs certbot
+```
 
 # 포트 확인
 netstat -tulpn | grep :80
@@ -127,7 +128,7 @@ ls -la ./container-volume/certs/live/${DOMAIN_NAME}/
 ## 인증서 갱신
 ```bash
 # 인증서 갱신
-docker-compose -f docker-compose.cert.yaml run --rm certbot renew
+docker compose -f docker-compose.cert.yaml run --rm certbot renew
 ```
 
 ## 접속 정보

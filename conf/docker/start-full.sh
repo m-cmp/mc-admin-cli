@@ -25,9 +25,9 @@ if [ ! -f "./container-volume/certs/live/${DOMAIN_NAME:-localhost}/fullchain.pem
     echo "  ./setup-ssl.sh"
     echo ""
     echo "또는 수동으로:"
-    echo "  docker-compose -f docker-compose.cert.yaml up -d"
-    echo "  # 인증서 발급 완료 후"
-    echo "  docker-compose -f docker-compose.cert.yaml down"
+echo "  docker compose -f docker-compose.cert.yaml up -d"
+echo "  # 인증서 발급 완료 후"
+echo "  docker compose -f docker-compose.cert.yaml down"
     exit 1
 fi
 
@@ -39,7 +39,7 @@ echo "전체 MCMP 서비스 시작 중..."
 echo "- PostgreSQL, MC-Infra-Connector, MC-Infra-Manager"
 echo "- MC-IAM-Keycloak, MC-IAM-Manager, Nginx (SSL 적용)"
 
-docker-compose -f docker-compose.yaml up -d
+docker compose -f docker-compose.yaml up -d
 
 echo ""
 echo "서비스 시작 완료. 상태 확인 중..."
@@ -47,7 +47,7 @@ sleep 10
 
 # 서비스 상태 확인
 echo "서비스 상태:"
-docker-compose -f docker-compose.yaml ps
+docker compose -f docker-compose.yaml ps
 
 echo ""
 echo "✅ 모든 서비스가 시작되었습니다!"
