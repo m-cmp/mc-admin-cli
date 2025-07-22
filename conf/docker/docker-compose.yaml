@@ -780,7 +780,7 @@ services:
 ##### MC-OBSERVABILITY #########################################################################################################################
 
   mc-observability-manager:
-    image: cloudbaristaorg/mc-observability:0.3.1
+    image: cloudbaristaorg/mc-observability:0.4.0
     container_name: mc-observability-manager
     ports:
       - target: 18080
@@ -973,7 +973,7 @@ services:
       <<: *default-health-check
 
   mc-observability-insight:
-    image: cloudbaristaorg/mc-o11y-insight:0.3.1
+    image: cloudbaristaorg/mc-o11y-insight:0.4.0
     container_name: mc-observability-insight
     ports:
       - target: 9001
@@ -981,6 +981,7 @@ services:
         protocol: tcp
     environment:
       - TZ=Asia/Seoul
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./container-volume/mc-observability/insight/log:/mc-insight/log
@@ -991,12 +992,15 @@ services:
       <<: *default-health-check
 
   mc-observability-insight-scheduler:
-    image: cloudbaristaorg/mc-o11y-insight-scheduler:0.3.1
+    image: cloudbaristaorg/mc-o11y-insight-scheduler:0.4.0
     container_name: mc-observability-insight-scheduler
     ports:
       - target: 9002
         published: 9002
         protocol: tcp
+    depends_on:
+      mc-observability-maria:
+        condition: service_started
     environment:
       - TZ=Asia/Seoul
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
@@ -1015,7 +1019,7 @@ services:
         rm -f airflow-webserver.pid
 
         # Set up metadata database
-        airflow db migrate
+        airflow db init
 
         # Create default user
         airflow users create --username admin --password admin --email admin@test.com --firstname admin --lastname admin --role Admin
@@ -1044,6 +1048,21 @@ services:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9002/readyz" ]
       <<: *default-health-check
 
-
-
-
+  mc-observability-mcp-grafana:
+    image: mcp/grafana:latest
+    container_name: mc-observability-mcp-grafana
+    tty: true
+    stdin_open: true
+    ports:
+      - target: 8000
+        published: 8000
+        protocol: tcp
+    environment:
+      - GRAFANA_URL=${GRAFANA_URL:-}
+      - GRAFANA_API_KEY=${GRAFANA_API_KEY:-}
+    command:
+      - "--disable-sift"
+      - "--disable-incident"
+      - "--disable-search"
+    networks:
+      - mc-observability-network
