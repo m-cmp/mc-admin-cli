@@ -460,7 +460,7 @@ services:
     image: mariadb:latest
     container_name: mc-cost-optimizer-db
     environment:
-      - ALLOW_EMPTY_PASSWORD=yes
+      - ALLOW_EMPTY_PASSWORD=no
       - MYSQL_ROOT_PASSWORD=${CO_MYSQL_ROOT_PASSWORD}
       - MYSQL_USER=${CO_MYSQL_USER}
       - MYSQL_PASSWORD=${CO_MYSQL_PASSWORD}
