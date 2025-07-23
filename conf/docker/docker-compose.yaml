@@ -186,7 +186,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: cloudbaristaorg/mc-iam-manager:0.3.0
+    image: cloudbaristaorg/mc-iam-manager:edge
     pull_policy: missing
     platform: linux/amd64
     networks:
@@ -201,8 +201,9 @@ services:
       - mc-iam-manager-db
       - mc-iam-manager-kc
     environment:
-      DATABASE_URL: postgres://${IAM_POSTGRES_USER}:${IAM_POSTGRES_PASSWORD}@mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
+      DATABASE_URL: postgres://${IAM_DB_USER}:${IAM_DB_PASSWORD}@mc-iam-manager-db:5432/${IAM_DB_DATABASE_NAME}
       PORT: 5000
+
     env_file:
       - ./conf/mc-iam-manager/.env
     volumes:
@@ -225,18 +226,16 @@ services:
     volumes:
       - ./container-volume/mc-iam-manager/postgres/postgres_data:/var/lib/postgresql/data
     environment:
-      POSTGRES_DB: ${IAM_POSTGRES_DB}
-      POSTGRES_USER: ${IAM_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${IAM_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${IAM_DB_DATABASE_NAME}
+      POSTGRES_USER: ${IAM_DB_USER}
+      POSTGRES_PASSWORD: ${IAM_DB_PASSWORD}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: ["CMD-SHELL", "pg_isready -U ${IAM_DB_USER} -d ${IAM_DB_DATABASE_NAME}"]
       <<: *default-health-check
 
   mc-iam-manager-kc:
     container_name: mc-iam-manager-kc
-    build:
-      context: ./
-      dockerfile: ./dockerfiles/Dockerfile.keycloak
+    image: quay.io/keycloak/keycloak:24.0.1
     networks:
       - mc-iam-manager-network
     ports:
@@ -245,29 +244,25 @@ services:
         protocol: tcp
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
-      KC_DB_USERNAME: ${IAM_POSTGRES_USER}
-      KC_DB_PASSWORD: ${IAM_POSTGRES_PASSWORD}
+      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${IAM_DB_DATABASE_NAME}
+      KC_DB_USERNAME: ${IAM_DB_USER}
+      KC_DB_PASSWORD: ${IAM_DB_PASSWORD}
       KC_HOSTNAME_PORT: 8080
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
+      KEYCLOAK_ADMIN: ${KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:-admin_password}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
     volumes:
       - ./tool/mcc:/app/tool/mcc
-      - ./conf/mc-iam-manager/realm-import.json:/opt/keycloak/data/import/realm-import.json
       - ./container-volume/mc-iam-manager/keycloak/data/:/opt/keycloak/data/
     env_file:
       - ./conf/mc-iam-manager/.env
     depends_on:
       - mc-iam-manager-db
-    command:
-      - start-dev
-      - --import-realm
-      - --verbose
-      - --features=token-exchange
-      - --https-key-store-file=/opt/keycloak/conf/server.keystore
-      - --https-key-store-password=password123
     healthcheck:
-      test: ["CMD", "/app/tool/mcc", "rest", "get","http://localhost:8080"]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
       <<: *default-health-check
 
 ##### MC-COST-OPTIMIZER #########################################################################################################################
