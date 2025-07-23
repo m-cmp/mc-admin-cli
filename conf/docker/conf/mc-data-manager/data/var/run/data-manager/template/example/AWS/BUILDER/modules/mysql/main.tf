@@ -12,4 +12,5 @@ resource "aws_db_instance" "default" {
   parameter_group_name = "default.mysql8.0"
   skip_final_snapshot  = true
   deletion_protection = false
+  publicly_accessible = true # Allow public access
 }
