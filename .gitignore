@@ -62,3 +62,6 @@ bin/swagger.json
 
 
 conf/swagger.json
+conf/docker/conf/mc-data-manager/data/var/run/data-manager/profile/profile.json
+bin/profile.json
+conf/docker/conf/mc-data-manager/data/var/log/
