@@ -8,6 +8,14 @@ resource "google_sql_database_instance" "mysql_instance" {
 
   settings {
     tier = "db-f1-micro" # instance reesource flavor
+    ip_configuration {
+      ipv4_enabled = true
+      authorized_networks {
+        name = "Allow All Port"
+        value = var.cidr_range
+      }
+    }
+    
   }
   deletion_protection = false # Delete protection
 

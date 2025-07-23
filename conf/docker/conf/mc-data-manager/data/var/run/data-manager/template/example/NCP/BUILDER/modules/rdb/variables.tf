@@ -18,6 +18,11 @@ variable "subnet_id" {
   type        = string
 }
 
+variable "acg_id" {
+  description = "acg_id"
+  type        = string
+}
+
 variable "db_user" {
   description = "DB user"
   type        = string

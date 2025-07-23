@@ -8,4 +8,5 @@ resource "google_storage_bucket" "data_storage" {
   versioning {
     enabled = true
   }
+  force_destroy = true
 }
