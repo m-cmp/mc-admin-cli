@@ -42,6 +42,38 @@ sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 ```
 
+# Quick Guide
+ Required: Domain, Email
+  - SSL and IDP configuration requires certificates. (If you already have certificates in use, substitute them into the nginx configuration values of the iam manager)
+
+1. Certificate Issuance (docker execution)
+ Execution location: ./conf/docker
+```shell 
+sudo docker compose -f docker-compose.cert.yaml up
+```
+When issuance is successful, pem files are created in the folder with the corresponding domain name.
+ex)
+ ./container-volume/mc-iam-manager/certs/live/<my domain>fullchain.pem
+ ./container-volume/mc-iam-manager/certs/live/<my domain>/privkey.pem
+
+After domain issuance is complete, run docker down (to be used again for future renewals)
+```shell 
+sudo docker compose -f docker-compose.cert.yaml up
+```
+
+2. Execute nginx configuration script
+ (If the owner of container-volume is root, change ownership to the appropriate user)
+```shell 
+  sudo chown -R ubuntu:ubuntu ./container-volume
+  cd mc-iam-manager
+  ./0_preset_create_nginx_conf.sh
+```
+ Creates files in container-volume/mc-iam-manager/nginx using template files and configuration information under the mc-iam-manager folder.
+
+3. After completing admin cli docker configuration, start the service with docker compose.
+```shell 
+sudo docker compose -f docker-compose.yaml
+```
 
 
 ---
