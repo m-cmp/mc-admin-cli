@@ -813,7 +813,7 @@ services:
       - ./conf/mc-observability/manager/manager-conf/c_1.conf:/etc/mc-observability-agent/conf/c_1.conf:ro
       - ./conf/mc-observability/manager/manager-conf/c_2.conf:/etc/mc-observability-agent/conf/c_2.conf:ro
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18080/readyz" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18080/api/o11y/readyz" ]
       <<: *default-health-check
 
   mc-observability-maria:
@@ -839,7 +839,7 @@ services:
     networks:
       - mc-observability-network
     healthcheck:
-      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
+      test: ["CMD", "healthcheck.sh", "--connect"]
       <<: *default-health-check
 
   mc-observability-influx:
@@ -988,7 +988,7 @@ services:
     networks:
       - mc-observability-network
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9001/readyz" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9001/docs" ]
       <<: *default-health-check
 
   mc-observability-insight-scheduler:
@@ -1004,6 +1004,7 @@ services:
     environment:
       - TZ=Asia/Seoul
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
+      - AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK=true
     networks:
       - mc-observability-network
     volumes:
@@ -1045,7 +1046,7 @@ services:
         sleep infinity
             "
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9002/readyz" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8974/health" ]
       <<: *default-health-check
 
   mc-observability-mcp-grafana:
