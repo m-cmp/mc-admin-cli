@@ -6,8 +6,8 @@ echo "Creating databases for MC IAM Manager and Keycloak..."
 # 환경변수에서 값 가져오기 (기본값 설정)
 DB_USER=${IAM_DB_USER:-mciamdbadmin}
 DB_PASSWORD=${IAM_DB_PASSWORD:-mciamdbpassword}
-IAM_DB_NAME=${IAM_DB_DATABASE_NAME:-mc_iam_manager_db}
-KEYCLOAK_DB_NAME=${KEYCLOAK_DB_DATABASE_NAME:-mc_iam_keycloak_db}
+IAM_DB_NAME=${IAM_DB_DATABASE_NAME:-mc-iam-manager-db}
+KEYCLOAK_DB_NAME=${KEYCLOAK_DB_DATABASE_NAME:-mc-iam-keycloak-db}
 RECREATE_DB=${IAM_DB_RECREATE:-false}
 
 echo "Using environment variables:"

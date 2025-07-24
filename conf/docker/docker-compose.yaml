@@ -230,6 +230,8 @@ services:
       POSTGRES_DB: ${IAM_DB_DATABASE_NAME}
       POSTGRES_USER: ${IAM_DB_USER}
       POSTGRES_PASSWORD: ${IAM_DB_PASSWORD}
+    env_file:
+      - ./conf/mc-iam-manager/.env
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${IAM_DB_USER} -d ${IAM_DB_DATABASE_NAME}"]
       <<: *default-health-check
