@@ -86,8 +86,8 @@ init_platform_admin() {
     response=$(curl -s -X POST \
         --header 'Content-Type: application/json' \
         --data "$json_data" \
-        "$MCIAMMANAGER_HOST/api/initial-admin")
-    
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/initial-admin")
+
     # 응답 검증
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to make request to platform admin API"
@@ -120,7 +120,7 @@ login() {
     response=$(curl --location --silent --header 'Content-Type: application/json' --data '{
         "id":"'"$MCIAMMANAGER_PLATFORMADMIN_ID"'",
         "password":"'"$MCIAMMANAGER_PLATFORMADMIN_PASSWORD"'"
-    }' "$MCIAMMANAGER_HOST/api/auth/login")
+    }' "$MCIAMMANAGER_HOST_FOR_INIT/api/auth/login")
     
     echo "Login response: $response"
     
@@ -170,7 +170,7 @@ init_predefined_roles() {
             --header 'Content-Type: application/json' \
             --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
             --data "$json_data" \
-            "$MCIAMMANAGER_HOST/api/roles")
+            "$MCIAMMANAGER_HOST_FOR_INIT/api/roles")
         
         # 응답 검증
         if [ $? -ne 0 ]; then
@@ -203,7 +203,7 @@ init_menu() {
     response=$(curl -s -X POST \
         --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST/api/setup/initial-menus")
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/setup/initial-menus")
     
     # 응답 검증
     if [ $? -ne 0 ]; then
@@ -236,7 +236,7 @@ init_api_resources() {
     response=$(curl -s -X POST \
         --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST/api/setup/sync-mcmp-apis")
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/setup/sync-mcmp-apis")
     
     # 응답 검증
     if [ $? -ne 0 ]; then
@@ -262,7 +262,7 @@ init_cloud_resources() {
         --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: multipart/form-data' \
         --form "file=@./cloud-resource.yaml" \
-        "$MCIAMMANAGER_HOST/api/resource/file/framework/all")
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/resource/file/framework/all")
     echo "Cloud resources initialization response: $response"
     echo "Cloud resources initialized"
 }
@@ -272,7 +272,7 @@ map_api_cloud_resources() {
     response=$(curl -s -X POST \
         --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST/api/resource/mapping/api-cloud")
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/resource/mapping/api-cloud")
     echo "API-Cloud resources mapping response: $response"
     echo "API-Cloud resources mapping completed"
 }
@@ -283,7 +283,7 @@ map_workspace_csp_roles() {
     response=$(curl -s -X POST \
         --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST/api/workspace-roles/csp-mapping")
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/workspace-roles/csp-mapping")
     echo "Workspace-CSP role mapping response: $response"
     echo "Workspace-CSP role mapping completed"
 }
@@ -294,7 +294,7 @@ sync_projects() {
     response=$(curl -s -X POST \
         --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST/api/projects/sync")
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/projects/sync")
     
     # 응답 검증
     if [ $? -ne 0 ]; then
@@ -321,7 +321,7 @@ map_workspace_projects() {
     workspace_response=$(curl -s -X GET \
         --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST/api/workspaces")
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/workspaces")
     
     # 응답 검증
     if [ $? -ne 0 ]; then
@@ -348,7 +348,7 @@ map_workspace_projects() {
         --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
         --data "$json_data" \
-        "$MCIAMMANAGER_HOST/api/workspaces/projects/mapping")
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/workspaces/projects/mapping")
     
     # 응답 검증
     if [ $? -ne 0 ]; then

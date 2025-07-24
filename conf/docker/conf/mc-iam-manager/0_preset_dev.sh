@@ -20,8 +20,15 @@ echo "Creating necessary directories..."
 
 # dockercontainer-volume 디렉토리 먼저 생성 (sudo 권한으로)
 echo "Creating container-volume directory with proper permissions..."
+
+# 현재 사용자 정보 가져오기
+CURRENT_USER=$(whoami)
+CURRENT_GROUP=$(id -gn)
+
+echo "Current user: ${CURRENT_USER}:${CURRENT_GROUP}"
+
 sudo mkdir -p "${CERT_PARENT_DIR}" || { echo "Error: Failed to create ${CERT_PARENT_DIR}"; exit 1; }
-sudo chown -R ubuntu:ubuntu "${CERT_PARENT_DIR}" || { echo "Error: Failed to change ownership of ${CERT_PARENT_DIR}"; exit 1; }
+sudo chown -R "${CURRENT_USER}:${CURRENT_GROUP}" "${CERT_PARENT_DIR}" || { echo "Error: Failed to change ownership of ${CERT_PARENT_DIR}"; exit 1; }
 echo "✓ Container volume directory created and permissions set"
 
 
@@ -43,12 +50,11 @@ if [ ! -f "$TEMPLATE_FILE" ]; then
     exit 1
 fi
 
-# .env 파일을 안전하게 로드
+# .env 파일을 환경변수로 로드
 echo "환경변수를 로드합니다..."
 
-# .env 파일에서 필요한 변수들을 직접 읽어오기 (줄바꿈 문자 제거)
-DOMAIN_NAME=$(grep "^DOMAIN_NAME=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r' | xargs)
-MCIAMMANAGER_PORT=$(grep "^MCIAMMANAGER_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | tr -d '\r' | xargs)
+# .env 파일을 직접 소스로 불러오기
+source "$ENV_FILE"
 
 echo "읽어온 환경변수:"
 echo "  DOMAIN_NAME: $DOMAIN_NAME"
