@@ -225,6 +225,7 @@ services:
         protocol: tcp
     volumes:
       - ./container-volume/mc-iam-manager/postgres/postgres_data:/var/lib/postgresql/data
+      - ./conf/mc-iam-manager/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     environment:
       POSTGRES_DB: ${IAM_DB_DATABASE_NAME}
       POSTGRES_USER: ${IAM_DB_USER}
@@ -244,7 +245,7 @@ services:
         protocol: tcp
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${IAM_DB_DATABASE_NAME}
+      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${KEYCLOAK_DB_DATABASE_NAME}
       KC_DB_USERNAME: ${IAM_DB_USER}
       KC_DB_PASSWORD: ${IAM_DB_PASSWORD}
       KC_HOSTNAME_PORT: 8080
@@ -264,6 +265,24 @@ services:
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
       <<: *default-health-check
+
+  mc-iam-manager-nginx:
+    image: nginx:1.25-alpine
+    container_name: mc-iam-manager-nginx
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN_NAME=${DOMAIN_NAME}
+    volumes:
+      - ./conf/mc-iam-manager/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./container-volume/certs:/etc/nginx/certs:ro
+      - ./container-volume/certbot/www:/var/www/certbot:ro
+    depends_on:
+      - mc-iam-manager-kc
+    networks:
+      - mc-iam-manager-network
+    restart: unless-stopped
 
 ##### MC-COST-OPTIMIZER #########################################################################################################################
 
