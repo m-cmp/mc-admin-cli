@@ -235,6 +235,10 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${IAM_DB_USER} -d ${IAM_DB_DATABASE_NAME}"]
       <<: *default-health-check
+    command: >
+      sh -c "chown -R 70:70 /var/lib/postgresql/data &&
+            exec docker-entrypoint.sh postgres"
+
 
   mc-iam-manager-kc:
     container_name: mc-iam-manager-kc
@@ -245,6 +249,8 @@ services:
       - target: 8080
         published: 8080
         protocol: tcp
+    command:
+      - start-dev
     environment:
       KC_DB: postgres
       KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${KEYCLOAK_DB_DATABASE_NAME}
@@ -265,7 +271,8 @@ services:
     depends_on:
       - mc-iam-manager-db
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/health/ready"]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8080/" ]
+      # test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8080/health/ready" ]
       <<: *default-health-check
 
   mc-iam-manager-nginx:
@@ -739,6 +746,7 @@ services:
     # image: sehyeong0108/mc-web-console-api:20241101
     image: cloudbaristaorg/mc-web-console-api:0.4.0
     container_name: mc-web-console-api
+    restart: on-failure
     depends_on:
       - mc-web-console-db
       - mc-infra-connector
