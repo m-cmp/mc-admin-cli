@@ -472,8 +472,7 @@ services:
       - mc-cost-optimizer-network
       - mc-web-console-network
     healthcheck:
-      # test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
-      test: ["CMD", "healthcheck.sh", "--connect", "--innodb_initialized"]
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
       <<: *default-health-check
 
 ##### MC-APPLICATION-MANAGER #########################################################################################################################
