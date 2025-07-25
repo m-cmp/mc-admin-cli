@@ -189,6 +189,7 @@ services:
     image: cloudbaristaorg/mc-iam-manager:edge
     pull_policy: missing
     platform: linux/amd64
+    restart: unless-stopped
     networks:
       - mc-iam-manager-network
       - mc-infra-manager-network
@@ -203,7 +204,6 @@ services:
     environment:
       DATABASE_URL: postgres://${IAM_DB_USER}:${IAM_DB_PASSWORD}@mc-iam-manager-db:5432/${IAM_DB_DATABASE_NAME}
       PORT: 5000
-
     env_file:
       - ./conf/mc-iam-manager/.env
     volumes:
@@ -217,6 +217,7 @@ services:
     image: postgres:14-alpine
     pull_policy: missing
     platform: linux/amd64
+    restart: unless-stopped
     networks:
       - mc-iam-manager-network
     ports:
@@ -242,6 +243,7 @@ services:
   mc-iam-manager-kc:
     container_name: mc-iam-manager-kc
     image: quay.io/keycloak/keycloak:24.0.1
+    restart: unless-stopped
     networks:
       - mc-iam-manager-network
     ports:
@@ -278,6 +280,7 @@ services:
   mc-iam-manager-nginx:
     image: nginx:1.25-alpine
     container_name: mc-iam-manager-nginx
+    restart: unless-stopped
     ports:
       - "80:80"
       - "443:443"
@@ -291,7 +294,6 @@ services:
       - mc-iam-manager-kc
     networks:
       - mc-iam-manager-network
-    restart: unless-stopped
 
   ##### MC-COST-OPTIMIZER #########################################################################################################################
 
@@ -678,6 +680,7 @@ services:
   mc-web-console-db:
     image: postgres:14-alpine
     container_name: mc-web-console-db
+    restart: unless-stopped
     volumes:
       - ./container-volume/mc-web-console/postgres/postgres_data:/var/lib/postgresql/data
     environment:
@@ -703,7 +706,7 @@ services:
     # image: sehyeong0108/mc-web-console-api:20241101
     image: cloudbaristaorg/mc-web-console-api:0.4.1
     container_name: mc-web-console-api
-    restart: on-failure
+    restart: unless-stopped
     depends_on:
       - mc-web-console-db
       - mc-infra-connector
@@ -741,6 +744,7 @@ services:
     # image: sehyeong0108/mc-web-console-front:20241101
     image: cloudbaristaorg/mc-web-console-front:0.4.1
     container_name: mc-web-console-front
+    restart: unless-stopped
     depends_on:
       - mc-web-console-api
     networks:
