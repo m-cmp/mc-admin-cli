@@ -142,7 +142,7 @@ sync_projects() {
     response=$(curl -s -X POST \
         --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/projects/sync")
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/setup/sync-projects")
     echo "Project sync response: $response"
     echo "Project sync completed"
 }
@@ -160,6 +160,110 @@ map_workspace_projects() {
     echo "Workspace-Project mapping completed"
 }
 
+create_new_user(){
+    echo "Creating new user..."
+    
+    # 사용자로부터 입력 받기
+    read -p "Enter user description: " description
+    read -p "Enter user email: " email
+    read -p "Enter user first name: " firstName
+    read -p "Enter user last name: " lastName
+    read -p "Enable user? (true/false): " enabled
+    
+    # 입력값 검증
+    if [ -z "$description" ] || [ -z "$email" ] || [ -z "$firstName" ] || [ -z "$lastName" ] || [ -z "$enabled" ]; then
+        echo "ERROR: All fields are required"
+        return 1
+    fi
+    
+    # enabled 값 검증
+    if [ "$enabled" != "true" ] && [ "$enabled" != "false" ]; then
+        echo "ERROR: Enabled must be 'true' or 'false'"
+        return 1
+    fi
+    
+    # 이메일 형식 검증 (간단한 검증)
+    if ! echo "$email" | grep -E "^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$" > /dev/null; then
+        echo "ERROR: Invalid email format"
+        return 1
+    fi
+    
+    echo "Creating user with following details:"
+    echo "Description: $description"
+    echo "Email: $email"
+    echo "First Name: $firstName"
+    echo "Last Name: $lastName"
+    echo "Enabled: $enabled"
+    
+    # JSON 데이터 생성
+    json_data=$(jq -n \
+        --arg description "$description" \
+        --arg email "$email" \
+        --arg enabled "$enabled" \
+        --arg firstName "$firstName" \
+        --arg lastName "$lastName" \
+        '{description: $description, email: $email, enabled: $enabled, firstName: $firstName, lastName: $lastName}')
+    
+    # API 호출
+    response=$(curl -s -X POST \
+        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "$json_data" \
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/users")
+    
+    # 응답 검증
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to create new user"
+        return 1
+    fi
+    
+    echo "New user creation response: $response"
+    echo "New user creation completed"
+    return 0
+}
+
+assign_workspace_user_role() {
+    echo "Assigning workspace user role..."
+    
+    # 사용자로부터 입력 받기
+    read -p "Enter role ID: " role_id
+    read -p "Enter user ID: " user_id
+    read -p "Enter role type (platform/workspace): " role_type
+    read -p "Enter workspace ID: " workspace_id
+    
+    # 입력값 검증
+    if [ -z "$role_id" ] || [ -z "$user_id" ] || [ -z "$role_type" ] || [ -z "$workspace_id" ]; then
+        echo "ERROR: All fields are required"
+        return 1
+    fi
+    
+    # role_type 검증
+    if [ "$role_type" != "platform" ] && [ "$role_type" != "workspace" ]; then
+        echo "ERROR: Role type must be 'platform' or 'workspace'"
+        return 1
+    fi
+    
+    echo "Assigning role ID: $role_id, User ID: $user_id, Role Type: $role_type, Workspace ID: $workspace_id"
+
+    json_data=$(jq -n --arg role_id "$role_id" --arg user_id "$user_id" --arg role_type "$role_type" --arg workspace_id "$workspace_id" \
+        '{roleId: $role_id, userId: $user_id, roleType: $role_type, workspaceId: $workspace_id}')
+    response=$(curl -s -X POST \
+        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "$json_data" \
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/roles/assign/platform-role")
+
+    # 응답 검증
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to assign workspace user role"
+        return 1
+    fi
+    
+    echo "Workspace user role assignment response: $response"
+    echo "Workspace user role assignment completed"
+    return 0
+}
+
 while true; do
     echo "Select an option:"
     echo "0. Exit"
@@ -173,9 +277,10 @@ while true; do
     echo "8. Init Workspace Roles"
     echo "9. Map Workspace-CSP Roles"
     echo "10. Sync Projects"
-    echo "11. Map Workspace-All Projects"
-    
-    read -p "Enter your choice (0-8): " choice
+    echo "11. Map Workspace-All Projects"    
+    echo "12. Create New User"
+    echo "13. Assign Workspace User Role"
+    read -p "Enter your choice (0-13): " choice
     
     case $choice in
         0)
@@ -248,6 +353,20 @@ while true; do
                 echo "Please login first (option 1)"
             else
                 map_workspace_projects
+            fi
+            ;;
+        12)
+            if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+                echo "Please login first (option 1)"
+            else
+                create_new_user
+            fi
+            ;;
+        13)
+            if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+                echo "Please login first (option 2)"
+            else
+                assign_workspace_user_role
             fi
             ;;
         *)

@@ -71,6 +71,17 @@ auto_setup() {
     echo "✓ Workspace-project mapping completed successfully"
     
     echo "=== Automated setup completed successfully ==="
+
+    
+    # test 용 롤 매핑
+    add_sample_userrole_mapping
+    if [ $? -ne 0 ]; then
+        echo "ERROR: role mapping failed"
+        return 1
+    fi
+    
+    echo "✓ role mapping completed successfully"
+
 }
 
 init_platform_admin() {
@@ -294,7 +305,7 @@ sync_projects() {
     response=$(curl -s -X POST \
         --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/projects/sync")
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/setup/sync-projects")
     
     # 응답 검증
     if [ $? -ne 0 ]; then
@@ -365,6 +376,38 @@ map_workspace_projects() {
     fi
     
     echo "Workspace-Project mapping completed for workspace ID: $workspace_id"
+    return 0
+}
+
+add_sample_userrole_mapping() {
+    echo "Adding test users..."
+
+    #admin
+    role_id="1"
+    #platform admin user
+    user_id="1"
+    role_type="platform"
+    # ws01
+    workspace_id="1"
+
+    json_data=$(jq -n --arg role_id "$role_id" --arg user_id "$user_id" --arg role_type "$role_type" --arg workspace_id "$workspace_id" \
+        '{role_id: $role_id, user_id: $user_id, role_type: $role_type, workspace_id: $workspace_id}')
+    response=$(curl -s -X POST \
+        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "$json_data" \
+        "$MCIAMMANAGER_HOST_FOR_INIT/api/roles/assign/platform-role")
+
+    # 응답 검증
+    if [ $? -ne 0 ]; then
+        echo "ERROR: Failed to sync projects"
+        return 1
+    fi
+    
+    echo "Test user addition response: $response"
+
+
+    echo "Test user addition completed"
     return 0
 }
 
