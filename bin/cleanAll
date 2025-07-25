@@ -1,0 +1,72 @@
+#!/bin/bash
+
+# 경고 메시지 및 사용자 확인
+cat <<EOF
+[WARNING]
+This shell script will delete ALL Docker images, containers, volumes, networks, and also remove all container-volume directories used for persistent data.
+This is intended to reset your environment to a clean state.
+Are you sure you want to continue? (y/n)
+EOF
+read -r answer
+if [[ ! "$answer" =~ ^[Yy]$ ]]; then
+  echo "Aborted by user."
+  exit 1
+fi
+
+# 모든 Docker 이미지 삭제
+echo "All Docker images deleting..."
+if [ -n "$(docker images -q)" ]; then
+  echo "docker rmi \$(docker images -q) -f"
+  docker rmi $(docker images -q) -f
+else
+  echo "The docker image to delete does not exist."
+  echo "All docker images have already been deleted."
+fi
+
+echo
+# 모든 컨테이너 중지 및 삭제
+echo "Stopping and deleting all Docker containers..."
+if [ -n "$(docker ps -aq)" ]; then
+  echo "docker stop \$(docker ps -aq)"
+  docker stop $(docker ps -aq)
+  echo "docker rm \$(docker ps -aq)"
+  docker rm $(docker ps -aq)
+else
+  echo "No containers to stop or delete."
+fi
+
+echo
+# 모든 사용되지 않는 Docker 시스템 리소스 정리
+echo "docker system prune -a -f"
+docker system prune -a -f
+
+echo
+# 모든 볼륨 삭제
+echo "Deleting all Docker volumes..."
+if [ -n "$(docker volume ls -q)" ]; then
+  echo "docker volume rm \$(docker volume ls -q)"
+  docker volume rm $(docker volume ls -q)
+else
+  echo "No volumes to delete."
+fi
+
+echo
+# 모든 네트워크 삭제
+echo "docker network prune -f"
+docker network prune -f
+
+echo
+# container-volume 폴더 삭제 (호스트 마운트 포인트)
+echo "Deleting container-volume directories..."
+if [ -d "../conf/docker/container-volume" ]; then
+  echo "sudo rm -rf ../conf/docker/container-volume"
+  sudo rm -rf ../conf/docker/container-volume
+  echo "container-volume directories deleted successfully."
+else
+  echo "container-volume directory does not exist."
+fi
+
+echo
+# Docker 시스템 리소스 정보 표시
+echo "docker system df"
+docker system df
