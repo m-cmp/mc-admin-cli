@@ -209,7 +209,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:5000/readyz" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:${MC_IAM_MANAGER_PORT}/readyz" ]
       <<: *default-health-check
 
   mc-iam-manager-db:
