@@ -57,11 +57,11 @@ echo "환경변수를 로드합니다..."
 source "$ENV_FILE"
 
 echo "읽어온 환경변수:"
-echo "  DOMAIN_NAME: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME"
+echo "  DOMAIN_NAME: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
 echo "  MC_IAM_MANAGER_KEYCLOAK_PORT: $MC_IAM_MANAGER_KEYCLOAK_PORT"
 
 # DOMAIN_NAME을 읽은 후 CERT_DIR 정의
-CERT_DIR="${CERT_PARENT_DIR}/certs/live/${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME}"      # Let's Encrypt 구조와 동일한 인증서 저장 경로
+CERT_DIR="${CERT_PARENT_DIR}/certs/live/${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}"      # Let's Encrypt 구조와 동일한 인증서 저장 경로
 
 # Let's Encrypt 구조와 동일한 certs/live/도메인명 디렉토리 생성
 echo "Creating certificate directory: ${CERT_DIR}"
@@ -72,31 +72,31 @@ echo "✓ Certificate directory created successfully"
 ## 로컬환경(인증서) 설정
 # --- 3. hosts 파일에 도메인 추가 (관리자 권한 필요) ---
 HOSTS_FILE="/etc/hosts" # hosts 파일 경로 (macOS/Linux 기준)
-echo "Checking ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME} in ${HOSTS_FILE}..."
+echo "Checking ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN} in ${HOSTS_FILE}..."
 
 # 더 정확한 패턴 매칭을 위한 정규식 사용
 # 127.0.0.1 도메인명 형태의 라인이 있는지 확인 (공백/탭 문자 고려)
-if grep -E "^[[:space:]]*127\.0\.0\.1[[:space:]]+${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME}[[:space:]]*$" "${HOSTS_FILE}" > /dev/null; then
-    echo "✓ ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME} already exists in ${HOSTS_FILE}. Skipping."
+if grep -E "^[[:space:]]*127\.0\.0\.1[[:space:]]+${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}[[:space:]]*$" "${HOSTS_FILE}" > /dev/null; then
+    echo "✓ ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN} already exists in ${HOSTS_FILE}. Skipping."
 else
     # 기존에 다른 형태로 추가된 항목이 있는지 확인하고 제거
-    echo "Removing any existing entries for ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME}..."
-    sudo sed -i "/[[:space:]]*127\.0\.0\.1[[:space:]]\+${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME}[[:space:]]*$/d" "${HOSTS_FILE}"
+    echo "Removing any existing entries for ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}..."
+    sudo sed -i "/[[:space:]]*127\.0\.0\.1[[:space:]]\+${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}[[:space:]]*$/d" "${HOSTS_FILE}"
     
     # hosts 파일에 추가 (sudo 권한 필요)
-    echo "Adding 127.0.0.1 ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME} to ${HOSTS_FILE}..."
-    echo "127.0.0.1 ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME}" | sudo tee -a "${HOSTS_FILE}" > /dev/null
+    echo "Adding 127.0.0.1 ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN} to ${HOSTS_FILE}..."
+    echo "127.0.0.1 ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}" | sudo tee -a "${HOSTS_FILE}" > /dev/null
     if [ $? -eq 0 ]; then
-        echo "✓ ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME} added successfully to ${HOSTS_FILE}."
+        echo "✓ ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN} added successfully to ${HOSTS_FILE}."
     else
-        echo "❌ Failed to add ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME} to ${HOSTS_FILE}. Please run this script with sudo or manually add it."
-        echo "Manual step: Add '127.0.0.1 ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME}' to ${HOSTS_FILE}"
+        echo "❌ Failed to add ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN} to ${HOSTS_FILE}. Please run this script with sudo or manually add it."
+        echo "Manual step: Add '127.0.0.1 ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}' to ${HOSTS_FILE}"
     fi
 fi
 
 
 # --- 4. Self-Signed Certificate 생성 ---
-echo "Generating Self-Signed Certificate for ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME}... ${CERT_DIR}"
+echo "Generating Self-Signed Certificate for ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}... ${CERT_DIR}"
 
 # 기존 인증서 삭제 (새로 발급하기 위해)
 if [ -f "${CERT_DIR}/privkey.pem" ]; then
@@ -136,15 +136,14 @@ if [ -d "$OUTPUT_FILE" ]; then
 fi
 
 # 환경변수 대치 (한 번에 처리)
-if [ -n "$MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME" ] && [ -n "$MC_IAM_MANAGER_KEYCLOAK_PORT" ]; then
-    # 템플릿 파일을 복사하고 환경변수를 한 번에 대치
-    sed -e "s/\${DOMAIN_NAME}/$MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME/g" \
+if [ -n "$MC_IAM_MANAGER_KEYCLOAK_DOMAIN" ] && [ -n "$MC_IAM_MANAGER_KEYCLOAK_PORT" ]; then
+    # 템플릿 파일을 복사하고 환경변수를 한 
         -e "s/\${PORT}/$MC_IAM_MANAGER_KEYCLOAK_PORT/g" \
         "$TEMPLATE_FILE" > "$OUTPUT_FILE"
-    echo "✓ DOMAIN_NAME 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME"
+    echo "✓ DOMAIN_NAME 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
     echo "✓ PORT 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_PORT"
 else
-    echo "경고: MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME 또는 MC_IAM_MANAGER_KEYCLOAK_PORT 환경변수가 설정되지 않았습니다."
+    echo "경고: MC_IAM_MANAGER_KEYCLOAK_DOMAIN 또는 MC_IAM_MANAGER_KEYCLOAK_PORT 환경변수가 설정되지 않았습니다."
     # 환경변수가 없으면 템플릿 파일을 그대로 복사
     cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 fi

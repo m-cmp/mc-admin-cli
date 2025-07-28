@@ -180,7 +180,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: cloudbaristaorg/mc-iam-manager:latest
+    image: cloudbaristaorg/mc-iam-manager:edge
     pull_policy: missing
     platform: linux/amd64
     restart: unless-stopped
@@ -196,14 +196,14 @@ services:
       - mc-iam-manager-db
       - mc-iam-manager-kc
     environment:
-      DATABASE_URL: postgres://${MC_IAM_MANAGER_DATABASE_USER}:${MC_IAM_MANAGER_DATABASE_PASSWORD}@${MC_IAM_MANAGER_DB_HOST}:5432/${MC_IAM_MANAGER_DATABASE_NAME}
+      DATABASE_URL: postgres://${MC_IAM_MANAGER_DATABASE_USER}:${MC_IAM_MANAGER_DATABASE_PASSWORD}@${MC_IAM_MANAGER_DATABASE_HOST}:5432/${MC_IAM_MANAGER_DATABASE_NAME}
       PORT: ${MC_IAM_MANAGER_PORT}
     env_file:
       - ./conf/mc-iam-manager/.env
     volumes:
       - ./tool/mcc:/app/tool/mcc
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://${MC_IAM_MANAGER_DOMAIN_NAME}:${MC_IAM_MANAGER_PORT}/readyz" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://${MC_IAM_MANAGER_DOMAIN}:${MC_IAM_MANAGER_PORT}/readyz" ]
       <<: *default-health-check
 
   mc-iam-manager-db:
@@ -248,9 +248,9 @@ services:
       - start-dev
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${MC_IAM_MANAGER_DATABASE_NAME}
-      KC_DB_USERNAME: ${MC_IAM_MANAGER_KEYCLOAK_DATABASE_USER}
-      KC_DB_PASSWORD: ${MC_IAM_MANAGER_KEYCLOAK_DATABASE_PASSWORD}
+      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${MC_IAM_MANAGER_KEYCLOAK_DATABASE_NAME}
+      KC_DB_USERNAME: ${MC_IAM_MANAGER_DATABASE_USER}
+      KC_DB_PASSWORD: ${MC_IAM_MANAGER_DATABASE_PASSWORD}
       KC_HOSTNAME_PORT: 8080
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
@@ -279,7 +279,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - DOMAIN_NAME=${MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME}
+      - DOMAIN_NAME=${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}
     volumes:
       - ./conf/mc-iam-manager/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./container-volume/certs:/etc/nginx/certs:ro

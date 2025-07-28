@@ -41,11 +41,11 @@ echo "출력: $OUTPUT_FILE"
 echo "환경변수를 로드합니다..."
 
 # .env 파일에서 필요한 변수들을 직접 읽어오기
-MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME=$(grep "^MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+MC_IAM_MANAGER_KEYCLOAK_DOMAIN=$(grep "^MC_IAM_MANAGER_KEYCLOAK_DOMAIN=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
 MC_IAM_MANAGER_KEYCLOAK_PORT=$(grep "^MC_IAM_MANAGER_KEYCLOAK_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
 
 echo "읽어온 환경변수:"
-echo "  MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME"
+echo "  MC_IAM_MANAGER_KEYCLOAK_DOMAIN: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
 echo "  MC_IAM_MANAGER_KEYCLOAK_PORT: $MC_IAM_MANAGER_KEYCLOAK_PORT"
 
 # 템플릿 파일을 복사하고 환경변수 대치
@@ -53,11 +53,11 @@ cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 
 # 환경변수 대치
 # ${DOMAIN_NAME} 대치
-if [ -n "$MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME" ]; then
-    sed -i "s/\${DOMAIN_NAME}/$MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME/g" "$OUTPUT_FILE"
-    echo "✓ DOMAIN_NAME 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME"
+if [ -n "$MC_IAM_MANAGER_KEYCLOAK_DOMAIN" ]; then
+    sed -i "s/\${DOMAIN_NAME}/$MC_IAM_MANAGER_KEYCLOAK_DOMAIN/g" "$OUTPUT_FILE"
+    echo "✓ DOMAIN_NAME 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
 else
-    echo "경고: MC_IAM_MANAGER_KEYCLOAK_DOMAIN_NAME 환경변수가 설정되지 않았습니다."
+    echo "경고: MC_IAM_MANAGER_KEYCLOAK_DOMAIN 환경변수가 설정되지 않았습니다."
 fi
 
 # ${PORT} 대치 (MC_IAM_MANAGER_PORT 사용)
