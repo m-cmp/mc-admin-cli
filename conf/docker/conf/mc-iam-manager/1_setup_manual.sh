@@ -5,6 +5,10 @@ source .env
 
 init_platform_admin() {
     echo "Initializing platform admin..."
+    echo "MC_IAM_MANAGER_PLATFORMADMIN_EMAIL: $MC_IAM_MANAGER_PLATFORMADMIN_EMAIL"
+    echo "MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD: $MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD"
+    echo "MC_IAM_MANAGER_PLATFORMADMIN_ID: $MC_IAM_MANAGER_PLATFORMADMIN_ID"
+    echo "MC_IAM_MANAGER_HOST_FOR_INIT: $MC_IAM_MANAGER_HOST_FOR_INIT"
     
     # 환경 변수 사용
     json_data=$(jq -n \
@@ -13,11 +17,56 @@ init_platform_admin() {
         --arg username "$MC_IAM_MANAGER_PLATFORMADMIN_ID" \
         '{email: $email, password: $password, username: $username}')
     
+    echo "Request JSON data: $json_data"
+    echo "Request URL: $MC_IAMMANAGER_HOST_FOR_INIT/api/initial-admin"
+    
     response=$(curl -s -X POST \
         --header 'Content-Type: application/json' \
         --data "$json_data" \
         "$MC_IAM_MANAGER_HOST_FOR_INIT/api/initial-admin")
+    
+    # curl 명령어의 종료 코드 확인
+    curl_exit_code=$?
+    
+    # 응답 검증
+    if [ $curl_exit_code -ne 0 ]; then
+        echo "ERROR: Failed to make request to platform admin API"
+        echo "Curl exit code: $curl_exit_code"
+        echo "Request details:"
+        echo "  URL: $MC_IAMMANAGER_HOST_FOR_INIT/api/initial-admin"
+        echo "  Data: $json_data"
+        echo "  Response: $response"
+        return 1
+    fi
+    
     echo "Platform admin initialization response: $response"
+    
+    # HTTP 상태 코드 확인 (curl이 성공했지만 HTTP 에러일 수 있음)
+    http_status=$(echo "$response" | grep -o 'HTTP/[0-9.]* [0-9]*' | tail -1 | awk '{print $2}')
+    if [ -n "$http_status" ] && [ "$http_status" -ge 400 ]; then
+        echo "ERROR: HTTP error occurred during platform admin initialization"
+        echo "HTTP Status: $http_status"
+        echo "Response: $response"
+        return 1
+    fi
+    
+    # 성공 여부 확인 (응답에 에러가 없는지 확인)
+    if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
+        echo "ERROR: Platform admin initialization failed"
+        echo "Error details:"
+        echo "$response" | jq -r '.error'
+        return 1
+    fi
+    
+    # 응답이 유효한 JSON인지 확인
+    if ! echo "$response" | jq . > /dev/null 2>&1; then
+        echo "ERROR: Invalid JSON response from platform admin API"
+        echo "Raw response: $response"
+        return 1
+    fi
+    
+    echo "✓ Platform admin initialization successful"
+    return 0
 }
 
 login() {
@@ -52,7 +101,7 @@ login() {
         return 1
     fi
     
-    MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN="$(echo "$response" | jq -r '.access_token')"
+    MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN="$(echo "$response" | jq -r '.access_token')"
     
     # 디버깅: 토큰이 제대로 추출되었는지 확인
     if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ] || [ "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" = "null" ]; then
@@ -118,9 +167,9 @@ init_cloud_resources() {
 map_api_cloud_resources() {
     echo "Mapping API-Cloud resources..."
     response=$(curl -s -X POST \
-        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/resource/mapping/api-cloud")
+        "$MC_IAM_MANAGER_HOST_FOR_INIT/api/resource/mapping/api-cloud")
     echo "API-Cloud resources mapping response: $response"
     echo "API-Cloud resources mapping completed"
 }
@@ -206,10 +255,10 @@ create_new_user(){
     
     # API 호출
     response=$(curl -s -X POST \
-        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
         --data "$json_data" \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/users")
+        "$MC_IAM_MANAGER_HOST_FOR_INIT/api/users")
     
     # 응답 검증
     if [ $? -ne 0 ]; then
@@ -294,69 +343,69 @@ while true; do
             login
             ;;
         3)
-            if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+            if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
                 echo "Please login first (option 2)"
-                echo "Current token value: '$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN'"
+                echo "Current token value: '$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN'"
             else
                 init_predefined_roles
             fi
             ;;
         4)
-            if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+            if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
                 echo "Please login first (option 2)"
-                echo "Current token value: '$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN'"
+                echo "Current token value: '$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN'"
             else
                 init_menu
             fi
             ;;
         5)
-            if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+            if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
                 echo "Please login first (option 2)"
-                echo "Current token value: '$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN'"
+                echo "Current token value: '$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN'"
             else
                 init_api_resources
             fi
             ;;
         7)
-            if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+            if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
                 echo "Please login first (option 2)"
-                echo "Current token value: '$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN'"
+                echo "Current token value: '$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN'"
             else
                 init_cloud_resources
             fi
             ;;
         8)
-            if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+            if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
                 echo "Please login first (option 2)"
-                echo "Current token value: '$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN'"
+                echo "Current token value: '$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN'"
             else
                 map_api_cloud_resources
             fi
             ;;
         9)
-            if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+            if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
                 echo "Please login first (option 2)"
-                echo "Current token value: '$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN'"
+                echo "Current token value: '$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN'"
             else
                 map_workspace_csp_roles
             fi
             ;;
         10)
-            if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+            if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
                 echo "Please login first (option 1)"
             else
                 sync_projects
             fi
             ;;
         11)
-            if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+            if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
                 echo "Please login first (option 1)"
             else
                 map_workspace_projects
             fi
             ;;
         12)
-            if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+            if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
                 echo "Please login first (option 1)"
             else
                 create_new_user
