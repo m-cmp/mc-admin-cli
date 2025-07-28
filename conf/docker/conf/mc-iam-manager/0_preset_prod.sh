@@ -41,31 +41,31 @@ echo "출력: $OUTPUT_FILE"
 echo "환경변수를 로드합니다..."
 
 # .env 파일에서 필요한 변수들을 직접 읽어오기
-DOMAIN_NAME=$(grep "^DOMAIN_NAME=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
-MCIAMMANAGER_PORT=$(grep "^MCIAMMANAGER_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+MC_IAM_MANAGER_KEYCLOAK_DOMAIN=$(grep "^MC_IAM_MANAGER_KEYCLOAK_DOMAIN=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+MC_IAM_MANAGER_KEYCLOAK_PORT=$(grep "^MC_IAM_MANAGER_KEYCLOAK_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
 
 echo "읽어온 환경변수:"
-echo "  DOMAIN_NAME: $DOMAIN_NAME"
-echo "  MCIAMMANAGER_PORT: $MCIAMMANAGER_PORT"
+echo "  MC_IAM_MANAGER_KEYCLOAK_DOMAIN: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
+echo "  MC_IAM_MANAGER_KEYCLOAK_PORT: $MC_IAM_MANAGER_KEYCLOAK_PORT"
 
 # 템플릿 파일을 복사하고 환경변수 대치
 cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 
 # 환경변수 대치
 # ${DOMAIN_NAME} 대치
-if [ -n "$DOMAIN_NAME" ]; then
-    sed -i "s/\${DOMAIN_NAME}/$DOMAIN_NAME/g" "$OUTPUT_FILE"
-    echo "✓ DOMAIN_NAME 대치 완료: $DOMAIN_NAME"
+if [ -n "$MC_IAM_MANAGER_KEYCLOAK_DOMAIN" ]; then
+    sed -i "s/\${DOMAIN_NAME}/$MC_IAM_MANAGER_KEYCLOAK_DOMAIN/g" "$OUTPUT_FILE"
+    echo "✓ DOMAIN_NAME 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
 else
-    echo "경고: DOMAIN_NAME 환경변수가 설정되지 않았습니다."
+    echo "경고: MC_IAM_MANAGER_KEYCLOAK_DOMAIN 환경변수가 설정되지 않았습니다."
 fi
 
-# ${PORT} 대치 (MCIAMMANAGER_PORT 사용)
-if [ -n "$MCIAMMANAGER_PORT" ]; then
-    sed -i "s/\${PORT}/$MCIAMMANAGER_PORT/g" "$OUTPUT_FILE"
-    echo "✓ PORT 대치 완료: $MCIAMMANAGER_PORT"
+# ${PORT} 대치 (MC_IAM_MANAGER_PORT 사용)
+if [ -n "$MC_IAM_MANAGER_KEYCLOAK_PORT" ]; then
+    sed -i "s/\${PORT}/$MC_IAM_MANAGER_KEYCLOAK_PORT/g" "$OUTPUT_FILE"
+    echo "✓ PORT 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_PORT"
 else
-    echo "경고: MCIAMMANAGER_PORT 환경변수가 설정되지 않았습니다."
+    echo "경고: MC_IAM_MANAGER_KEYCLOAK_PORT 환경변수가 설정되지 않았습니다."
 fi
 
 echo "nginx 설정 파일 생성이 완료되었습니다: $OUTPUT_FILE"

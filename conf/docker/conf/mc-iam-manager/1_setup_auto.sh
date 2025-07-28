@@ -86,33 +86,67 @@ auto_setup() {
 
 init_platform_admin() {
     echo "Initializing platform admin..."
+    echo "MC_IAM_MANAGER_PLATFORMADMIN_EMAIL: $MC_IAM_MANAGER_PLATFORMADMIN_EMAIL"
+    echo "MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD: $MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD"
+    echo "MC_IAM_MANAGER_PLATFORMADMIN_ID: $MC_IAM_MANAGER_PLATFORMADMIN_ID"
+    echo "MC_IAM_MANAGER_HOST_FOR_INIT: $MC_IAM_MANAGER_HOST_FOR_INIT"
     
     # 환경 변수 사용
     json_data=$(jq -n \
-        --arg email "$MCIAMMANAGER_PLATFORMADMIN_EMAIL" \
-        --arg password "$MCIAMMANAGER_PLATFORMADMIN_PASSWORD" \
-        --arg username "$MCIAMMANAGER_PLATFORMADMIN_ID" \
+        --arg email "$MC_IAM_MANAGER_PLATFORMADMIN_EMAIL" \
+        --arg password "$MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD" \
+        --arg username "$MC_IAM_MANAGER_PLATFORMADMIN_ID" \
         '{email: $email, password: $password, username: $username}')
+    
+    echo "Request JSON data: $json_data"
+    echo "Request URL: $MC_IAMMANAGER_HOST_FOR_INIT/api/initial-admin"
     
     response=$(curl -s -X POST \
         --header 'Content-Type: application/json' \
         --data "$json_data" \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/initial-admin")
-
+        "$MC_IAM_MANAGER_HOST_FOR_INIT/api/initial-admin")
+    
+    # curl 명령어의 종료 코드 확인
+    curl_exit_code=$?
+    
     # 응답 검증
-    if [ $? -ne 0 ]; then
+    if [ $curl_exit_code -ne 0 ]; then
         echo "ERROR: Failed to make request to platform admin API"
+        echo "Curl exit code: $curl_exit_code"
+        echo "Request details:"
+        echo "  URL: $MC_IAMMANAGER_HOST_FOR_INIT/api/initial-admin"
+        echo "  Data: $json_data"
+        echo "  Response: $response"
         return 1
     fi
     
     echo "Platform admin initialization response: $response"
     
-    # 성공 여부 확인 (응답에 에러가 없는지 확인)
-    if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
-        echo "ERROR: Platform admin initialization failed"
+    # HTTP 상태 코드 확인 (curl이 성공했지만 HTTP 에러일 수 있음)
+    http_status=$(echo "$response" | grep -o 'HTTP/[0-9.]* [0-9]*' | tail -1 | awk '{print $2}')
+    if [ -n "$http_status" ] && [ "$http_status" -ge 400 ]; then
+        echo "ERROR: HTTP error occurred during platform admin initialization"
+        echo "HTTP Status: $http_status"
+        echo "Response: $response"
         return 1
     fi
     
+    # 성공 여부 확인 (응답에 에러가 없는지 확인)
+    if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
+        echo "ERROR: Platform admin initialization failed"
+        echo "Error details:"
+        echo "$response" | jq -r '.error'
+        return 1
+    fi
+    
+    # 응답이 유효한 JSON인지 확인
+    if ! echo "$response" | jq . > /dev/null 2>&1; then
+        echo "ERROR: Invalid JSON response from platform admin API"
+        echo "Raw response: $response"
+        return 1
+    fi
+    
+    echo "✓ Platform admin initialization successful"
     return 0
 }
 
@@ -120,20 +154,40 @@ login() {
     echo "Logging in with platform admin credentials from .env file..."
     
     # 환경 변수에서 플랫폼 어드민 정보 사용
-    if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ID" ] || [ -z "$MCIAMMANAGER_PLATFORMADMIN_PASSWORD" ]; then
+    if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ID" ] || [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD" ]; then
         echo "ERROR: Platform admin credentials not found in .env file"
-        echo "Please check MCIAMMANAGER_PLATFORMADMIN_ID and MCIAMMANAGER_PLATFORMADMIN_PASSWORD in .env"
+        echo "Please check MC_IAM_MANAGER_PLATFORMADMIN_ID and MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD in .env"
         return 1
     fi
     
-    echo "Using platform admin ID: $MCIAMMANAGER_PLATFORMADMIN_ID"
+    echo "Using platform admin ID: $MC_IAM_MANAGER_PLATFORMADMIN_ID"
+    echo "Request URL: $MC_IAM_MANAGER_HOST_FOR_INIT/api/auth/login"
     
-    response=$(curl --location --silent --header 'Content-Type: application/json' --data '{
-        "id":"'"$MCIAMMANAGER_PLATFORMADMIN_ID"'",
-        "password":"'"$MCIAMMANAGER_PLATFORMADMIN_PASSWORD"'"
-    }' "$MCIAMMANAGER_HOST_FOR_INIT/api/auth/login")
+    login_data='{
+        "id":"'"$MC_IAM_MANAGER_PLATFORMADMIN_ID"'",
+        "password":"'"$MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD"'"
+    }'
+    
+    echo "Login request data: $login_data"
+    
+    response=$(curl --location --silent --header 'Content-Type: application/json' --data "$login_data" "$MC_IAM_MANAGER_HOST_FOR_INIT/api/auth/login")
+    
+    # curl 명령어의 종료 코드 확인
+    curl_exit_code=$?
     
     echo "Login response: $response"
+    echo "Curl exit code: $curl_exit_code"
+    
+    # curl 에러 확인
+    if [ $curl_exit_code -ne 0 ]; then
+        echo "ERROR: Failed to make login request"
+        echo "Curl exit code: $curl_exit_code"
+        echo "Request details:"
+        echo "  URL: $MCIAMMANAGER_HOST_FOR_INIT/api/auth/login"
+        echo "  Data: $login_data"
+        echo "  Response: $response"
+        return 1
+    fi
     
     # 디버깅: jq가 설치되어 있는지 확인
     if ! command -v jq &> /dev/null; then
@@ -148,25 +202,36 @@ login() {
         return 1
     fi
     
+    # HTTP 상태 코드 확인
+    http_status=$(echo "$response" | grep -o 'HTTP/[0-9.]* [0-9]*' | tail -1 | awk '{print $2}')
+    if [ -n "$http_status" ] && [ "$http_status" -ge 400 ]; then
+        echo "ERROR: HTTP error occurred during login"
+        echo "HTTP Status: $http_status"
+        echo "Response: $response"
+        return 1
+    fi
+    
     # 디버깅: access_token 필드가 있는지 확인
     if ! echo "$response" | jq -e '.access_token' > /dev/null 2>&1; then
         echo "ERROR: access_token field not found in response"
         echo "Available fields:"
         echo "$response" | jq 'keys'
+        echo "Full response: $response"
         return 1
     fi
     
-    MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN="$(echo "$response" | jq -r '.access_token')"
+    MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN="$(echo "$response" | jq -r '.access_token')"
     
     # 디버깅: 토큰이 제대로 추출되었는지 확인
-    if [ -z "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" ] || [ "$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" = "null" ]; then
+    if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ] || [ "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" = "null" ]; then
         echo "ERROR: Failed to extract access token"
-        echo "Extracted token: '$MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN'"
+        echo "Extracted token: '$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN'"
+        echo "Full response: $response"
         return 1
     fi
     
-    echo "Access token extracted successfully: ${MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN:0:20}..."
-    echo "Login successful"
+    echo "Access token extracted successfully: ${MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN:0:20}..."
+    echo "✓ Login successful"
     return 0
 }
 
@@ -179,9 +244,9 @@ init_predefined_roles() {
             '{name: $name, description: $description, role_types: ["workspace", "platform"]}')
         response=$(curl -s -X POST \
             --header 'Content-Type: application/json' \
-            --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+            --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
             --data "$json_data" \
-            "$MCIAMMANAGER_HOST_FOR_INIT/api/roles")
+            "$MC_IAM_MANAGER_HOST_FOR_INIT/api/roles")
         
         # 응답 검증
         if [ $? -ne 0 ]; then
@@ -212,9 +277,9 @@ init_menu() {
     fi
     
     response=$(curl -s -X POST \
-        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/setup/initial-menus")
+        "$MC_IAM_MANAGER_HOST_FOR_INIT/api/setup/initial-menus")
     
     # 응답 검증
     if [ $? -ne 0 ]; then
@@ -245,9 +310,9 @@ init_api_resources() {
     fi
     
     response=$(curl -s -X POST \
-        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/setup/sync-mcmp-apis")
+        "$MC_IAM_MANAGER_HOST_FOR_INIT/api/setup/sync-mcmp-apis")
     
     # 응답 검증
     if [ $? -ne 0 ]; then
@@ -270,10 +335,10 @@ init_api_resources() {
 init_cloud_resources() {
     echo "Initializing cloud resources..."
     response=$(curl -s -X POST \
-        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: multipart/form-data' \
         --form "file=@./cloud-resource.yaml" \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/resource/file/framework/all")
+        "$MC_IAM_MANAGER_HOST_FOR_INIT/api/resource/file/framework/all")
     echo "Cloud resources initialization response: $response"
     echo "Cloud resources initialized"
 }
@@ -281,9 +346,9 @@ init_cloud_resources() {
 map_api_cloud_resources() {
     echo "Mapping API-Cloud resources..."
     response=$(curl -s -X POST \
-        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/resource/mapping/api-cloud")
+        "$MC_IAM_MANAGER_HOST_FOR_INIT/api/resource/mapping/api-cloud")
     echo "API-Cloud resources mapping response: $response"
     echo "API-Cloud resources mapping completed"
 }
@@ -292,9 +357,9 @@ map_api_cloud_resources() {
 map_workspace_csp_roles() {
     echo "Mapping workspace roles to CSP IAM roles..."
     response=$(curl -s -X POST \
-        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/workspace-roles/csp-mapping")
+        "$MC_IAM_MANAGER_HOST_FOR_INIT/api/workspace-roles/csp-mapping")
     echo "Workspace-CSP role mapping response: $response"
     echo "Workspace-CSP role mapping completed"
 }
@@ -303,9 +368,9 @@ map_workspace_csp_roles() {
 sync_projects() {
     echo "Syncing projects with mc-infra-manager..."
     response=$(curl -s -X POST \
-        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/setup/sync-projects")
+        "$MC_IAM_MANAGER_HOST_FOR_INIT/api/setup/sync-projects")
     
     # 응답 검증
     if [ $? -ne 0 ]; then
@@ -329,10 +394,10 @@ map_workspace_projects() {
     echo "Getting workspace list..."
     
     # 워크스페이스 목록 가져오기
-    workspace_response=$(curl -s -X GET \
-        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+    workspace_response=$(curl -s -X POST \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/workspaces")
+        "$MC_IAM_MANAGER_HOST_FOR_INIT/api/workspaces/list")
     
     # 응답 검증
     if [ $? -ne 0 ]; then
@@ -343,7 +408,8 @@ map_workspace_projects() {
     echo "Workspace list response: $workspace_response"
     
     # 첫 번째 워크스페이스 ID 추출
-    workspace_id=$(echo "$workspace_response" | jq -r '.data[0].id // empty')
+    #workspace_id=$(echo "$workspace_response" | jq -r '.data[0].id // empty')
+    workspace_id=$(echo "$workspace_response" | jq -r '.[0].id // empty')
     
     if [ -z "$workspace_id" ] || [ "$workspace_id" = "null" ]; then
         echo "ERROR: No workspace found or failed to extract workspace ID"
@@ -352,30 +418,54 @@ map_workspace_projects() {
     
     echo "Using workspace ID: $workspace_id"
     
-    # 워크스페이스에 모든 프로젝트 매핑
-    json_data=$(jq -n --arg workspace_id "$workspace_id" --arg all_projects "true" \
-        '{workspace_id: $workspace_id, all_projects: $all_projects}')
-    response=$(curl -s -X POST \
-        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
-        --header 'Content-Type: application/json' \
-        --data "$json_data" \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/workspaces/projects/mapping")
-    
+    # 프로젝트 목록 가져오기
+    echo "Getting project list..."
+    project_response=$(curl -s -X POST \
+    --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+    --header 'Content-Type: application/json' \
+    --data '{}' \
+    "$MC_IAM_MANAGER_HOST_FOR_INIT/api/projects/list")
+
+    echo "Project list response: $project_response"
+
     # 응답 검증
     if [ $? -ne 0 ]; then
-        echo "ERROR: Failed to map workspace to projects"
-        return 1
+        echo "There is no project"
+        
+    else
+        # 프로젝트 목록 추출 (문자열 배열로)
+        project_ids=$(echo "$project_response" | jq -r '[.[].id | tostring]')
+
+        echo "Project IDs: $project_ids"
+
+        # 워크스페이스에 모든 프로젝트 매핑
+        json_data=$(jq -n --arg workspace_id "$workspace_id" --argjson project_ids "$project_ids" \
+            '{workspaceId: $workspace_id, projectIds: $project_ids}')
+        response=$(curl -s -X POST \
+            --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+            --header 'Content-Type: application/json' \
+            --data "$json_data" \
+            "$MC_IAM_MANAGER_HOST_FOR_INIT/api/workspaces/assign/projects")
+        
+        # 응답 검증
+        if [ $? -ne 0 ]; then
+            echo "ERROR: Failed to map workspace to projects"
+            return 1
+        fi
+        
+        echo "Workspace-Project mapping response: $response"
+        
+        # 성공 여부 확인
+        if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
+            echo "ERROR: Workspace-project mapping failed"
+            return 1
+        fi
+        
+        echo "Workspace-Project mapping completed for workspace ID: $workspace_id"
+        
     fi
-    
-    echo "Workspace-Project mapping response: $response"
-    
-    # 성공 여부 확인
-    if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
-        echo "ERROR: Workspace-project mapping failed"
-        return 1
-    fi
-    
-    echo "Workspace-Project mapping completed for workspace ID: $workspace_id"
+
+
     return 0
 }
 
@@ -393,10 +483,10 @@ add_sample_userrole_mapping() {
     json_data=$(jq -n --arg role_id "$role_id" --arg user_id "$user_id" --arg role_type "$role_type" --arg workspace_id "$workspace_id" \
         '{role_id: $role_id, user_id: $user_id, role_type: $role_type, workspace_id: $workspace_id}')
     response=$(curl -s -X POST \
-        --header "Authorization: Bearer $MCIAMMANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
         --data "$json_data" \
-        "$MCIAMMANAGER_HOST_FOR_INIT/api/roles/assign/platform-role")
+        "$MC_IAM_MANAGER_HOST_FOR_INIT/api/roles/assign/platform-role")
 
     # 응답 검증
     if [ $? -ne 0 ]; then
