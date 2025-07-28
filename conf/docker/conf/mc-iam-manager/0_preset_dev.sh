@@ -137,8 +137,9 @@ fi
 
 # 환경변수 대치 (한 번에 처리)
 if [ -n "$MC_IAM_MANAGER_KEYCLOAK_DOMAIN" ] && [ -n "$MC_IAM_MANAGER_KEYCLOAK_PORT" ]; then
-    # 템플릿 파일을 복사하고 환경변수를 한 
-        -e "s/\${PORT}/$MC_IAM_MANAGER_KEYCLOAK_PORT/g" \
+    # 템플릿 파일을 복사하고 환경변수를 한 번에 대치
+    sed -e "s/\${DOMAIN_NAME}/$DOMAIN_NAME/g" \
+        -e "s/\${PORT}/$MC_IAM_MANAGER_PORT/g" \
         "$TEMPLATE_FILE" > "$OUTPUT_FILE"
     echo "✓ DOMAIN_NAME 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
     echo "✓ PORT 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_PORT"
