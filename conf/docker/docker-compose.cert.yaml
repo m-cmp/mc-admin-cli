@@ -11,9 +11,9 @@ services:
       # Certbot 설정 및 발급된 인증서 저장 (읽기/쓰기 권한 필요)
       - ./container-volume/mc-iam-manager/certs:/etc/letsencrypt
     environment:
-      DOMAIN_NAME: ${DOMAIN_NAME}
-      EMAIL: ${CERT_EMAIL}
+      DOMAIN_NAME: ${MC_IAM_MANAGER_DOMAIN}
+      EMAIL: ${MC_  IAM_MANAGER_CERT_EMAIL}
     entrypoint: ["certbot"] # Certbot 실행 명령을 엔트리포인트로 지정
     #command: ["certonly", "--standalone", "--email", "$EMAIL", "--agree-tos", "--no-eff-email", "-d", "$DOMAIN_NAME", "--non-interactive", "--staging"] # <-- 초기 발급 테스트 시 --staging 사용, 실제 발급 시 제거
-    command: ["certonly", "--standalone", "--email", "$CERT_EMAIL", "--agree-tos", "--no-eff-email", "-d", "$DOMAIN_NAME", "--non-interactive"] # <-- 실제발급
+    command: ["certonly", "--standalone", "--email", "$MC_IAM_MANAGER_CERT_EMAIL", "--agree-tos", "--no-eff-email", "-d", "$MC_IAM_MANAGER_DOMAIN", "--non-interactive"] # <-- 실제발급
     #command: ["certonly", "--standalone", "--email", "$EMAIL", "--agree-tos", "--no-eff-email", "-d", "$DOMAIN_NAME", "--non-interactive", "--force-renewal"] # <-- 강제 재발급 (필요시에만 사용)
