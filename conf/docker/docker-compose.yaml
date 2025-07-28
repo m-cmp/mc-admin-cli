@@ -285,7 +285,7 @@ services:
       - "80:80"
       - "443:443"
     environment:
-      - DOMAIN_NAME=${MC_IAM_MANAGER_KEYCLOAK_DOMAIN:-localhost}
+      - DOMAIN_NAME=${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}
     volumes:
       - ./conf/mc-iam-manager/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./container-volume/certs:/etc/nginx/certs:ro
@@ -727,7 +727,7 @@ services:
 
   mc-web-console-api:
     # image: sehyeong0108/mc-web-console-api:20241101
-    image: cloudbaristaorg/mc-web-console-api:0.4.1
+    image: cloudbaristaorg/mc-web-console-api:0.4.3
     container_name: mc-web-console-api
     restart: unless-stopped
     depends_on:
@@ -765,7 +765,7 @@ services:
 
   mc-web-console-front:
     # image: sehyeong0108/mc-web-console-front:20241101
-    image: cloudbaristaorg/mc-web-console-front:0.4.1
+    image: cloudbaristaorg/mc-web-console-front:0.4.3
     container_name: mc-web-console-front
     restart: unless-stopped
     depends_on:
