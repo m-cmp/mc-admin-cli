@@ -56,6 +56,12 @@ echo "환경변수를 로드합니다..."
 # .env 파일을 직접 소스로 불러오기
 source "$ENV_FILE"
 
+# MC_IAM_MANAGER_KEYCLOAK_PORT가 설정되지 않은 경우 기본값 설정
+if [ -z "$MC_IAM_MANAGER_KEYCLOAK_PORT" ]; then
+    MC_IAM_MANAGER_KEYCLOAK_PORT=8080
+    echo "MC_IAM_MANAGER_KEYCLOAK_PORT가 설정되지 않아 기본값 8080을 사용합니다."
+fi
+
 echo "읽어온 환경변수:"
 echo "  DOMAIN_NAME: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
 echo "  MC_IAM_MANAGER_KEYCLOAK_PORT: $MC_IAM_MANAGER_KEYCLOAK_PORT"
@@ -105,7 +111,7 @@ if [ -f "${CERT_DIR}/privkey.pem" ]; then
 fi
 
 openssl genrsa -out "${CERT_DIR}/privkey.pem" 2048
-openssl req -new -key "${CERT_DIR}/privkey.pem" -out "${CERT_DIR}/csr.pem" -subj "/CN=${DOMAIN_NAME}"
+openssl req -new -key "${CERT_DIR}/privkey.pem" -out "${CERT_DIR}/csr.pem" -subj "/CN=${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}"
 openssl x509 -req -days 365 -in "${CERT_DIR}/csr.pem" -signkey "${CERT_DIR}/privkey.pem" -out "${CERT_DIR}/fullchain.pem"
 rm "${CERT_DIR}/csr.pem" # CSR 파일 제거
 
@@ -137,8 +143,11 @@ fi
 
 # 환경변수 대치 (한 번에 처리)
 if [ -n "$MC_IAM_MANAGER_KEYCLOAK_DOMAIN" ] && [ -n "$MC_IAM_MANAGER_KEYCLOAK_PORT" ]; then
-    # 템플릿 파일을 복사하고 환경변수를 한 
-        -e "s/\${PORT}/$MC_IAM_MANAGER_KEYCLOAK_PORT/g" \
+    # 템플릿 파일을 복사하고 환경변수를 한 번에 대치
+    sed -e "s/\${MC_IAM_MANAGER_DOMAIN}/$MC_IAM_MANAGER_DOMAIN/g" \
+        -e "s/\${MC_IAM_MANAGER_PORT}/$MC_IAM_MANAGER_PORT/g" \
+        -e "s/\${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}/$MC_IAM_MANAGER_KEYCLOAK_DOMAIN/g" \
+        -e "s/\${MC_IAM_MANAGER_KEYCLOAK_PORT}/$MC_IAM_MANAGER_KEYCLOAK_PORT/g" \
         "$TEMPLATE_FILE" > "$OUTPUT_FILE"
     echo "✓ DOMAIN_NAME 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
     echo "✓ PORT 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_PORT"
