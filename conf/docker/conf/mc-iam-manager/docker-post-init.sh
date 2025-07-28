@@ -5,16 +5,24 @@ echo 'All required containers are healthy. Starting initialization...'
 # 필요한 도구 설치
 apt-get update && apt-get install -y curl jq wget
 
+echo ''
+echo ''
+
+echo '------------------------------------------------' 
+echo ' Health Check'
+echo '------------------------------------------------'
+
+
 # mc-iam-manager API가 완전히 준비될 때까지 대기 (간단한 버전)
 echo 'Waiting for mc-iam-manager API to be ready...'
-max_attempts=1
+max_attempts=2
 attempt=1
 
 while [ $attempt -le $max_attempts ]; do
   echo "Attempt $attempt/$max_attempts: Checking mc-iam-manager API..."
   
   # 간단한 API 헬스체크 (컨테이너 이름 사용)
-  if curl -s -f "http://mc-iam-manager:5000/" > /dev/null 2>&1; then
+  if curl -s -f "http://mc-iam-manager:5000/readyz" > /dev/null 2>&1; then
     echo '✓ mc-iam-manager API is ready!'
     break
   fi
@@ -29,6 +37,12 @@ while [ $attempt -le $max_attempts ]; do
   attempt=$((attempt + 1))
 done
 
+echo ''
+echo ''
+
+echo '------------------------------------------------' 
+echo ' Debug Info'
+echo '------------------------------------------------'
 # 디버깅: 현재 디렉토리와 파일 목록 확인
 echo 'Current working directory:'
 pwd
@@ -41,6 +55,17 @@ ls -la /app/mc-iam-manager/ || echo 'Directory /app/mc-iam-manager/ not found'
 echo 'Files in mounted volume:'
 ls -la /app/ || echo 'Directory /app/ not found'
 
+
+echo ''
+echo ''
+
+echo '------------------------------------------------' 
+echo ' Sleep 60 seconds'
+echo '------------------------------------------------'
+sleep 60
+
+echo ''
+echo ''
 
 echo '------------------------------------------------' 
 echo '1_setup_auto.sh'
