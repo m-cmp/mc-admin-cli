@@ -295,6 +295,29 @@ services:
     networks:
       - mc-iam-manager-network
 
+
+  mc-iam-manager-post-initial:
+    image: ubuntu:22.04
+    container_name: mc-iam-manager-post-initial
+    # restart: unless-stopped
+    networks:
+      - mc-iam-manager-network
+    depends_on:
+      mc-iam-manager:
+        condition: service_healthy
+      mc-iam-manager-db:
+        condition: service_healthy
+      mc-iam-manager-kc:
+        condition: service_healthy
+    env_file:
+      - ./conf/mc-iam-manager/.env
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+      - ./conf/mc-iam-manager/:/app/mc-iam-manager/
+    working_dir: /app/mc-iam-manager
+    command: bash /app/mc-iam-manager/docker-post-init.sh
+
+
   ##### MC-COST-OPTIMIZER #########################################################################################################################
 
   mc-cost-optimizer-fe:

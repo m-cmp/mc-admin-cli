@@ -52,23 +52,23 @@ auto_setup() {
     fi
     echo "✓ API resources initialized successfully"
     
-    # 6. 프로젝트 동기화
-    echo "Step 6: Syncing projects..."
-    sync_projects
-    if [ $? -ne 0 ]; then
-        echo "ERROR: Project sync failed"
-        return 1
-    fi
-    echo "✓ Projects synced successfully"
+    # # 6. 프로젝트 동기화
+    # echo "Step 6: Syncing projects..."
+    # sync_projects
+    # if [ $? -ne 0 ]; then
+    #     echo "ERROR: Project sync failed"
+    #     return 1
+    # fi
+    # echo "✓ Projects synced successfully"
     
-    # 7. 워크스페이스-프로젝트 매핑
-    echo "Step 7: Mapping workspace to all projects..."
-    map_workspace_projects
-    if [ $? -ne 0 ]; then
-        echo "ERROR: Workspace-project mapping failed"
-        return 1
-    fi
-    echo "✓ Workspace-project mapping completed successfully"
+    # # 7. 워크스페이스-프로젝트 매핑
+    # echo "Step 7: Mapping workspace to all projects..."
+    # map_workspace_projects
+    # if [ $? -ne 0 ]; then
+    #     echo "ERROR: Workspace-project mapping failed"
+    #     return 1
+    # fi
+    # echo "✓ Workspace-project mapping completed successfully"
     
     echo "=== Automated setup completed successfully ==="
 
