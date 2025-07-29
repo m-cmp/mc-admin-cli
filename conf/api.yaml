@@ -728,10 +728,10 @@ serviceActions:
       method: post
       resourcePath: /api/wsprj
       description: "workspace - projects mapping 생성"
-    Updatewpmappings:
-      method: put
-      resourcePath: /api/wsprj
-      description: "workspace - projects mapping 수정\n\n새로 입력되는 projects 와 기존 projects 를 비교하여, 없는 project 는 삭제하고, 신규 projects 는 새로 mapping 한다."
+    addProjectToWorkspace:
+      method: post
+      resourcePath: /api/workspaces/assign/projects
+      description: "workspace에 project 등록"
     Getworkspaceuserrolemappinglistbyworkspaceid:
       method: get
       resourcePath: /api/wsuserrole/workspace/id/{workspaceId}
@@ -830,8 +830,21 @@ serviceActions:
       description: "workspace 목록 조회"
     listMciamPermissions:
       method: post
-      resourcePath: /api/permissions/mciam
+      resourcePath: /api/permissions/mciam/list
       description: "모든 권한을 가져옵니다."
+    listUsersAndRolesByWorkspaces:
+      method: post
+      resourcePath: /api/workspaces/id/{workspaceId}/users/list
+      description: "workspace 목록 조회"
+    getWorkspaceProjectsByWorkspaceId:
+      method: get
+      resourcePath: /api/workspaces/id/{workspaceId}/projects/list
+    ListUsersAndRolesByWorkspaces:
+      method: post
+      resourcePath: /api/workspaces/id/{workspaceId}/users/list
+    listWorkspaceProjects:
+      method: post
+      resourcePath: /api/workspaces/projects/list
     getTempCredentialProviders:
       method: get
       resourcePath: /api/auth/temp-credential-csps
@@ -954,10 +967,10 @@ serviceActions:
       method: post
       resourcePath: /api/user/deactive
       description: "권한 있는 사용자가 해당 유저를 비활성화합니다."
-    Deleteworkspaceprojectmappingbyid:
+    removeWorkspaceFromProject:
       method: delete
-      resourcePath: /api/wsprj/workspace/id/{workspaceId}/project/id/{projectId}
-      description: "workspace - projects mapping 단건 삭제"
+      resourcePath: /api/projects/unassign/workspaces
+      description: "Workspace에서 Project 할당 해제"
 
   mc-infra-manager:
     Lookupspeclist:
