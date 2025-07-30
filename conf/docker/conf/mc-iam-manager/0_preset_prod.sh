@@ -6,10 +6,8 @@
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 
-echo "PROJECT_ROOT: $PROJECT_ROOT"
-
 # .env 파일 경로
-ENV_FILE="./.env"
+ENV_FILE="$PROJECT_ROOT/.env"
 
 # 템플릿 파일 경로
 TEMPLATE_FILE="./nginx.template.conf"
@@ -54,16 +52,16 @@ cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 # 환경변수 대치
 # ${DOMAIN_NAME} 대치
 if [ -n "$MC_IAM_MANAGER_KEYCLOAK_DOMAIN" ]; then
-    sed -i "s/\${DOMAIN_NAME}/$MC_IAM_MANAGER_KEYCLOAK_DOMAIN/g" "$OUTPUT_FILE"
-    echo "✓ DOMAIN_NAME 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
+    sed -i "s/\${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}/$MC_IAM_MANAGER_KEYCLOAK_DOMAIN/g" "$OUTPUT_FILE"
+    echo "✓ MC_IAM_MANAGER_KEYCLOAK_DOMAIN 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
 else
     echo "경고: MC_IAM_MANAGER_KEYCLOAK_DOMAIN 환경변수가 설정되지 않았습니다."
 fi
 
 # ${PORT} 대치 (MC_IAM_MANAGER_PORT 사용)
 if [ -n "$MC_IAM_MANAGER_KEYCLOAK_PORT" ]; then
-    sed -i "s/\${PORT}/$MC_IAM_MANAGER_KEYCLOAK_PORT/g" "$OUTPUT_FILE"
-    echo "✓ PORT 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_PORT"
+    sed -i "s/\${MC_IAM_MANAGER_KEYCLOAK_PORT}/$MC_IAM_MANAGER_KEYCLOAK_PORT/g" "$OUTPUT_FILE"
+    echo "✓ MC_IAM_MANAGER_KEYCLOAK_PORT 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_PORT"
 else
     echo "경고: MC_IAM_MANAGER_KEYCLOAK_PORT 환경변수가 설정되지 않았습니다."
 fi
