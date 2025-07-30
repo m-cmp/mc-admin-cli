@@ -47,7 +47,7 @@ var (
 	originApiYamlFile string
 	createPath        string
 	services          = map[string]string{
-		"mc-infra-manager": "https://raw.githubusercontent.com/cloud-barista/cb-tumblebug/main/src/api/rest/docs/swagger.json",
+		"mc-infra-manager": "https://raw.githubusercontent.com/cloud-barista/cb-tumblebug/main/src/interface/rest/docs/swagger.json",
 		"mc-iam-manager":   "https://raw.githubusercontent.com/m-cmp/mc-iam-manager/docs/swagger/swagger.json",
 		"mc-web-console":   "https://raw.githubusercontent.com/m-cmp/mc-web-console/main/mc_web_console_api/docs/swagger.json",
 	}
