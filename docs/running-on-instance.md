@@ -125,7 +125,7 @@ Edit .env to configure IAM service properties:
 ```bash
 cd ~/workspace/mc-iam-manager/scripts/init
 cp .env.initsample .env
-sed -i 's|MCIAMMANAGER_HOST=https://MCIAMMANAGER_HOST|MCIAMMANAGER_HOST=http://127.0.0.1:5000|' .env
+sed -i 's|MCIAMMANAGER_HOST=https://MCIAMMANAGER_HOST|MCIAMMANAGER_HOST=http://127.0.0.1:5005|' .env
 sed -i 's|MCIAMMANAGER_PLATFORMADMIN_ID=|MCIAMMANAGER_PLATFORMADMIN_ID=mcmpadmin|' .env
 sed -i 's|MCIAMMANAGER_PLATFORMADMIN_PASSWORD=|MCIAMMANAGER_PLATFORMADMIN_PASSWORD=mcmpAdminPassword#@!|' .env
 ```
