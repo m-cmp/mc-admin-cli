@@ -199,8 +199,12 @@ services:
         published: 5000
         protocol: tcp
     depends_on:
-      - mc-iam-manager-db
-      - mc-iam-manager-kc
+      mc-iam-manager-db:
+        condition: service_healthy
+      mc-iam-manager-kc:
+        condition: service_healthy
+      mc-infra-manager:
+        condition: service_healthy
     environment:
       DATABASE_URL: postgres://${MC_IAM_MANAGER_DATABASE_USER}:${MC_IAM_MANAGER_DATABASE_PASSWORD}@mc-iam-manager-db:5432/${MC_IAM_MANAGER_DATABASE_NAME}
       PORT: 5000
@@ -271,7 +275,8 @@ services:
     env_file:
       - ./conf/mc-iam-manager/.env
     depends_on:
-      - mc-iam-manager-db
+      mc-iam-manager-db:
+        condition: service_healthy
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8080/" ]
       # test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8080/health/ready" ]
@@ -291,7 +296,8 @@ services:
       - ./container-volume/certs:/etc/nginx/certs:ro
       - ./container-volume/certbot/www:/var/www/certbot:ro
     depends_on:
-      - mc-iam-manager-kc
+      mc-iam-manager-kc:
+        condition: service_healthy
     networks:
       - mc-iam-manager-network
 
@@ -303,11 +309,13 @@ services:
     networks:
       - mc-iam-manager-network
     depends_on:
-      mc-iam-manager:
+      mc-infra-manager:
         condition: service_healthy
       mc-iam-manager-db:
         condition: service_healthy
       mc-iam-manager-kc:
+        condition: service_healthy
+      mc-iam-manager:
         condition: service_healthy
     env_file:
       - ./conf/mc-iam-manager/.env
@@ -731,15 +739,24 @@ services:
     container_name: mc-web-console-api
     restart: unless-stopped
     depends_on:
-      - mc-web-console-db
-      - mc-infra-connector
-      - mc-infra-manager
-      - mc-iam-manager
-      - mc-observability-manager
-      - mc-workflow-manager
-      - mc-data-manager
-      - mc-application-manager
-      - mc-cost-optimizer-be
+      mc-web-console-db:
+        condition: service_healthy
+      mc-infra-connector:
+        condition: service_healthy
+      mc-infra-manager:
+        condition: service_healthy
+      mc-iam-manager:
+        condition: service_healthy
+      mc-observability-manager:
+        condition: service_healthy
+      mc-workflow-manager:
+        condition: service_healthy
+      mc-data-manager:
+        condition: service_healthy
+      mc-application-manager:
+        condition: service_healthy
+      mc-cost-optimizer-be:
+        condition: service_healthy
     ports:
       - target: 3000
         published: 3000
@@ -769,7 +786,8 @@ services:
     container_name: mc-web-console-front
     restart: unless-stopped
     depends_on:
-      - mc-web-console-api
+      mc-web-console-api:
+        condition: service_healthy
     networks:
       - mc-web-console-network
       - mc-iam-manager-network
