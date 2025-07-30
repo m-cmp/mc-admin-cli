@@ -9,11 +9,11 @@ PROJECT_ROOT="$(dirname "$(dirname "$SCRIPT_DIR")")"
 echo "PROJECT_ROOT: $PROJECT_ROOT"
 
 # .env 파일 경로
-ENV_FILE="./.env"
+ENV_FILE="${PROJECT_ROOT}/.env"
 
 
 # 인증서 파일 생성할 경로 (Let's Encrypt 구조와 동일)
-CERT_PARENT_DIR="../../container-volume" # dockercontainer-volume 디렉토리
+CERT_PARENT_DIR="${PROJECT_ROOT}/container-volume" # dockercontainer-volume 디렉토리
 
 # --- 3. 필요한 디렉토리 생성 (Let's Encrypt 구조와 동일) ---
 echo "Creating necessary directories..."
@@ -35,8 +35,8 @@ echo "✓ Container volume directory created and permissions set"
 # 템플릿 파일 경로
 TEMPLATE_FILE="./nginx.template.conf"
 
-# 출력 파일 경로 (Docker Compose에서 참조하는 위치)
-OUTPUT_FILE="./nginx.conf"
+# 출력 파일 경로 (개선된 구조)
+OUTPUT_FILE="${PROJECT_ROOT}/container-volume/mc-iam-manager/nginx/nginx.conf"
 
 # .env 파일 존재 확인
 if [ ! -f "$ENV_FILE" ]; then
@@ -56,15 +56,55 @@ echo "환경변수를 로드합니다..."
 # .env 파일을 직접 소스로 불러오기
 source "$ENV_FILE"
 
+# 필수 환경변수 검증
+echo "필수 환경변수를 검증합니다..."
+
+# 검증할 필수 환경변수 목록
+REQUIRED_VARS=(
+    "MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
+    "MC_IAM_MANAGER_DATABASE_NAME"
+    "MC_IAM_MANAGER_DATABASE_USER"
+    "MC_IAM_MANAGER_DATABASE_PASSWORD"
+    "MC_IAM_MANAGER_DATABASE_HOST"
+    "MC_IAM_MANAGER_PORT"
+)
+
+# 각 필수 환경변수 검증
+MISSING_VARS=()
+for var in "${REQUIRED_VARS[@]}"; do
+    if [ -z "${!var}" ]; then
+        MISSING_VARS+=("$var")
+    fi
+done
+
+# 누락된 환경변수가 있으면 종료
+if [ ${#MISSING_VARS[@]} -gt 0 ]; then
+    echo "❌ 오류: 다음 필수 환경변수가 설정되지 않았습니다:"
+    for var in "${MISSING_VARS[@]}"; do
+        echo "  - $var"
+    done
+    echo ""
+    echo "해결 방법:"
+    echo "1. .env 파일이 존재하는지 확인: $ENV_FILE"
+    echo "2. .env 파일에 필수 환경변수들이 설정되어 있는지 확인"
+    echo "3. .env_sample 파일을 참고하여 누락된 환경변수를 추가"
+    exit 1
+fi
+
 # MC_IAM_MANAGER_KEYCLOAK_PORT가 설정되지 않은 경우 기본값 설정
 if [ -z "$MC_IAM_MANAGER_KEYCLOAK_PORT" ]; then
     MC_IAM_MANAGER_KEYCLOAK_PORT=8080
     echo "MC_IAM_MANAGER_KEYCLOAK_PORT가 설정되지 않아 기본값 8080을 사용합니다."
 fi
 
+echo "✅ 모든 필수 환경변수가 정상적으로 로드되었습니다."
 echo "읽어온 환경변수:"
 echo "  DOMAIN_NAME: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
 echo "  MC_IAM_MANAGER_KEYCLOAK_PORT: $MC_IAM_MANAGER_KEYCLOAK_PORT"
+echo "  DATABASE_NAME: $MC_IAM_MANAGER_DATABASE_NAME"
+echo "  DATABASE_USER: $MC_IAM_MANAGER_DATABASE_USER"
+echo "  DATABASE_HOST: $MC_IAM_MANAGER_DATABASE_HOST"
+echo "  MC_IAM_MANAGER_PORT: $MC_IAM_MANAGER_PORT"
 
 # DOMAIN_NAME을 읽은 후 CERT_DIR 정의
 CERT_DIR="${CERT_PARENT_DIR}/certs/live/${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}"      # Let's Encrypt 구조와 동일한 인증서 저장 경로
@@ -148,9 +188,12 @@ if [ -n "$MC_IAM_MANAGER_KEYCLOAK_DOMAIN" ] && [ -n "$MC_IAM_MANAGER_KEYCLOAK_PO
         -e "s/\${MC_IAM_MANAGER_PORT}/$MC_IAM_MANAGER_PORT/g" \
         -e "s/\${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}/$MC_IAM_MANAGER_KEYCLOAK_DOMAIN/g" \
         -e "s/\${MC_IAM_MANAGER_KEYCLOAK_PORT}/$MC_IAM_MANAGER_KEYCLOAK_PORT/g" \
+        -e "s/mciam-manager/mc-iam-manager/g" \
+        -e "s/mciam-keycloak/mc-iam-manager-kc/g" \
         "$TEMPLATE_FILE" > "$OUTPUT_FILE"
     echo "✓ DOMAIN_NAME 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
     echo "✓ PORT 대치 완료: $MC_IAM_MANAGER_KEYCLOAK_PORT"
+    echo "✓ 컨테이너 이름 수정 완료"
 else
     echo "경고: MC_IAM_MANAGER_KEYCLOAK_DOMAIN 또는 MC_IAM_MANAGER_KEYCLOAK_PORT 환경변수가 설정되지 않았습니다."
     # 환경변수가 없으면 템플릿 파일을 그대로 복사
