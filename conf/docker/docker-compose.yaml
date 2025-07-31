@@ -296,7 +296,7 @@ services:
       - mc-iam-manager-network
     depends_on:
       mc-iam-manager:
-        condition: service_healthy
+        condition: service_started
       mc-iam-manager-db:
         condition: service_healthy
       mc-iam-manager-kc:
