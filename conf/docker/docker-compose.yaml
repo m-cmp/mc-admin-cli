@@ -15,13 +15,12 @@ networks:
   mc-observability-network:
   mc-web-console-network:
 
-
 services:
-  ##### MC-INFRA-CONNECTOR #########################################################################################################################
+##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.11.1
-    pull_policy: if_not_present
+    image: cloudbaristaorg/cb-spider:0.11.0
+    pull_policy: missing
     container_name: mc-infra-connector
     platform: linux/amd64
     networks:
@@ -45,17 +44,16 @@ services:
       - SPIDER_LOG_LEVEL=error
       - SPIDER_HISCALL_LOG_LEVEL=error
       - ID_TRANSFORM_MODE=OFF
-    healthcheck:
-      # for CB-Spider
+    healthcheck: # for CB-Spider
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:1024/spider/readyz" ]
       <<: *default-health-check
 
-  ##### MC-INFRA-MANAGER #########################################################################################################################
+##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.11.1
+    image: cloudbaristaorg/cb-tumblebug:0.11.0
     container_name: mc-infra-manager
-    pull_policy: if_not_present
+    pull_policy: missing
     platform: linux/amd64
     networks:
       - mc-infra-connector-network
@@ -71,7 +69,7 @@ services:
       mc-infra-connector:
         condition: service_started
       mc-infra-manager-postgres:
-        condition: service_healthy
+        condition: service_healthy      
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-infra-manager/:/app/conf/:ro
@@ -82,11 +80,11 @@ services:
       - TB_SPIDER_REST_URL=http://mc-infra-connector:1024/spider
       - TB_ETCD_ENDPOINTS=http://mc-infra-manager-etcd:2379
       - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
-      - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
+      - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000      
       # - TB_ETCD_AUTH_ENABLED=true
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
-      - TB_POSTGRES_ENDPOINT=mc-infra-manager-postgres:5432
+      - TB_POSTGRES_ENDPOINT=mc-infra-manager-postgres:6432
       - TB_POSTGRES_DATABASE=cb_tumblebug
       - TB_POSTGRES_USER=cb_tumblebug
       - TB_POSTGRES_PASSWORD=cb_tumblebug
@@ -154,8 +152,9 @@ services:
       - --auth-token
       - simple
     healthcheck:
-      test: [ "CMD", "etcdctl", "endpoint", "health", "--endpoints=http://localhost:2379" ]
+      test: [ "CMD", "etcdctl", "endpoint", "health", "--endpoints=http://localhost:2379"]
       <<: *default-health-check
+
 
   # mc-infra-manager PostgreSQL
   # This is used for storing CB-Tumblebug Spec and Image.
@@ -176,68 +175,14 @@ services:
       - POSTGRES_PASSWORD=cb_tumblebug
       - POSTGRES_DB=cb_tumblebug
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U cb_tumblebug" ]
+      test: ["CMD-SHELL", "pg_isready -U cb_tumblebug"]
       interval: 10s
       timeout: 5s
       retries: 5
       start_period: 10s
 
-  ##### MC-IAM-MANAGER #########################################################################################################################
 
-  mc-iam-manager:
-    container_name: mc-iam-manager
-    # image: mc-iam-manager:latest
-    image: cloudbaristaorg/mc-iam-manager:edge
-    restart: unless-stopped
-    networks:
-      - mc-iam-manager-network
-      - mc-infra-manager-network
-      - mc-web-console-network
-    ports:
-      - target: ${MC_IAM_MANAGER_PORT}
-        published: ${MC_IAM_MANAGER_PORT}
-        protocol: tcp
-    depends_on:
-      - mc-iam-manager-db
-      - mc-iam-manager-kc
-    environment:
-      DATABASE_URL: postgres://${MC_IAM_MANAGER_DATABASE_USER}:${MC_IAM_MANAGER_DATABASE_PASSWORD}@${MC_IAM_MANAGER_DATABASE_HOST}:5432/${MC_IAM_MANAGER_DATABASE_NAME}
-      PORT: ${MC_IAM_MANAGER_PORT}
-    env_file:
-      - ./conf/mc-iam-manager/.env
-    volumes:
-      - ./tool/mcc:/app/tool/mcc
-    healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://${MC_IAM_MANAGER_DOMAIN}:${MC_IAM_MANAGER_PORT}/readyz" ]
-      <<: *default-health-check
-
-  mc-iam-manager-db:
-    container_name: mc-iam-manager-db
-    image: postgres:14-alpine
-    pull_policy: missing
-    platform: linux/amd64
-    restart: unless-stopped
-    networks:
-      - mc-iam-manager-network
-    ports:
-      - target: 5432
-        published: 5432
-        protocol: tcp
-    volumes:
-      - ./container-volume/mc-iam-manager/postgres/postgres_data:/var/lib/postgresql/data
-      - ./conf/mc-iam-manager/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
-    environment:
-      POSTGRES_DB: ${MC_IAM_MANAGER_DATABASE_NAME}
-      POSTGRES_USER: ${MC_IAM_MANAGER_DATABASE_USER}
-      POSTGRES_PASSWORD: ${MC_IAM_MANAGER_DATABASE_PASSWORD}
-    env_file:
-      - ./conf/mc-iam-manager/.env
-    healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${MC_IAM_MANAGER_DATABASE_USER} -d ${MC_IAM_MANAGER_DATABASE_NAME}" ]
-      <<: *default-health-check
-    command: >
-      sh -c "chown -R 70:70 /var/lib/postgresql/data &&
-            exec docker-entrypoint.sh postgres"
+##### MC-IAM-MANAGER #########################################################################################################################
 
   mc-iam-manager-kc:
     container_name: mc-iam-manager-kc
@@ -315,13 +260,12 @@ services:
     working_dir: /app/mc-iam-manager
     command: bash /app/mc-iam-manager/docker-post-init.sh
 
-
-  ##### MC-COST-OPTIMIZER #########################################################################################################################
+##### MC-COST-OPTIMIZER #########################################################################################################################
 
   mc-cost-optimizer-fe:
     restart: on-failure
     container_name: mc-cost-optimizer-fe
-    image: cloudbaristaorg/mc-costopti-ui:0.4.0
+    image: cloudbaristaorg/mc-costopti-ui:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -342,7 +286,7 @@ services:
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: cloudbaristaorg/mc-costopti-api:0.4.0
+    image: cloudbaristaorg/mc-costopti-api:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -369,13 +313,13 @@ services:
       costopti.costprocessor.url: ${CO_COST_PROCESSOR_URL}
       costopti.costselector.url: ${CO_COST_SELECTOR_URL}
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9090/api/costopti/be/readyz" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get",  "http://localhost:9090/api/costopti/be/readyz" ]
       <<: *default-health-check
 
   mc-cost-optimizer-cost-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
-    image: cloudbaristaorg/mc-costopti-costcollector:0.4.0
+    image: cloudbaristaorg/mc-costopti-costcollector:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -403,7 +347,7 @@ services:
   mc-cost-optimizer-cost-processor:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
-    image: cloudbaristaorg/mc-costopti-costprocessor:0.4.0
+    image: cloudbaristaorg/mc-costopti-costprocessor:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -429,7 +373,7 @@ services:
   mc-cost-optimizer-cost-selector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
-    image: cloudbaristaorg/mc-costopti-costselector:0.4.0
+    image: cloudbaristaorg/mc-costopti-costselector:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -452,7 +396,7 @@ services:
   mc-cost-optimizer-alarm-service:
     restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
-    image: cloudbaristaorg/mc-costopti-alarm:0.4.0
+    image: cloudbaristaorg/mc-costopti-alarm:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -480,7 +424,7 @@ services:
   mc-cost-optimizer-asset-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-asset-collector
-    image: cloudbaristaorg/mc-costopti-assetcollector:0.4.0
+    image: cloudbaristaorg/mc-costopti-assetcollector:0.3.1
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -523,10 +467,10 @@ services:
       - mc-cost-optimizer-network
       - mc-web-console-network
     healthcheck:
-      test: [ "CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized" ]
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
       <<: *default-health-check
 
-  ##### MC-APPLICATION-MANAGER #########################################################################################################################
+##### MC-APPLICATION-MANAGER #########################################################################################################################
 
   mc-application-manager-jenkins:
     image: bitnami/jenkins:2.462.3
@@ -548,7 +492,28 @@ services:
       JENKINS_USERNAME: admin
       JENKINS_PASSWORD: 123456 # Please CHANGE ME
       JENKINS_PLUGINS: >-
-        workflow-api, swarm, authorize-project, antisamy-markup-formatter, pipeline-github-lib, pipeline-rest-api, git, github-branch-source, gradle, pipeline-model-definition, pipeline-build-step, workflow-aggregator, matrix-project, email-ext, durable-task, checks-api, build-timeout, timestamper, ws-cleanup, ssh-slaves, ssh-agent, publish-over-ssh
+        workflow-api,
+        swarm,
+        authorize-project,
+        antisamy-markup-formatter,
+        pipeline-github-lib,
+        pipeline-rest-api,
+        git,
+        github-branch-source,
+        gradle,
+        pipeline-model-definition,
+        pipeline-build-step,
+        workflow-aggregator,
+        matrix-project,
+        email-ext,
+        durable-task,
+        checks-api,
+        build-timeout,
+        timestamper,
+        ws-cleanup,
+        ssh-slaves,
+        ssh-agent,
+        publish-over-ssh
     healthcheck:
       test: [ "CMD", "curl", "-f", "http://localhost:8080/login" ]
       interval: 1m
@@ -577,11 +542,11 @@ services:
       NEXUS_SECURITY_INITIAL_PASSWORD: 123456 # Please CHANGE ME
     user: root
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8081" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8081"]
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:0.4.0
+    image: cloudbaristaorg/mc-application-manager:0.3.1
     container_name: mc-application-manager
     networks:
       - mc-application-manager-network
@@ -607,7 +572,8 @@ services:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18084/readyz" ]
       <<: *default-health-check
 
-  ##### MC-WORKFLOW-MANAGER #########################################################################################################################
+
+##### MC-WORKFLOW-MANAGER #########################################################################################################################
 
   mc-workflow-manager-jenkins:
     image: bitnami/jenkins:2.462.3
@@ -627,14 +593,36 @@ services:
       JENKINS_USERNAME: admin
       JENKINS_PASSWORD: 123456 # Please CHANGE ME
       JENKINS_PLUGINS: >-
-        workflow-api, swarm, authorize-project, antisamy-markup-formatter, pipeline-github-lib, pipeline-rest-api, git, github-branch-source, gradle, pipeline-model-definition, pipeline-build-step, workflow-aggregator, matrix-project, email-ext, durable-task, checks-api, build-timeout, timestamper, ws-cleanup, ssh-slaves, ssh-agent, publish-over-ssh
+        workflow-api,
+        swarm,
+        authorize-project,
+        antisamy-markup-formatter,
+        pipeline-github-lib,
+        pipeline-rest-api,
+        git,
+        github-branch-source,
+        gradle,
+        pipeline-model-definition,
+        pipeline-build-step,
+        workflow-aggregator,
+        matrix-project,
+        email-ext,
+        durable-task,
+        checks-api,
+        build-timeout,
+        timestamper,
+        ws-cleanup,
+        ssh-slaves,
+        ssh-agent,
+        publish-over-ssh
     user: root
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/login" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
       <<: *default-health-check
 
+
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:0.4.0
+    image: cloudbaristaorg/mc-workflow-manager:0.3.1
     container_name: mc-workflow-manager
     platform: linux/amd64
     networks:
@@ -656,12 +644,13 @@ services:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18083/readyz" ]
       <<: *default-health-check
 
-  ##### MC-DATA-MANAGER #########################################################################################################################
+
+##### MC-DATA-MANAGER #########################################################################################################################
 
   mc-data-manager-init-volumes:
     image: busybox:stable
     container_name: mc-data-manager-init-volumes
-    command: [ "sh", "-c", "chown -R ${UID:-0}:${GID:-0} /app/data" ]
+    command: ["sh", "-c", "chown -R ${UID:-0}:${GID:-0} /app/data"]
     volumes:
       - ./conf/mc-data-manager/data:/app/data/
     user: root
@@ -696,8 +685,11 @@ services:
       test: [ "CMD", "curl", "-f", "http://localhost:3300/readyZ" ]
       <<: *default-health-check
 
-  ##### MC-WEB-CONSOLE #########################################################################################################################
- mc-web-console-db:
+
+##### MC-WEB-CONSOLE #########################################################################################################################
+
+
+  mc-web-console-db:
     image: postgres:14-alpine
     container_name: mc-web-console-db
     restart: unless-stopped
@@ -724,7 +716,7 @@ services:
 
   mc-web-console-api:
     # image: sehyeong0108/mc-web-console-api:20241101
-    image: cloudbaristaorg/mc-web-console-api:0.4.1
+    image: cloudbaristaorg/mc-web-console-api:0.4.4
     container_name: mc-web-console-api
     platform: linux/amd64
     restart: unless-stopped
@@ -763,8 +755,31 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-
-  ##### MC-OBSERVABILITY #########################################################################################################################
+    # image: sehyeong0108/mc-web-console-front:20241101
+    image: cloudbaristaorg/mc-web-console-front:0.4.4
+    container_name: mc-web-console-front
+    platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      - mc-web-console-api
+    networks:
+      - mc-web-console-network
+      - mc-iam-manager-network
+    ports:
+      - target: 3001
+        published: 3001
+        protocol: tcp
+    environment:
+      API_ADDR: mc-web-console-api
+      API_PORT: 3000
+      FRONT_ADDR: 0.0.0.0
+      FRONT_PORT: 3001
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:3001" ]
+      <<: *default-health-check 
+##### MC-OBSERVABILITY #########################################################################################################################
 
   mc-observability-manager:
     image: cloudbaristaorg/mc-observability:0.4.0
@@ -826,7 +841,7 @@ services:
     networks:
       - mc-observability-network
     healthcheck:
-      test: [ "CMD", "healthcheck.sh", "--connect" ]
+      test: ["CMD", "healthcheck.sh", "--connect"]
       <<: *default-health-check
 
   mc-observability-influx:
@@ -850,7 +865,7 @@ services:
     networks:
       - mc-observability-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8086/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
       <<: *default-health-check
 
   mc-observability-chronograf:
@@ -866,13 +881,13 @@ services:
       - mc-web-console-network
       - mc-observability-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8888/chronograf/v1/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:8888/chronograf/v1/health"]
       <<: *default-health-check
 
   mc-observability-kapacitor-init-volumes:
     image: busybox:stable
     container_name: mc-observability-kapacitor-init-volumes
-    command: [ "sh", "-c", "chown -R 999:999 /var/lib/kapacitor" ]
+    command: ["sh", "-c", "chown -R 999:999 /var/lib/kapacitor"]
     volumes:
       - ./container-volume/mc-observability/kapacitor:/var/lib/kapacitor
     user: root
@@ -895,13 +910,13 @@ services:
       - mc-observability-network
     restart: unless-stopped
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9092/kapacitor/v1/ping" ]
+      test: ["CMD", "curl", "-f", "http://localhost:9092/kapacitor/v1/ping"]
       <<: *default-health-check
 
   mc-observability-opensearch-init-volumes:
     image: busybox:stable
     container_name: mc-observability-opensearch-init-volumes
-    command: [ "sh", "-c", "chown -R 1000:1000 /usr/share/opensearch/data" ]
+    command: ["sh", "-c", "chown -R 1000:1000 /usr/share/opensearch/data"]
     volumes:
       - ./container-volume/mc-observability/opensearch:/usr/share/opensearch/data
     user: root
@@ -939,7 +954,7 @@ services:
     networks:
       - mc-observability-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:9200/_cluster/health" ]
+      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
       <<: *default-health-check
 
   mc-observability-opensearch-dashboards:
@@ -956,7 +971,7 @@ services:
       - mc-web-console-network
       - mc-observability-network
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:5601/api/status" ]
+      test: ["CMD", "curl", "-f", "http://localhost:5601/api/status"]
       <<: *default-health-check
 
   mc-observability-insight:
