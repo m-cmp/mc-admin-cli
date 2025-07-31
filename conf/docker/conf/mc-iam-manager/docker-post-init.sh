@@ -13,29 +13,29 @@ echo ' Health Check'
 echo '------------------------------------------------'
 
 
-# mc-iam-manager API가 완전히 준비될 때까지 대기 (간단한 버전)
-echo 'Waiting for mc-iam-manager API to be ready...'
-max_attempts=2
-attempt=1
+# # mc-iam-manager API가 완전히 준비될 때까지 대기 (간단한 버전)
+# echo 'Waiting for mc-iam-manager API to be ready...'
+# max_attempts=2
+# attempt=1
 
-while [ $attempt -le $max_attempts ]; do
-  echo "Attempt $attempt/$max_attempts: Checking mc-iam-manager API..."
+# while [ $attempt -le $max_attempts ]; do
+#   echo "Attempt $attempt/$max_attempts: Checking mc-iam-manager API..."
   
-  # 간단한 API 헬스체크 (컨테이너 이름 사용)
-  if curl -s -f "http://mc-iam-manager:5005/readyz" > /dev/null 2>&1; then
-    echo '✓ mc-iam-manager API is ready!'
-    break
-  fi
+#   # 간단한 API 헬스체크 (컨테이너 이름 사용)
+#   if curl -s -f "http://mc-iam-manager:5005/readyz" > /dev/null 2>&1; then
+#     echo '✓ mc-iam-manager API is ready!'
+#     break
+#   fi
   
-  if [ $attempt -eq $max_attempts ]; then
-    echo 'WARNING: mc-iam-manager API might not be fully ready, but proceeding anyway...'
-    echo 'This is normal if the service is still initializing.'
-  fi
+#   if [ $attempt -eq $max_attempts ]; then
+#     echo 'WARNING: mc-iam-manager API might not be fully ready, but proceeding anyway...'
+#     echo 'This is normal if the service is still initializing.'
+#   fi
   
-  echo 'API not ready yet, waiting 5 seconds...'
-  sleep 5
-  attempt=$((attempt + 1))
-done
+#   echo 'API not ready yet, waiting 5 seconds...'
+#   sleep 5
+#   attempt=$((attempt + 1))
+# done
 
 echo ''
 echo ''

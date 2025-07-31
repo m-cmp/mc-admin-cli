@@ -17,7 +17,7 @@ echo "----------------------------------------"
 echo "필수 컨테이너 상태를 확인하고 있습니다..."
 echo ""
 
-REQUIRED_CONTAINERS=("mc-iam-manager" "mc-iam-manager-db" "mc-iam-manager-kc")
+REQUIRED_CONTAINERS=("mc-iam-manager-db" "mc-iam-manager-kc")
 ALL_HEALTHY=true
 
 for container in "${REQUIRED_CONTAINERS[@]}"; do
@@ -52,7 +52,7 @@ echo ""
 if [ "$ALL_HEALTHY" = false ]; then
     echo "❌ 필수 컨테이너가 모두 정상 상태가 아닙니다."
     echo "다음 컨테이너들이 정상적으로 구동된 후 다시 시도해주세요:"
-    echo "  - mc-iam-manager"
+    # echo "  - mc-iam-manager"
     echo "  - mc-iam-manager-db"
     echo "  - mc-iam-manager-kc"
     echo ""
@@ -102,31 +102,33 @@ while true; do
             echo "모든 초기화 작업이 자동으로 순차 진행됩니다..."
             echo ""
             
-            # 전체 초기화 스크립트 실행
-            cd ../conf/docker/conf/mc-iam-manager/ || {
-                echo "오류: mc-iam-manager 디렉토리를 찾을 수 없습니다."
-                cd "$ORIGINAL_DIR"
-                exit 1
-            }
+            cd "$ORIGINAL_DIR"
+            ./mcc infra run -s mc-iam-manager-post-initial
+            # # 전체 초기화 스크립트 실행
+            # cd ../conf/docker/conf/mc-iam-manager/ || {
+            #     echo "오류: mc-iam-manager 디렉토리를 찾을 수 없습니다."
+            #     cd "$ORIGINAL_DIR"
+            #     exit 1
+            # }
             
-            if [ -f "1_setup_auto.sh" ]; then
-                chmod +x 1_setup_auto.sh
-                ./1_setup_auto.sh
-                if [ $? -eq 0 ]; then
-                    echo ""
-                    echo "✓ 전체 초기화가 완료되었습니다."
-                    echo "MC-IAM-Manager가 정상적으로 설정되었습니다."
-                else
-                    echo ""
-                    echo "❌ 전체 초기화 중 오류가 발생했습니다."
-                    cd "$ORIGINAL_DIR"
-                    exit 1
-                fi
-            else
-                echo "오류: 1_setup_auto.sh 파일을 찾을 수 없습니다."
-                cd "$ORIGINAL_DIR"
-                exit 1
-            fi
+            # if [ -f "1_setup_auto.sh" ]; then
+            #     chmod +x 1_setup_auto.sh
+            #     ./1_setup_auto.sh
+            #     if [ $? -eq 0 ]; then
+            #         echo ""
+            #         echo "✓ 전체 초기화가 완료되었습니다."
+            #         echo "MC-IAM-Manager가 정상적으로 설정되었습니다."
+            #     else
+            #         echo ""
+            #         echo "❌ 전체 초기화 중 오류가 발생했습니다."
+            #         cd "$ORIGINAL_DIR"
+            #         exit 1
+            #     fi
+            # else
+            #     echo "오류: 1_setup_auto.sh 파일을 찾을 수 없습니다."
+            #     cd "$ORIGINAL_DIR"
+            #     exit 1
+            # fi
             
             break
             ;;
