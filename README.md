@@ -43,6 +43,123 @@ sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 ```
 
 # Quick Guide
+This section describes the minimal process for those who want to set up quickly.   
+After downloading mc-admin-cli, move to the bin folder and run the installAll.sh shell script.
+```shell 
+$ git clone https://github.com/m-cmp/mc-admin-cli.git
+$ cd mc-admin-cli/bin
+$ ./installAll.sh
+```
+
+After a while, check that all required containers are in healthy status without any unhealthy status.   
+Especially, make sure that the mc-web-console-api container, which runs last, is healthy.
+```shell 
+$ ./mcc infra info
+```
+
+Usually, the work so far is sufficient, but if the web console is not working properly,   
+check the logs of the mc-iam-manager-post-initial container below to verify that all configuration tasks have been processed normally.   
+If the mc-iam-manager-post-initial operation does not terminate successfully, please run the iam_manager_init.sh shell script in the mc-admin-cli/bin folder.
+```shell 
+$ docker logs mc-iam-manager-post-initial
+```
+
+
+If you want to completely initialize the working environment due to other Docker environments or existing tests, please use the cleanAll.sh shell script in the mc-admin-cli/bin folder.   
+**[WARNING] All Docker environments and existing work history on the system will be deleted.**
+```shell 
+$ cd mc-admin-cli/bin
+$ ./cleanAll.sh
+```
+
+
+## Firewall Port Information
+
+The following ports should be registered in the firewall if needed:
+
+### **MC-INFRA-CONNECTOR**
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| mc-infra-connector | 1024 | TCP | CB-Spider API |
+
+### **MC-INFRA-MANAGER**
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| mc-infra-manager | 1323 | TCP | CB-Tumblebug API |
+| mc-infra-manager-etcd | 2379, 2380 | TCP | etcd cluster |
+| mc-infra-manager-postgres | 6432 | TCP | PostgreSQL DB |
+
+### **MC-IAM-MANAGER**
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| mc-iam-manager | 5000 | TCP | IAM Manager API |
+| mc-iam-manager-db | 5432 | TCP | PostgreSQL DB |
+| mc-iam-manager-kc | 8080 | TCP | Keycloak |
+| mc-iam-manager-nginx | 80, 443 | TCP | Nginx (HTTP/HTTPS) |
+
+### **MC-COST-OPTIMIZER**
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend |
+| mc-cost-optimizer-be | 9090 | TCP | Cost Optimizer Backend |
+| mc-cost-optimizer-cost-collector | 8881 | TCP | Cost Collector |
+| mc-cost-optimizer-cost-processor | 18082 | TCP | Cost Processor |
+| mc-cost-optimizer-cost-selector | 8083 | TCP | Cost Selector |
+| mc-cost-optimizer-alarm-service | 9000 | TCP | Alarm Service |
+| mc-cost-optimizer-asset-collector | 8091 | TCP | Asset Collector |
+| mc-cost-optimizer-db | 3307 | TCP | MariaDB |
+
+### **MC-APPLICATION-MANAGER**
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| mc-application-manager-jenkins | 9800 | TCP | Jenkins |
+| mc-application-manager-sonatype-nexus | 8081, 5500 | TCP | Nexus Repository |
+| mc-application-manager | 18084 | TCP | Application Manager API |
+
+### **MC-WORKFLOW-MANAGER**
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| mc-workflow-manager-jenkins | 9880 | TCP | Jenkins |
+| mc-workflow-manager | 18083 | TCP | Workflow Manager API |
+
+### **MC-DATA-MANAGER**
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| mc-data-manager | 3300 | TCP | Data Manager API |
+
+### **MC-WEB-CONSOLE**
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| mc-web-console-db | 15432 | TCP | PostgreSQL DB |
+| mc-web-console-api | 3000 | TCP | Web Console API |
+| mc-web-console-front | 3001 | TCP | Web Console Frontend |
+
+### **MC-OBSERVABILITY**
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| mc-observability-manager | 18080, 18081 | TCP | Observability Manager |
+| mc-observability-maria | 3306 | TCP | MariaDB |
+| mc-observability-influx | 8086, 8082 | TCP | InfluxDB |
+| mc-observability-chronograf | 8888 | TCP | Chronograf |
+| mc-observability-kapacitor | 9092 | TCP | Kapacitor |
+| opensearch-node1 | 9200, 9600 | TCP | OpenSearch |
+| mc-observability-opensearch-dashboards | 5601 | TCP | OpenSearch Dashboards |
+| mc-observability-insight | 9001 | TCP | Observability Insight |
+| mc-observability-insight-scheduler | 9002 | TCP | Insight Scheduler |
+| mc-observability-mcp-grafana | 8000 | TCP | MCP Grafana |
+
+**Total 39 ports** are configured for external access.
+
+The following ports must be registered in the firewall:
+### **Required Firewall Services**
+| Service | Port | Protocol | Description |
+|---------|------|----------|-------------|
+| mc-web-console-api | 3000 | TCP | Web Console API |
+| mc-web-console-front | 3001 | TCP | Web Console Frontend |
+
+
+<!-- 
+# Quick Guide
  Required: Domain, Email
   - SSL and IDP configuration requires certificates. (If you already have certificates in use, substitute them into the nginx configuration values of the iam manager)
 
@@ -73,7 +190,7 @@ sudo docker compose -f docker-compose.cert.yaml up
 3. After completing admin cli docker configuration, start the service with docker compose.
 ```shell 
 sudo docker compose -f docker-compose.yaml
-```
+``` -->
 
 
 ---
