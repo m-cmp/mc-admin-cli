@@ -1,7 +1,7 @@
 #!/bin/bash
 
 # UID 변수 충돌 방지 - .env.setup 파일 사용
-source .env.setup
+source .env
 
 # 자동화된 설정 함수
 auto_setup() {
