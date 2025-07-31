@@ -184,6 +184,61 @@ services:
 
 ##### MC-IAM-MANAGER #########################################################################################################################
 
+  mc-iam-manager:
+    container_name: mc-iam-manager
+    # image: mc-iam-manager:latest
+    image: cloudbaristaorg/mc-iam-manager:edge
+    restart: unless-stopped
+    networks:
+      - mc-iam-manager-network
+      - mc-infra-manager-network
+      - mc-web-console-network
+    ports:
+      - target: ${MC_IAM_MANAGER_PORT}
+        published: ${MC_IAM_MANAGER_PORT}
+        protocol: tcp
+    depends_on:
+      - mc-iam-manager-db
+      - mc-iam-manager-kc
+    environment:
+      DATABASE_URL: postgres://${MC_IAM_MANAGER_DATABASE_USER}:${MC_IAM_MANAGER_DATABASE_PASSWORD}@${MC_IAM_MANAGER_DATABASE_HOST}:5432/${MC_IAM_MANAGER_DATABASE_NAME}
+      PORT: ${MC_IAM_MANAGER_PORT}
+    env_file:
+      - ./conf/mc-iam-manager/.env
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    healthcheck:
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://${MC_IAM_MANAGER_DOMAIN}:${MC_IAM_MANAGER_PORT}/readyz" ]
+      <<: *default-health-check
+
+  mc-iam-manager-db:
+    container_name: mc-iam-manager-db
+    image: postgres:14-alpine
+    pull_policy: missing
+    platform: linux/amd64
+    restart: unless-stopped
+    networks:
+      - mc-iam-manager-network
+    ports:
+      - target: 5432
+        published: 5432
+        protocol: tcp
+    volumes:
+      - ./container-volume/mc-iam-manager/postgres/postgres_data:/var/lib/postgresql/data
+      - ./conf/mc-iam-manager/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
+    environment:
+      POSTGRES_DB: ${MC_IAM_MANAGER_DATABASE_NAME}
+      POSTGRES_USER: ${MC_IAM_MANAGER_DATABASE_USER}
+      POSTGRES_PASSWORD: ${MC_IAM_MANAGER_DATABASE_PASSWORD}
+    env_file:
+      - ./conf/mc-iam-manager/.env
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${MC_IAM_MANAGER_DATABASE_USER} -d ${MC_IAM_MANAGER_DATABASE_NAME}" ]
+      <<: *default-health-check
+    command: >
+      sh -c "chown -R 70:70 /var/lib/postgresql/data &&
+            exec docker-entrypoint.sh postgres"
+
   mc-iam-manager-kc:
     container_name: mc-iam-manager-kc
     image: quay.io/keycloak/keycloak:24.0.1
@@ -259,6 +314,7 @@ services:
       - ./conf/mc-iam-manager/:/app/mc-iam-manager/
     working_dir: /app/mc-iam-manager
     command: bash /app/mc-iam-manager/docker-post-init.sh
+
 
 ##### MC-COST-OPTIMIZER #########################################################################################################################
 
