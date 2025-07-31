@@ -22,7 +22,7 @@ echo '------------------------------------------------'
 #   echo "Attempt $attempt/$max_attempts: Checking mc-iam-manager API..."
   
 #   # 간단한 API 헬스체크 (컨테이너 이름 사용)
-#   if curl -s -f "http://mc-iam-manager:5005/readyz" > /dev/null 2>&1; then
+#   if curl -s -f "http://mc-iam-manager:5000/readyz" > /dev/null 2>&1; then
 #     echo '✓ mc-iam-manager API is ready!'
 #     break
 #   fi
