@@ -180,8 +180,8 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: mc-iam-manager:latest
-    pull_policy: never
+    # image: mc-iam-manager:latest
+    image: cloudbaristaorg/mc-iam-manager:edge
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
