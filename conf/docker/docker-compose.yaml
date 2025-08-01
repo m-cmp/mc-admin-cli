@@ -772,7 +772,7 @@ services:
 
   mc-web-console-api:
     # image: sehyeong0108/mc-web-console-api:20241101
-    image: cloudbaristaorg/mc-web-console-api:0.4.4
+    image: cloudbaristaorg/mc-web-console-api:0.4.5
     container_name: mc-web-console-api
     platform: linux/amd64
     restart: unless-stopped
@@ -812,7 +812,7 @@ services:
 
   mc-web-console-front:
     # image: sehyeong0108/mc-web-console-front:20241101
-    image: cloudbaristaorg/mc-web-console-front:0.4.4
+    image: cloudbaristaorg/mc-web-console-front:0.4.5
     container_name: mc-web-console-front
     platform: linux/amd64
     restart: unless-stopped
