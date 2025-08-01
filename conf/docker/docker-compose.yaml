@@ -502,9 +502,24 @@ services:
       asset.collect.url: ${CO_ASSET_MONITORING_SERVER}
       assetCollectBatchCronSchedule: ${CO_ASSET_COLLECT_BATCH_CRON_SCHEDULE}
 
+  mc-cost-optimizer-init-volume:
+    image: busybox:stable
+    container_name: mc-cost-optimizer-init-volume
+    command: ["sh", "-c", "chown -R 999:999 /var/lib/mysql"]
+    volumes:
+      - ./container-volume/mc-cost-optimizer/mysql/:/var/lib/mysql
+    user: root
+    networks:
+      - mc-cost-optimizer-network
+    init: true
+    restart: "no"
+
   mc-cost-optimizer-db:
     image: mariadb:latest
     container_name: mc-cost-optimizer-db
+    depends_on:
+      mc-cost-optimizer-init-volume:
+        condition: service_completed_successfully    
     environment:
       - ALLOW_EMPTY_PASSWORD=no
       - MYSQL_ROOT_PASSWORD=${CO_MYSQL_ROOT_PASSWORD}
