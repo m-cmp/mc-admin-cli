@@ -47,7 +47,7 @@ services:
 
   mc-cost-optimizer:
     version: 0.3.0
-    baseurl: http://mc-cost-optimizer:9090
+    baseurl: http://mc-cost-optimizer:7780
     auth:
 
   mc-data-manager:
