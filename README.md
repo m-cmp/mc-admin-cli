@@ -180,6 +180,7 @@ The following ports must be registered in the firewall:
 |---------|------|----------|-------------|
 | mc-web-console-api | 3000 | TCP | Web Console API |
 | mc-web-console-front | 3001 | TCP | Web Console Frontend |
+| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend |
 
 
 <!-- 
