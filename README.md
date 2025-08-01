@@ -64,6 +64,14 @@ If the mc-iam-manager-post-initial operation does not terminate successfully, pl
 $ docker logs mc-iam-manager-post-initial
 ```
 
+Once the mc-web-console-api container becomes healthy, initialize CB-Tumblebug using the following instructions:
+- [Quick Start Guide – CB-Tumblebug](https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#quick-start-)
+- In the guide, running `init.sh` is the required step.
+
+By default, the web console can be accessed at http://<IP>:3001 using the temporary credentials:
+- Username: mcmp
+- Password: mcmp_password
+
 
 If you want to completely initialize the working environment due to other Docker environments or existing tests, please use the cleanAll.sh shell script in the mc-admin-cli/bin folder.   
 **[WARNING] All Docker environments and existing work history on the system will be deleted.**
