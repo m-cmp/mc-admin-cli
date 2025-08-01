@@ -44,33 +44,49 @@ sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 
 # Quick Guide
 This section describes the minimal process for those who want to set up quickly.   
+
+First, clone the repository.
+```shell
+git clone https://github.com/m-cmp/mc-admin-cli.git
+cd mc-admin-cli/bin
+```
+
+For [mc-date-manager](https://github.com/cloud-barista/mc-data-manager/blob/main/docs/Datamanager-Docker-Guide.md) configuration, you need to copy and edit `profile.json` which will be used for csp credenticals.
+```shell
+cp ../conf/docker/conf/mc-data-manager/data/var/run/data-manager/profile/sample.json ./profile.json
+```
+
 After downloading mc-admin-cli, move to the bin folder and run the installAll.sh shell script.
 ```shell 
-$ git clone https://github.com/m-cmp/mc-admin-cli.git
-$ cd mc-admin-cli/bin
-$ ./installAll.sh
+./installAll.sh
 ```
+
+For [mc-date-manager](https://github.com/cloud-barista/mc-data-manager/blob/main/docs/Datamanager-Docker-Guide.md) configuration, you need to copy the profile.json into mc-data-manager container. Try `./mcc infra stop` and `./mcc infra run` if mc-date-manager keeps unhealthy.
+```shell
+docker cp profile.json  mc-data-manager:/app/data/var/run/data-manager/profile/profile.json
+```
+(optionally, remove the profile.json file since it is not secure)
 
 After a while, check that all required containers are in healthy status without any unhealthy status.   
 Especially, make sure that the mc-web-console-api container, which runs last, is healthy.
 ```shell 
-$ ./mcc infra info
+./mcc infra info
 ```
 
 Usually, the work so far is sufficient, but if the web console is not working properly,   
 check the logs of the mc-iam-manager-post-initial container below to verify that all configuration tasks have been processed normally.   
 If the mc-iam-manager-post-initial operation does not terminate successfully, please run the iam_manager_init.sh shell script in the mc-admin-cli/bin folder.
 ```shell 
-$ docker logs mc-iam-manager-post-initial
+docker logs mc-iam-manager-post-initial
 ```
 
 Once the mc-web-console-api container becomes healthy, initialize CB-Tumblebug using the following instructions:
 - [Quick Start Guide – CB-Tumblebug](https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#quick-start-)
 - In the guide, running `init.sh` is the required step.
 
-By default, the web console can be accessed at http://IP:3001 using the temporary credentials:
-- Username: mcmp
-- Password: mcmp_password
+By default, the web console can be accessed at http://{HostIP}:3001 using the temporary credentials:
+- Username: `mcmp`
+- Password: `mcmp_password`
 
 
 If you want to completely initialize the working environment due to other Docker environments or existing tests, please use the cleanAll.sh shell script in the mc-admin-cli/bin folder.   
