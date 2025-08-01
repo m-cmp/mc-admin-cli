@@ -68,7 +68,7 @@ Once the mc-web-console-api container becomes healthy, initialize CB-Tumblebug u
 - [Quick Start Guide – CB-Tumblebug](https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#quick-start-)
 - In the guide, running `init.sh` is the required step.
 
-By default, the web console can be accessed at http://<IP>:3001 using the temporary credentials:
+By default, the web console can be accessed at http://IP:3001 using the temporary credentials:
 - Username: mcmp
 - Password: mcmp_password
 
