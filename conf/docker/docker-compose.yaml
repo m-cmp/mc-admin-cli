@@ -617,7 +617,7 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:0.4.0
+    image: cloudbaristaorg/mc-application-manager:0.4.1
     container_name: mc-application-manager
     networks:
       - mc-application-manager-network
@@ -693,7 +693,7 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:0.4.0
+    image: cloudbaristaorg/mc-workflow-manager:0.4.1
     container_name: mc-workflow-manager
     platform: linux/amd64
     networks:
