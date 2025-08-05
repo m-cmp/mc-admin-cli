@@ -786,8 +786,7 @@ services:
             exec docker-entrypoint.sh postgres"
 
   mc-web-console-api:
-    # image: sehyeong0108/mc-web-console-api:20241101
-    image: cloudbaristaorg/mc-web-console-api:0.4.5
+    image: cloudbaristaorg/mc-web-console-api:0.4.6
     container_name: mc-web-console-api
     platform: linux/amd64
     restart: unless-stopped
@@ -796,11 +795,11 @@ services:
       - mc-infra-connector
       - mc-infra-manager
       - mc-iam-manager
-      # - mc-observability-manager
-      # - mc-workflow-manager
-      # - mc-data-manager
-      # - mc-application-manager
-      # - mc-cost-optimizer-be
+      - mc-observability-manager
+      - mc-workflow-manager
+      - mc-data-manager
+      - mc-application-manager
+      - mc-cost-optimizer-be
     ports:
       - target: 3000
         published: 3000
@@ -826,8 +825,7 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    # image: sehyeong0108/mc-web-console-front:20241101
-    image: cloudbaristaorg/mc-web-console-front:0.4.5
+    image: cloudbaristaorg/mc-web-console-front:0.4.6
     container_name: mc-web-console-front
     platform: linux/amd64
     restart: unless-stopped
