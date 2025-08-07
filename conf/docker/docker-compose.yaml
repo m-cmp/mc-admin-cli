@@ -617,7 +617,7 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:0.4.1
+    image: cloudbaristaorg/mc-application-manager:0.4.2
     container_name: mc-application-manager
     networks:
       - mc-application-manager-network
