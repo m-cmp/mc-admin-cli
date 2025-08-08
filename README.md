@@ -44,6 +44,7 @@ sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 
 # Quick Guide
 This section describes the minimal process for those who want to set up quickly.   
+For more detailed installation guide, please refer to the [Running on Single Instance Guide](https://github.com/m-cmp/mc-admin-cli/blob/main/docs/running-on-instance.md) document.   
 
 First, clone the repository.
 ```shell
