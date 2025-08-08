@@ -1,34 +1,34 @@
 # M-CMP ADMIN CLI (mcc)
-This repository provides a Multi-Cloud ADMIN CLI.    
-The name of this tool is mcc(Multi-Cloud admin CLI).    
-A sub-system of [M-CMP platform](https://github.com/m-cmp) to deploy and manage Multi-Cloud Infrastructures.    
+이 저장소는 멀티 클라우드 관리 CLI를 제공합니다.    
+이 도구의 이름은 mcc(Multi-Cloud admin CLI)입니다.    
+멀티 클라우드 인프라를 배포하고 관리하기 위한 [M-CMP 플랫폼](https://github.com/m-cmp)의 하위 시스템입니다.    
 
 
 ```
-[NOTE]
-mcc is currently under development.
-So, we do not recommend using the current release in production.
-Please note that the functionalities of mcc are not stable and secure yet.
-If you have any difficulties in using mcc, please let us know.
-(Open an issue or Join the M-CMP Slack)
+[참고]
+mcc는 현재 개발 중입니다.
+따라서 현재 릴리스를 프로덕션에서 사용하는 것을 권장하지 않습니다.
+mcc의 기능들이 아직 안정적이고 안전하지 않다는 점을 참고하시기 바랍니다.
+mcc 사용에 어려움이 있으시면 알려주시기 바랍니다.
+(이슈를 열거나 M-CMP Slack에 참여하세요)
 ```
 
-## mcc Overview
-- Management tool that supports the installation, execution, status information provision, termination, and API calls of the M-CMP system.
-- Currently, infra subcommand is only support docker compose base infra install and management.
-  - [infra subcommand](./docs/mc-admin-cli-infra.md)
-- If you want to checkout how to run the whole subsystem on the single instance on CSP Instance, see [this document](./docs/mc-admin-cli-infra.md).
+## mcc 개요
+- M-CMP 시스템의 설치, 실행, 상태 정보 제공, 종료 및 API 호출을 지원하는 관리 도구입니다.
+- 현재 infra 서브커맨드는 docker compose 기반 인프라 설치 및 관리만 지원합니다.
+  - [infra 서브커맨드](./docs/mc-admin-cli-infra.md)
+- CSP 인스턴스에서 전체 하위 시스템을 단일 인스턴스에서 실행하는 방법을 확인하려면 [이 문서](./docs/mc-admin-cli-infra.md)를 참조하세요.
 
-## Development & Test Environment
+## 개발 및 테스트 환경
 - Go 1.23
 - Docker version 27.3.1
 - Docker Compose version v2.29
 
-## Install Docker & Docker Compose V2
+## Docker 및 Docker Compose V2 설치
 
-- [Install Docker Engine on Ubuntu](https://docs.docker.com/engine/install/ubuntu/)
+- [Ubuntu에서 Docker Engine 설치](https://docs.docker.com/engine/install/ubuntu/)
 
-checkout the commands down below.
+아래 명령어를 확인하세요.
 
 ```shell
 sudo apt-get install -y apt-transport-https ca-certificates curl gnupg-agent software-properties-common
@@ -42,93 +42,93 @@ sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 ```
 
-# Quick Guide
-This section describes the minimal process for those who want to set up quickly.   
-For more detailed installation guide, please refer to the [Running on Single Instance Guide](https://github.com/m-cmp/mc-admin-cli/blob/main/docs/running-on-instance.md) document.   
+# 빠른 가이드
+이 섹션은 빠르게 설정하고 싶은 분들을 위한 최소한의 과정을 설명합니다.   
+더 자세한 설치 가이드를 원하시면 [단일 인스턴스에서 실행하기 가이드](https://github.com/m-cmp/mc-admin-cli/blob/main/docs/running-on-instance.md) 문서를 참조하세요.   
 
-First, clone the repository.
+먼저 저장소를 클론합니다.
 ```shell
 git clone https://github.com/m-cmp/mc-admin-cli.git
 cd mc-admin-cli/bin
 ```
 
-For [mc-data-manager](https://github.com/cloud-barista/mc-data-manager/blob/main/docs/Datamanager-Docker-Guide.md) configuration, you need to copy and edit `profile.json` which will be used for csp credenticals.
+[mc-data-manager](https://github.com/cloud-barista/mc-data-manager/blob/main/docs/Datamanager-Docker-Guide.md) 설정을 위해 csp 자격 증명에 사용될 `profile.json`을 복사하고 편집해야 합니다.
 ```shell
 cp ../conf/docker/conf/mc-data-manager/data/var/run/data-manager/profile/sample.json ./profile.json
 ```
 
-After downloading mc-admin-cli, move to the bin folder and run the installAll.sh shell script.
+mc-admin-cli를 다운로드한 후, bin 폴더로 이동하여 installAll.sh 셸 스크립트를 실행합니다.
 ```shell 
 ./installAll.sh
 ```
 
-**Installation Mode Selection:**
-- **Developer Mode (Local Certificate)**: For development and testing environments (Temporary credential features are not available)
-- **Production Mode (CA Certificate)**: For production environments (Domain required. Target CSP work required for temporary credentials)
+    스크립트 실행 시 도메인과 인증서가 필요하므로 적절한 모드를 선택하여 인증서를 발급하고 nginx 설정 파일을 생성합니다.
+    **설치 모드 선택:**
+    - **개발자 모드 (로컬 인증)**: 개발 및 테스트 환경용.( 임시자격증명을 활용하는 기능 사용 불가)
+    - **프로덕션 모드 (CA 인증)**: 운영 환경용 (도메인 필수. 임시자격증명을 위한 대상 CSP의 작업 필요 )
 
-Domain and certificates are required, so select the appropriate mode during installation to issue certificates and create nginx configuration files.
+
 ```shell
 ./mcc infra run
 ```
-Run the above command to start platform installation.
+위 명령어를 실행하여 플랫폼 설치를 시작합니다.
 
-For [mc-data-manager](https://github.com/cloud-barista/mc-data-manager/blob/main/docs/Datamanager-Docker-Guide.md) configuration, you need to copy the profile.json into mc-data-manager container. Try `./mcc infra stop` and `./mcc infra run` if mc-date-manager keeps unhealthy.
+[mc-data-manager](https://github.com/cloud-barista/mc-data-manager/blob/main/docs/Datamanager-Docker-Guide.md) 설정을 위해 profile.json을 mc-data-manager 컨테이너에 복사해야 합니다. mc-date-manager가 계속 unhealthy 상태라면 `./mcc infra stop`과 `./mcc infra run`을 시도해보세요.
 ```shell
 docker cp profile.json  mc-data-manager:/app/data/var/run/data-manager/profile/profile.json
 ```
-(optionally, remove the profile.json file since it is not secure)
+(선택사항: 보안상 profile.json 파일을 제거하세요)
 
-After a while, check that all required containers are in healthy status without any unhealthy status.   
-Especially, make sure that the mc-web-console-api container, which runs last, is healthy.
+잠시 후, 모든 필수 컨테이너가 unhealthy 상태 없이 healthy 상태인지 확인하세요.   
+특히 마지막에 실행되는 mc-web-console-api 컨테이너가 healthy 상태인지 확인하세요.
 ```shell 
 ./mcc infra info
 ```
 
-Usually, the work so far is sufficient, but if the web console is not working properly,   
-check the logs of the mc-iam-manager-post-initial container below to verify that all configuration tasks have been processed normally.   
-If the mc-iam-manager-post-initial operation does not terminate successfully, please run the iam_manager_init.sh shell script in the mc-admin-cli/bin folder.
+보통 지금까지의 작업으로 충분하지만, 웹 콘솔이 제대로 작동하지 않는 경우,   
+아래의 mc-iam-manager-post-initial 컨테이너 로그를 확인하여 모든 설정 작업이 정상적으로 처리되었는지 확인하세요.   
+mc-iam-manager-post-initial 작업이 성공적으로 종료되지 않으면 mc-admin-cli/bin 폴더의 iam_manager_init.sh 셸 스크립트를 실행하세요.
 ```shell 
 docker logs mc-iam-manager-post-initial
 ```
+    해당작업은 mc-iam-manager에서 필요한 작업영역(realm, client)생성 및 관리자, role, menu를 설정하는 작업입니다.
+    실패한 경우 1_setup_manual.sh 파일을 이용하여 특정 단계를 재실행할 수 있습니다.
 
-This task involves creating necessary workspaces (realm, client) in mc-iam-manager and setting up administrators, roles, and menus.
-If it fails, you can re-run specific steps using the 1_setup_manual.sh file.
+mc-web-console-api 컨테이너가 healthy 상태가 되면 다음 지침을 사용하여 CB-Tumblebug를 초기화하세요:
+- [빠른 시작 가이드 – CB-Tumblebug](https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#quick-start-)
+- 가이드에서 `init.sh` 실행이 필수 단계입니다.
 
-Once the mc-web-console-api container becomes healthy, initialize CB-Tumblebug using the following instructions:
-- [Quick Start Guide – CB-Tumblebug](https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#quick-start-)
-- In the guide, running `init.sh` is the required step.
-
-By default, the web console can be accessed at http://{HostIP}:3001 using the temporary credentials:
-- Username: `mcmp`
-- Password: `mcmp_password`
+기본적으로 웹 콘솔은 임시 자격 증명을 사용하여 http://{HostIP}:3001에서 접근할 수 있습니다:
+- 사용자명: `mcmp`
+- 비밀번호: `mcmp_password`
 
 
-If you want to completely initialize the working environment due to other Docker environments or existing tests, please use the cleanAll.sh shell script in the mc-admin-cli/bin folder.   
-**[WARNING] All Docker environments and existing work history on the system will be deleted.**
+다른 Docker 환경이나 기존 테스트로 인해 작업 환경을 완전히 초기화하고 싶다면 mc-admin-cli/bin 폴더의 cleanAll.sh 셸 스크립트를 사용하세요.   
+**[경고] 시스템의 모든 Docker 환경과 기존 작업 기록이 삭제됩니다.**
 ```shell 
 $ cd mc-admin-cli/bin
 $ ./cleanAll.sh
 ```
 
 
-## Firewall Port Information
+## 방화벽 포트 정보
 
-The following ports should be registered in the firewall if needed:
+필요한 경우 다음 포트들을 방화벽에 등록해야 합니다:
 
 ### **MC-INFRA-CONNECTOR**
-| Service | Port | Protocol | Description |
+| 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
 | mc-infra-connector | 1024 | TCP | CB-Spider API |
 
 ### **MC-INFRA-MANAGER**
-| Service | Port | Protocol | Description |
+| 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
 | mc-infra-manager | 1323 | TCP | CB-Tumblebug API |
-| mc-infra-manager-etcd | 2379, 2380 | TCP | etcd cluster |
+| mc-infra-manager-etcd | 2379, 2380 | TCP | etcd 클러스터 |
 | mc-infra-manager-postgres | 6432 | TCP | PostgreSQL DB |
 
 ### **MC-IAM-MANAGER**
-| Service | Port | Protocol | Description |
+| 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
 | mc-iam-manager | 5000 | TCP | IAM Manager API |
 | mc-iam-manager-db | 5432 | TCP | PostgreSQL DB |
@@ -136,7 +136,7 @@ The following ports should be registered in the firewall if needed:
 | mc-iam-manager-nginx | 80, 443 | TCP | Nginx (HTTP/HTTPS) |
 
 ### **MC-COST-OPTIMIZER**
-| Service | Port | Protocol | Description |
+| 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
 | mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend |
 | mc-cost-optimizer-be | 9090 | TCP | Cost Optimizer Backend |
@@ -148,32 +148,32 @@ The following ports should be registered in the firewall if needed:
 | mc-cost-optimizer-db | 3307 | TCP | MariaDB |
 
 ### **MC-APPLICATION-MANAGER**
-| Service | Port | Protocol | Description |
+| 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
 | mc-application-manager-jenkins | 9800 | TCP | Jenkins |
 | mc-application-manager-sonatype-nexus | 8081, 5500 | TCP | Nexus Repository |
 | mc-application-manager | 18084 | TCP | Application Manager API |
 
 ### **MC-WORKFLOW-MANAGER**
-| Service | Port | Protocol | Description |
+| 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
 | mc-workflow-manager-jenkins | 9880 | TCP | Jenkins |
 | mc-workflow-manager | 18083 | TCP | Workflow Manager API |
 
 ### **MC-DATA-MANAGER**
-| Service | Port | Protocol | Description |
+| 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
 | mc-data-manager | 3300 | TCP | Data Manager API |
 
 ### **MC-WEB-CONSOLE**
-| Service | Port | Protocol | Description |
+| 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
 | mc-web-console-db | 15432 | TCP | PostgreSQL DB |
 | mc-web-console-api | 3000 | TCP | Web Console API |
 | mc-web-console-front | 3001 | TCP | Web Console Frontend |
 
 ### **MC-OBSERVABILITY**
-| Service | Port | Protocol | Description |
+| 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
 | mc-observability-manager | 18080, 18081 | TCP | Observability Manager |
 | mc-observability-maria | 3306 | TCP | MariaDB |
@@ -186,11 +186,11 @@ The following ports should be registered in the firewall if needed:
 | mc-observability-insight-scheduler | 9002 | TCP | Insight Scheduler |
 | mc-observability-mcp-grafana | 8000 | TCP | MCP Grafana |
 
-**Total 39 ports** are configured for external access.
+**총 39개 포트**가 외부 접근용으로 구성되어 있습니다.
 
-The following ports must be registered in the firewall:
-### **Required Firewall Services**
-| Service | Port | Protocol | Description |
+다음 포트들은 방화벽에 등록해야 합니다:
+### **필수 방화벽 서비스**
+| 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
 | mc-web-console-api | 3000 | TCP | Web Console API |
 | mc-web-console-front | 3001 | TCP | Web Console Frontend |
@@ -199,18 +199,18 @@ The following ports must be registered in the firewall:
 
 ---
 
-# Command to build the operator from souce code
+# 소스 코드에서 운영자를 빌드하는 명령어
 ```Shell
 $ git clone https://github.com/m-cmp/mc-admin-cli.git
 $ cd mc-admin-cli/src
 
-(Setup dependencies)
+(의존성 설정)
 mc-admin-cli/src$ go get -u
 
-(Build a binary for mcc)
+(mcc용 바이너리 빌드)
 mc-admin-cli/src$ go build -o mcc
 
-**Build a binary for mcc using Makerfile depends on your machine\'s os type**
+**기계의 os 타입에 따라 Makerfile을 사용하여 mcc용 바이너리 빌드**
 mc-admin-cli/src$ make
 mc-admin-cli/src$ make win
 mc-admin-cli/src$ make mac
@@ -219,12 +219,12 @@ mc-admin-cli/src$ make win86
 mc-admin-cli/src$ make mac-arm
 ```
 
-# How to use the mcc
+# mcc 사용 방법
 
 ```
 mc-admin-cli/bin$ ./mcc -h
 
-The mcc is a tool to operate Cloud-Barista system. 
+mcc는 Cloud-Barista 시스템을 운영하기 위한 도구입니다. 
   
 Usage:
   mcc [command]
@@ -241,24 +241,24 @@ Flags:
 Use "mcc [command] --help" for more information about a command.
 ```
 
-For more detailed explanations, see the articles below.   
-- [infra sub-command guide](./docs/mc-admin-cli-infra.md)
-- [rest sub-command guide](./docs/mc-admin-cli-rest.md)
+더 자세한 설명은 아래 문서를 참조하세요.   
+- [infra 서브커맨드 가이드](./docs/mc-admin-cli-infra.md)
+- [rest 서브커맨드 가이드](./docs/mc-admin-cli-rest.md)
 
 ## docker-compose.yaml
 ```
-The necessary service information for the M-CMP System configuration is defined in the mc-admin-cli/docker-compose-mode-files/docker-compose.yaml file.(By default, it is set to build the desired configuration and data volume in the docker-compose-mode-files folder.)
+M-CMP 시스템 구성에 필요한 서비스 정보는 mc-admin-cli/docker-compose-mode-files/docker-compose.yaml 파일에 정의되어 있습니다.(기본적으로 docker-compose-mode-files 폴더에 원하는 구성과 데이터 볼륨을 빌드하도록 설정되어 있습니다.)
 
-If you want to change the information for each container you want to deploy, modify the mc-admin-cli/docker-compose-mode-files/docker-compose.yaml file or use the -f option.
+배포하려는 각 컨테이너의 정보를 변경하려면 mc-admin-cli/docker-compose-mode-files/docker-compose.yaml 파일을 수정하거나 -f 옵션을 사용하세요.
 ```
 
-## infra subcommand
-For more information, check out [the infra subcommand document.](./docs/mc-admin-cli-infra.md)
+## infra 서브커맨드
+자세한 정보는 [infra 서브커맨드 문서](./docs/mc-admin-cli-infra.md)를 확인하세요.
 
 
-For now, it supports infra's run/stop/info/pull/remove commands.
+현재 infra의 run/stop/info/pull/remove 명령어를 지원합니다.
 
-Use the -h option at the end of the sub-command requiring assistance, or executing 'mcc' without any options will display the help manual.
+도움이 필요한 서브커맨드 끝에 -h 옵션을 사용하거나 옵션 없이 'mcc'를 실행하면 도움말이 표시됩니다.
 
 
 ```
@@ -279,8 +279,8 @@ Flags:
 Use "mcc infra [command] --help" for more information about a command.
 ```
 
-## infra subcommand examples
-Simple usage examples for infra subcommand
+## infra 서브커맨드 예제
+infra 서브커맨드의 간단한 사용 예제
 ```
 - ./mcc infra pull [-f ../conf/docker/docker-compose.yaml]
 - ./mcc infra run [-f ../conf/docker/docker-compose.yaml]  -d
@@ -289,14 +289,14 @@ Simple usage examples for infra subcommand
 - ./mcc infra remove [-f ../conf/docker/docker-compose.yaml] -v -i
 
 ```
-## k8s subcommand
-**K8S is not currently supported and will be supported in the near future.**
+## k8s 서브커맨드
+**K8S는 현재 지원되지 않으며 가까운 시일 내에 지원될 예정입니다.**
 
-## rest subcommand
-The rest subcommands are developed around the basic features of REST to make it easy to use the open APIs of M-CMP-related frameworks from the CLI.
-For now, it supports get/post/delete/put/patch commands.
+## rest 서브커맨드
+rest 서브커맨드는 CLI에서 M-CMP 관련 프레임워크의 오픈 API를 쉽게 사용할 수 있도록 REST의 기본 기능을 중심으로 개발되었습니다.
+현재 get/post/delete/put/patch 명령어를 지원합니다.
 
-For more information, check out [the rest subcommand document.](./docs/mc-admin-cli-rest.md)
+자세한 정보는 [rest 서브커맨드 문서](./docs/mc-admin-cli-rest.md)를 확인하세요.
 
 ```
 rest api call
@@ -327,8 +327,8 @@ Flags:
 Use "mcc rest [command] --help" for more information about a command.
 ```
 
-## rest command examples
-Simple usage examples for rest commands
+## rest 명령어 예제
+rest 명령어의 간단한 사용 예제
 
 ```
 ./mcc rest get -u default -p default http://localhost:1323/tumblebug/health
@@ -338,12 +338,12 @@ Simple usage examples for rest commands
         }'
 ```
 
-## api subcommand
-For more information, check out [the infra subcommand document.](./docs/mc-admin-cli-api.md)
-The api subcommands are developed to make it easy to use the open APIs of M-CMP-related frameworks from the CLI.
+## api 서브커맨드
+자세한 정보는 [infra 서브커맨드 문서](./docs/mc-admin-cli-api.md)를 확인하세요.
+api 서브커맨드는 CLI에서 M-CMP 관련 프레임워크의 오픈 API를 쉽게 사용할 수 있도록 개발되었습니다.
 
 ```
-Call the action of the service defined in api.yaml. 
+api.yaml에 정의된 서비스의 액션을 호출합니다. 
 
 Usage:
   mcc api [flags]
@@ -368,8 +368,8 @@ Flags:
 Use "mcc api [command] --help" for more information about a command.
 ```
 
-## api subcommand examples
-Simple usage examples for api subcommand.
+## api 서브커맨드 예제
+api 서브커맨드의 간단한 사용 예제.
 
 ```
 ./mcc api --help
@@ -379,3 +379,5 @@ Simple usage examples for api subcommand.
 ./mcc api --service spider --action GetCloudDriver --pathParam driver_name:AWS
 ./mcc api --service spider --action GetRegionZone --pathParam region_name:ap-northeast-3 --queryString ConnectionName:aws-config01
 ```
+
+
