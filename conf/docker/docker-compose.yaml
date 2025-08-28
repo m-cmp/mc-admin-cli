@@ -19,7 +19,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.11.1
+    image: cloudbaristaorg/cb-spider:0.11.4
     pull_policy: missing
     container_name: mc-infra-connector
     platform: linux/amd64
@@ -51,7 +51,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.11.1
+    image: cloudbaristaorg/cb-tumblebug:0.11.8
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
@@ -786,7 +786,7 @@ services:
             exec docker-entrypoint.sh postgres"
 
   mc-web-console-api:
-    image: cloudbaristaorg/mc-web-console-api:0.4.8
+    image: cloudbaristaorg/mc-web-console-api:0.4.10
     container_name: mc-web-console-api
     platform: linux/amd64
     restart: unless-stopped
@@ -825,7 +825,7 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    image: cloudbaristaorg/mc-web-console-front:0.4.8
+    image: cloudbaristaorg/mc-web-console-front:0.4.10
     container_name: mc-web-console-front
     platform: linux/amd64
     restart: unless-stopped
