@@ -652,6 +652,8 @@ services:
     platform: linux/amd64
     networks:
       - mc-workflow-manager-network
+      - mc-web-console-network
+      - mc-infra-manager-network
     ports:
       - target: 8080
         published: 9880
@@ -693,7 +695,7 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:0.4.1
+    image: cloudbaristaorg/mc-workflow-manager:0.4.2
     container_name: mc-workflow-manager
     platform: linux/amd64
     networks:
