@@ -47,10 +47,13 @@ This section describes the minimal process for those who want to set up quickly.
 For more detailed installation guide, please refer to the [Running on Single Instance Guide](https://github.com/m-cmp/mc-admin-cli/blob/main/docs/running-on-instance.md) document.   
 
 First, clone the repository.
+For stable infrastructure deployment, it is recommended to explicitly clone a specific [released version](https://github.com/m-cmp/mc-admin-cli/releases) using the `-b` flag instead of using the latest development version.
+(Example) v0.4.1
 ```shell
-git clone https://github.com/m-cmp/mc-admin-cli.git
+git clone https://github.com/m-cmp/mc-admin-cli.git -b v0.4.1
 cd mc-admin-cli/bin
 ```
+
 
 For [mc-data-manager](https://github.com/cloud-barista/mc-data-manager/blob/main/docs/Datamanager-Docker-Guide.md) configuration, you need to copy and edit `profile.json` which will be used for csp credenticals.
 ```shell
