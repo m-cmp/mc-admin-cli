@@ -1,7 +1,7 @@
 x-default-health-check: &default-health-check
   interval: ${HEALTH_CHECK_INTERVAL}
   timeout: ${HEALTH_CHECK_TIMEOUT}
-  retries: ${HEALTH_CHECK_RETIES}
+  retries: ${HEALTH_CHECK_RETRIES}
   start_period: ${HEALTH_CHECK_START_PERIOD}
 
 networks:
@@ -1119,7 +1119,7 @@ services:
         sleep infinity
             "
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8974/health" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9002/health" ]
       <<: *default-health-check
 
   mc-observability-mcp-grafana:

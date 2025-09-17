@@ -47,8 +47,10 @@ sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 더 자세한 설치 가이드를 원하시면 [단일 인스턴스에서 실행하기 가이드](https://github.com/m-cmp/mc-admin-cli/blob/main/docs/running-on-instance.md) 문서를 참조하세요.   
 
 먼저 저장소를 클론합니다.
+안정적인 인프라 구축을 위해 최신 개발 버전 대신 `-b` 플래그를 사용하여 특정 [릴리스 버전](https://github.com/m-cmp/mc-admin-cli/releases)을 명시적으로 클론하는 것을 권장합니다.
+(예시) v0.4.1
 ```shell
-git clone https://github.com/m-cmp/mc-admin-cli.git
+git clone https://github.com/m-cmp/mc-admin-cli.git -b v0.4.1
 cd mc-admin-cli/bin
 ```
 
