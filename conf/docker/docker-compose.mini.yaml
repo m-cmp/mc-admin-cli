@@ -1,7 +1,7 @@
 x-default-health-check: &default-health-check
   interval: ${HEALTH_CHECK_INTERVAL}
   timeout: ${HEALTH_CHECK_TIMEOUT}
-  retries: ${HEALTH_CHECK_RETIES}
+  retries: ${HEALTH_CHECK_RETRIES}
   start_period: ${HEALTH_CHECK_START_PERIOD}
 
 networks:
