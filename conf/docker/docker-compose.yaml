@@ -737,7 +737,7 @@ services:
     image: cloudbaristaorg/mc-data-manager:0.4.3
     container_name: mc-data-manager
     depends_on:
-      init-chown-volumes:
+      mc-data-manager-init-volumes:
         condition: service_completed_successfully
       mc-data-manager-db:
         condition: service_healthy
@@ -785,7 +785,7 @@ services:
       interval: 30s
       timeout: 10s
       retries: 3
-    <<: *default-health-check
+      <<: *default-health-check
     environment:
       - MYSQL_DATABASE=mcmp
       - MYSQL_USER=mcmp
