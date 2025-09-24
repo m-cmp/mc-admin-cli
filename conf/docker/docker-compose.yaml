@@ -1,7 +1,7 @@
 x-default-health-check: &default-health-check
   interval: ${HEALTH_CHECK_INTERVAL}
   timeout: ${HEALTH_CHECK_TIMEOUT}
-  retries: ${HEALTH_CHECK_RETIES}
+  retries: ${HEALTH_CHECK_RETRIES}
   start_period: ${HEALTH_CHECK_START_PERIOD}
 
 networks:
@@ -19,7 +19,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.11.0
+    image: cloudbaristaorg/cb-spider:0.11.4
     pull_policy: missing
     container_name: mc-infra-connector
     platform: linux/amd64
@@ -51,7 +51,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.11.0
+    image: cloudbaristaorg/cb-tumblebug:0.11.8
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
@@ -84,7 +84,7 @@ services:
       # - TB_ETCD_AUTH_ENABLED=true
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
-      - TB_POSTGRES_ENDPOINT=mc-infra-manager-postgres:6432
+      - TB_POSTGRES_ENDPOINT=mc-infra-manager-postgres:5432
       - TB_POSTGRES_DATABASE=cb_tumblebug
       - TB_POSTGRES_USER=cb_tumblebug
       - TB_POSTGRES_PASSWORD=cb_tumblebug
@@ -186,29 +186,29 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: cloudbaristaorg/mc-iam-manager:0.3.0
-    pull_policy: missing
-    platform: linux/amd64
+    # image: mc-iam-manager:latest
+    image: cloudbaristaorg/mc-iam-manager:edge
+    restart: unless-stopped
     networks:
       - mc-iam-manager-network
       - mc-infra-manager-network
       - mc-web-console-network
     ports:
-      - target: 5000
-        published: 5000
+      - target: ${MC_IAM_MANAGER_PORT}
+        published: ${MC_IAM_MANAGER_PORT}
         protocol: tcp
     depends_on:
       - mc-iam-manager-db
       - mc-iam-manager-kc
     environment:
-      DATABASE_URL: postgres://${IAM_POSTGRES_USER}:${IAM_POSTGRES_PASSWORD}@mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
-      PORT: 5000
+      DATABASE_URL: postgres://${MC_IAM_MANAGER_DATABASE_USER}:${MC_IAM_MANAGER_DATABASE_PASSWORD}@${MC_IAM_MANAGER_DATABASE_HOST}:5432/${MC_IAM_MANAGER_DATABASE_NAME}
+      PORT: ${MC_IAM_MANAGER_PORT}
     env_file:
       - ./conf/mc-iam-manager/.env
     volumes:
       - ./tool/mcc:/app/tool/mcc
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:5000/readyz"]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://${MC_IAM_MANAGER_DOMAIN}:${MC_IAM_MANAGER_PORT}/readyz" ]
       <<: *default-health-check
 
   mc-iam-manager-db:
@@ -216,6 +216,7 @@ services:
     image: postgres:14-alpine
     pull_policy: missing
     platform: linux/amd64
+    restart: unless-stopped
     networks:
       - mc-iam-manager-network
     ports:
@@ -224,51 +225,96 @@ services:
         protocol: tcp
     volumes:
       - ./container-volume/mc-iam-manager/postgres/postgres_data:/var/lib/postgresql/data
+      - ./conf/mc-iam-manager/init-db.sh:/docker-entrypoint-initdb.d/init-db.sh:ro
     environment:
-      POSTGRES_DB: ${IAM_POSTGRES_DB}
-      POSTGRES_USER: ${IAM_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${IAM_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${MC_IAM_MANAGER_DATABASE_NAME}
+      POSTGRES_USER: ${MC_IAM_MANAGER_DATABASE_USER}
+      POSTGRES_PASSWORD: ${MC_IAM_MANAGER_DATABASE_PASSWORD}
+    env_file:
+      - ./conf/mc-iam-manager/.env
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U ${MC_IAM_MANAGER_DATABASE_USER} -d ${MC_IAM_MANAGER_DATABASE_NAME}" ]
       <<: *default-health-check
+    command: >
+      sh -c "chown -R 70:70 /var/lib/postgresql/data &&
+            exec docker-entrypoint.sh postgres"
 
   mc-iam-manager-kc:
     container_name: mc-iam-manager-kc
-    build:
-      context: ./
-      dockerfile: ./dockerfiles/Dockerfile.keycloak
+    image: quay.io/keycloak/keycloak:24.0.1
+    restart: unless-stopped
     networks:
       - mc-iam-manager-network
     ports:
       - target: 8080
         published: 8080
         protocol: tcp
+    command:
+      - start-dev
     environment:
       KC_DB: postgres
-      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${IAM_POSTGRES_DB}
-      KC_DB_USERNAME: ${IAM_POSTGRES_USER}
-      KC_DB_PASSWORD: ${IAM_POSTGRES_PASSWORD}
+      KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${MC_IAM_MANAGER_KEYCLOAK_DATABASE_NAME}
+      KC_DB_USERNAME: ${MC_IAM_MANAGER_DATABASE_USER}
+      KC_DB_PASSWORD: ${MC_IAM_MANAGER_DATABASE_PASSWORD}
       KC_HOSTNAME_PORT: 8080
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
+      KC_HOSTNAME: localhost
+      KEYCLOAK_ADMIN: ${MC_IAM_MANAGER_KEYCLOAK_ADMIN:-admin}
+      KEYCLOAK_ADMIN_PASSWORD: ${MC_IAM_MANAGER_KEYCLOAK_ADMIN_PASSWORD:-admin_password}
+      KC_HTTP_ENABLED: "true"
+      KC_PROXY: edge
     volumes:
       - ./tool/mcc:/app/tool/mcc
-      - ./conf/mc-iam-manager/realm-import.json:/opt/keycloak/data/import/realm-import.json
       - ./container-volume/mc-iam-manager/keycloak/data/:/opt/keycloak/data/
     env_file:
       - ./conf/mc-iam-manager/.env
     depends_on:
       - mc-iam-manager-db
-    command:
-      - start-dev
-      - --import-realm
-      - --verbose
-      - --features=token-exchange
-      - --https-key-store-file=/opt/keycloak/conf/server.keystore
-      - --https-key-store-password=password123
     healthcheck:
-      test: ["CMD", "/app/tool/mcc", "rest", "get","http://localhost:8080"]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8080/" ]
+      # test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8080/health/ready" ]
       <<: *default-health-check
+
+  mc-iam-manager-nginx:
+    image: nginx:1.25-alpine
+    container_name: mc-iam-manager-nginx
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    environment:
+      - DOMAIN_NAME=${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}
+    volumes:
+      - ./container-volume/mc-iam-manager/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./container-volume/certs:/etc/nginx/certs:ro
+      - ./container-volume/certbot/www:/var/www/certbot:ro
+    depends_on:
+      - mc-iam-manager-kc
+    networks:
+      - mc-iam-manager-network
+
+  mc-iam-manager-post-initial:
+    image: ubuntu:22.04
+    container_name: mc-iam-manager-post-initial
+    # restart: unless-stopped
+    networks:
+      - mc-iam-manager-network
+    depends_on:
+      mc-iam-manager:
+        condition: service_started
+      mc-iam-manager-db:
+        condition: service_healthy
+      mc-iam-manager-kc:
+        condition: service_healthy
+    env_file:
+      - ./conf/mc-iam-manager/.env
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+      - ./conf/mc-iam-manager/:/app/mc-iam-manager/
+    working_dir: /app/mc-iam-manager
+    command: bash /app/mc-iam-manager/docker-post-init.sh
+
 
 ##### MC-COST-OPTIMIZER #########################################################################################################################
 
@@ -456,9 +502,24 @@ services:
       asset.collect.url: ${CO_ASSET_MONITORING_SERVER}
       assetCollectBatchCronSchedule: ${CO_ASSET_COLLECT_BATCH_CRON_SCHEDULE}
 
+  mc-cost-optimizer-init-volume:
+    image: busybox:stable
+    container_name: mc-cost-optimizer-init-volume
+    command: ["sh", "-c", "chown -R 999:999 /var/lib/mysql"]
+    volumes:
+      - ./container-volume/mc-cost-optimizer/mysql/:/var/lib/mysql
+    user: root
+    networks:
+      - mc-cost-optimizer-network
+    init: true
+    restart: "no"
+
   mc-cost-optimizer-db:
     image: mariadb:latest
     container_name: mc-cost-optimizer-db
+    depends_on:
+      mc-cost-optimizer-init-volume:
+        condition: service_completed_successfully    
     environment:
       - ALLOW_EMPTY_PASSWORD=no
       - MYSQL_ROOT_PASSWORD=${CO_MYSQL_ROOT_PASSWORD}
@@ -556,7 +617,7 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:0.4.0
+    image: cloudbaristaorg/mc-application-manager:0.4.2
     container_name: mc-application-manager
     networks:
       - mc-application-manager-network
@@ -591,6 +652,8 @@ services:
     platform: linux/amd64
     networks:
       - mc-workflow-manager-network
+      - mc-web-console-network
+      - mc-infra-manager-network
     ports:
       - target: 8080
         published: 9880
@@ -632,7 +695,7 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:0.4.0
+    image: cloudbaristaorg/mc-workflow-manager:0.4.2
     container_name: mc-workflow-manager
     platform: linux/amd64
     networks:
@@ -698,9 +761,11 @@ services:
 
 ##### MC-WEB-CONSOLE #########################################################################################################################
 
+
   mc-web-console-db:
     image: postgres:14-alpine
     container_name: mc-web-console-db
+    restart: unless-stopped
     volumes:
       - ./container-volume/mc-web-console/postgres/postgres_data:/var/lib/postgresql/data
     environment:
@@ -716,12 +781,17 @@ services:
         published: 15432
         protocol: tcp
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      test: [ "CMD-SHELL", "pg_isready -U ${CONSOLE_POSTGRES_USER}" ]
       <<: *default-health-check
+    command: >
+      sh -c "chown -R 70:70 /var/lib/postgresql/data &&
+            exec docker-entrypoint.sh postgres"
 
   mc-web-console-api:
-    image: sehyeong0108/mc-web-console-api:20241101
+    image: cloudbaristaorg/mc-web-console-api:0.4.10
     container_name: mc-web-console-api
+    platform: linux/amd64
+    restart: unless-stopped
     depends_on:
       - mc-web-console-db
       - mc-infra-connector
@@ -738,6 +808,7 @@ services:
         protocol: tcp
     networks:
       - mc-web-console-network
+      - mc-iam-manager-network
     environment:
       GO_ENV: development
       GODEBUG: netdns=go
@@ -747,6 +818,7 @@ services:
       MCIAM_USE: true
       MCIAM_TICKET_USE: false
       IFRAME_TARGET_IS_HOST: true
+      MC_IAM_MANAGER_PORT: ${MC_IAM_MANAGER_PORT}
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-web-console/api/conf/:/conf/
@@ -755,12 +827,15 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    image: sehyeong0108/mc-web-console-front:20241101
+    image: cloudbaristaorg/mc-web-console-front:0.4.10
     container_name: mc-web-console-front
+    platform: linux/amd64
+    restart: unless-stopped
     depends_on:
       - mc-web-console-api
     networks:
       - mc-web-console-network
+      - mc-iam-manager-network
     ports:
       - target: 3001
         published: 3001
@@ -774,9 +849,7 @@ services:
       - ./tool/mcc:/app/tool/mcc
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:3001" ]
-      <<: *default-health-check
-
-
+      <<: *default-health-check 
 ##### MC-OBSERVABILITY #########################################################################################################################
 
   mc-observability-manager:
@@ -1046,7 +1119,7 @@ services:
         sleep infinity
             "
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8974/health" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9002/health" ]
       <<: *default-health-check
 
   mc-observability-mcp-grafana:

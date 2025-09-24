@@ -30,6 +30,13 @@ variable "acl_name" {
 
 }
 
+variable "acg_name" {
+  description = "acg_name"
+  type        = string
+  default     = "mcmp-acg"
+
+}
+
 variable "private_subnet_name" {
   description = "private_subnet_name"
   type        = string
@@ -46,24 +53,24 @@ variable "public_subnet_name" {
 variable "bucket_name" {
   description = "bucket_name"
   type        = string
-  default     = "mc-data-manager"
+  default     = "mcdatamanager"
 }
 
 variable "db_name" {
   description = "DB name"
   type        = string
-  default     = "mc-data-manager"
+  default     = "mcdatamanager"
 }
 
 
 variable "db_user" {
   description = "DB user"
   type        = string
-  default     = "datamanager"
+  default     = "mcdatamanager"
 }
 
 variable "db_pswd" {
   description = "DB PW"
   type        = string
-  default     = "N@mutech7^^7"
+  default     = "mcdatamanager1!"
 }
