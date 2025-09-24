@@ -47,33 +47,33 @@ variable "public_subnet_name" {
 variable "bucket_name" {
   description = "bucket_name"
   type        = string
-  default     = "mc-data-manager"
+  default     = "mcdatamanager"
 }
 
 variable "table_name" {
   description = "table_name"
   type        = string
-  default     = "mc-data-manager"
+  default     = "mcdatamanager"
 }
 
 
 variable "db_name" {
   description = "DB name"
   type        = string
-  default     = "MCDataManager"
+  default     = "mcdatamanager"
 }
 
 
 variable "db_user" {
   description = "DB user"
   type        = string
-  default     = "datamanager"
+  default     = "mcdatamanager"
 }
 
 variable "db_pswd" {
   description = "DB PW"
   type        = string
-  default     = "NAmutech7^^7"
+  default     = "mcdatamanager"
 }
 
 

@@ -55,16 +55,16 @@ module "s3" {
   bucket_name = var.bucket_name
 }
 
-# mysql module call
-module "mysql" {
-  source  = "./modules/mysql"
-  db_name = var.db_name
-  db_user = var.db_user
-  db_pswd = var.db_pswd
-}
+# # mysql module call
+# module "mysql" {
+#   source  = "./modules/mysql"
+#   db_name = var.db_name
+#   db_user = var.db_user
+#   db_pswd = var.db_pswd
+# }
 
-# DynamoDB module call
-module "dynamodb" {
-  source     = "./modules/dynamodb"
-  table_name = var.table_name
-}
+# # DynamoDB module call
+# module "dynamodb" {
+#   source     = "./modules/dynamodb"
+#   table_name = var.table_name
+# }

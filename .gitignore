@@ -60,5 +60,12 @@ conf/docker/data/*
 conf/docker/container-volume
 bin/swagger.json
 
-
 conf/swagger.json
+bin/profile.json
+
+conf/docker/conf/mc-data-manager/data/var/run/data-manager/profile/profile.json
+conf/docker/conf/mc-data-manager/data/var/log/
+
+conf/docker/conf/mc-iam-manager/menu.yaml
+conf/docker/conf/mc-iam-manager/nginx.conf
+conf/docker/conf/mc-iam-manager/api.yaml
