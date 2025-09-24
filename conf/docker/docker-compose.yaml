@@ -734,30 +734,63 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: cloudbaristaorg/mc-data-manager:0.4.0
+    image: cloudbaristaorg/mc-data-manager:0.4.3
     container_name: mc-data-manager
     depends_on:
-      - mc-data-manager-init-volumes
+      init-chown-volumes:
+        condition: service_completed_successfully
+      mc-data-manager-db:
+        condition: service_healthy
+    build:
+      context: .
+      dockerfile: Dockerfile  
+      args:
+        UID: ${UID:-0}
+        GID: ${GID:-0}
+        USER: ${USER_NAME:-root}
+        GROUP: ${GROUP_NAME:-root}
+        WEB_DIR : ${WEB_DIR:-/web}
+        APP_HOME: /app
     tty: true
     ports:
-      - target: 3300
-        published: 3300
-        protocol: tcp
-    restart: on-failure
-    user: root
+      - "3300:3300"
+    restart : always
     volumes:
-      - ./conf/mc-data-manager/data:/app/data/
-      - ./conf/mc-data-manager/scripts:/app/scripts/
-      - /etc/localtime:/etc/localtime:ro
+      - ./data:/app/data/ # container-volume
+      - ./scripts:/app/scripts/ # container-volume
+      - /etc/localtime:/etc/localtime:ro # timezone
     env_file:
-      - ./conf/mc-data-manager/.env
-    networks:
-      - mc-data-manager-network
-      - mc-web-console-network
+      - .env
+    # Health check configuration
+    # OK [ 2xx ,3xx}, ERR [4xx,5xx,...etc]
     healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:3300/readyZ" ]
+      test: ["CMD", "curl", "-f", "http://localhost:3300/readyZ"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
       <<: *default-health-check
-
+  mc-data-manager-db:
+    image: mariadb:latest
+    container_name: mc-data-manager-db
+    command:
+      - --skip-character-set-client-handshake
+    volumes:
+      - ./data/mariadb:/var/lib/mysql
+    ports:
+      - target: 3306
+        published: 3301
+        protocol: tcp
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    <<: *default-health-check
+    environment:
+      - MYSQL_DATABASE=mcmp
+      - MYSQL_USER=mcmp
+      - MYSQL_PASSWORD=mcmp
+      - MYSQL_ROOT_PASSWORD=mcmp
 
 ##### MC-WEB-CONSOLE #########################################################################################################################
 
