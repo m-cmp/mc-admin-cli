@@ -734,7 +734,7 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: cloudbaristaorg/mc-data-manager:0.4.3
+    image: cloudbaristaorg/mc-data-manager:0.4.4
     container_name: mc-data-manager
     depends_on:
       mc-data-manager-init-volumes:
