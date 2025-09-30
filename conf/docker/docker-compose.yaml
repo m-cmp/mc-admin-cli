@@ -19,7 +19,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.11.4
+    image: cloudbaristaorg/cb-spider:0.11.13
     pull_policy: missing
     container_name: mc-infra-connector
     platform: linux/amd64
@@ -51,7 +51,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.11.8
+    image: cloudbaristaorg/cb-tumblebug:0.11.13
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
@@ -85,9 +85,9 @@ services:
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
       - TB_POSTGRES_ENDPOINT=mc-infra-manager-postgres:5432
-      - TB_POSTGRES_DATABASE=cb_tumblebug
-      - TB_POSTGRES_USER=cb_tumblebug
-      - TB_POSTGRES_PASSWORD=cb_tumblebug
+      - TB_POSTGRES_DATABASE=tumblebug
+      - TB_POSTGRES_USER=tumblebug
+      - TB_POSTGRES_PASSWORD=tumblebug
       # - TB_ALLOW_ORIGINS=*
       # - TB_AUTH_ENABLED=true
       # - TB_API_USERNAME=default
@@ -171,9 +171,9 @@ services:
     volumes:
       - ./container-volume/mc-infra-manager/meta_db/postgres:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=cb_tumblebug
-      - POSTGRES_PASSWORD=cb_tumblebug
-      - POSTGRES_DB=cb_tumblebug
+      - POSTGRES_USER=tumblebug
+      - POSTGRES_PASSWORD=tumblebug
+      - POSTGRES_DB=tumblebug
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U cb_tumblebug"]
       interval: 10s
