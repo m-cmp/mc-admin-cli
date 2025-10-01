@@ -56,7 +56,7 @@ NO_HEALTH_CHECK_CONTAINERS=(
     "mc-cost-optimizer-cost-collector"
     "mc-cost-optimizer-cost-processor"
     "mc-cost-optimizer-cost-selector"
-    "mc-observability-rabbitmq"
+    "mc-observability-tempo"
 )
 
 # =============================================================================

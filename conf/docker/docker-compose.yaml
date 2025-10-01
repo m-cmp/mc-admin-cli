@@ -893,6 +893,8 @@ services:
       - OTEL_LOGS_EXPORTER=none
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://mc-observability-tempo:4318}
+      - OTEL_INSTRUMENTATION_MICROMETER_ENABLED=false
+      - MAX_FILE_SIZE=200MB
       # --- RabbitMQ connection ---
       - SPRING_RABBITMQ_HOST=mc-observability-rabbitmq
       - SPRING_RABBITMQ_PORT=5672
@@ -916,7 +918,7 @@ services:
       - ./conf/mc-observability/manager:/config
       - grafana_shared_config:/grafana_config:ro
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18080/api/o11y/readyz" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18080/api/docs" ]
       <<: *default-health-check
 
   mc-observability-infra:
@@ -1011,6 +1013,12 @@ services:
       - ./conf/mc-observability/rabbitmq/etc:/etc/rabbitmq
       - ./container-volume/mc-observability/rabbitmq/data:/var/lib/rabbitmq
       - ./conf/mc-observability/rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    healthcheck:
+      start_period: 120s
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 30
 
   mc-observability-maria:
     image: mariadb:10.11.11
@@ -1244,7 +1252,7 @@ services:
       - mc-observability-network
     ports:
       - target: 3000
-        published: 3000
+        published: 33001
         protocol: tcp
     depends_on:
       mc-observability-grafana-init-volumes:
