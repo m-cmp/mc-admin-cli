@@ -770,6 +770,29 @@ services:
       retries: 3
       <<: *default-health-check
 
+  mc-data-manager-db:
+    image: mariadb:latest
+    container_name: mc-data-manager-db
+    command:
+      - --skip-character-set-client-handshake
+    volumes:
+      - ./data/mariadb:/var/lib/mysql
+    ports:
+      - target: 3306
+        published: 3301
+        protocol: tcp
+    healthcheck:
+      test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      <<: *default-health-check
+    environment:
+      - MYSQL_DATABASE=mcmp
+      - MYSQL_USER=mcmp
+      - MYSQL_PASSWORD=mcmp
+      - MYSQL_ROOT_PASSWORD=mcmp
+
 
 ##### MC-WEB-CONSOLE #########################################################################################################################
 
