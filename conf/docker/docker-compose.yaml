@@ -858,6 +858,13 @@ services:
   mc-observability-manager:
     image: cloudbaristaorg/mc-observability:0.4.1
     container_name: mc-observability-manager
+    depends_on:
+      mc-observability-maria:
+        condition: service_healthy
+      mc-observability-infra:
+        condition: service_healthy
+      mc-observability-grafana:
+        condition: service_healthy
     ports:
       - target: 18080
         published: 18080
@@ -886,6 +893,21 @@ services:
       - OTEL_LOGS_EXPORTER=none
       - OTEL_TRACES_EXPORTER=otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://mc-observability-tempo:4318}
+      # --- RabbitMQ connection ---
+      - SPRING_RABBITMQ_HOST=mc-observability-rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=mc-agent
+      - SPRING_RABBITMQ_PASSWORD=mc-agent
+      - SPRING_RABBITMQ_VIRTUAL_HOST=/test
+
+      # --- Custom alert config ---
+      - SPRING_RABBITMQ_ALERT_QUEUENAME=alert.queue
+      - SPRING_RABBITMQ_ALERT_EXCHANGENAME=alert.exchange
+      - SPRING_RABBITMQ_ALERT_ROUTINGKEY=alert
+      - SPRING_RABBITMQ_ALERT_DEADLETTERQUEUENAME=alert.dlq
+      - SPRING_RABBITMQ_ALERT_DEADLETTEREXCHANGENAME=alert.dlx
+      - SPRING_RABBITMQ_ALERT_DEADLETTERROUTINGKEY=alert.dlq
+      - SPRING_RABBITMQ_ALERT_MQTTEXCHANGENAME=mqtt.topic
     env_file:
       - ./conf/mc-observability/manager/.env
     volumes:
@@ -932,6 +954,63 @@ services:
       interval: 10s
       timeout: 10s
       retries: 30
+
+  mc-observability-rabbitmq-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-rabbitmq-init-volumes
+    restart: no
+    networks:
+      - mc-observability-network
+    command:
+      - sh
+      - -c
+      - |
+        set -eux && \
+        mkdir -p /var/lib/rabbitmq /var/log/rabbitmq && \
+        if [ ! -s /var/lib/rabbitmq/.erlang.cookie ] || \
+           [ "$(wc -c < /var/lib/rabbitmq/.erlang.cookie)" -lt 20 ]; then
+          umask 177
+          tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48 > /var/lib/rabbitmq/.erlang.cookie
+        fi && \
+        chmod 600 /var/lib/rabbitmq/.erlang.cookie && \
+        chown -R 999:999 /var/lib/rabbitmq /var/log/rabbitmq
+    volumes:
+      - ./container-volume/mc-observability/rabbitmq/data:/var/lib/rabbitmq
+    user: root
+    init: true
+
+  mc-observability-rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: mc-observability-rabbitmq
+    restart: always
+    networks:
+      - mc-observability-network
+    ports:
+      - target: 5672
+        published: 5672
+        protocol: tcp
+      - target: 1883
+        published: 1883
+        protocol: tcp
+      - target: 15672
+        published: 15672
+        protocol: tcp
+      # - target: 8883
+      #   published: 8883
+      #   protocol: tcp
+      # - target: 15675
+      #   published: 15675
+      #   protocol: tcp
+    depends_on:
+      mc-observability-rabbitmq-init-volumes:
+        condition: service_completed_successfully
+    environment:
+      - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/enabled_plugins
+      - RABBITMQ_LOAD_DEFINITIONS=/etc/rabbitmq/definitions.json
+    volumes:
+      - ./conf/mc-observability/rabbitmq/etc:/etc/rabbitmq
+      - ./container-volume/mc-observability/rabbitmq/data:/var/lib/rabbitmq
+      - ./conf/mc-observability/rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
 
   mc-observability-maria:
     image: mariadb:10.11.11
