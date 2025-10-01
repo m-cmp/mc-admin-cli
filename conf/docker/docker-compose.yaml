@@ -734,7 +734,7 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: cloudbaristaorg/mc-data-manager:0.4.4
+    image: cloudbaristaorg/mc-data-manager:0.4.5
     container_name: mc-data-manager
     depends_on:
       mc-data-manager-init-volumes:
@@ -760,7 +760,7 @@ services:
       - ./scripts:/app/scripts/ # container-volume
       - /etc/localtime:/etc/localtime:ro # timezone
     env_file:
-      - .env
+      - ./conf/mc-data-manager/.env
     # Health check configuration
     # OK [ 2xx ,3xx}, ERR [4xx,5xx,...etc]
     healthcheck:
