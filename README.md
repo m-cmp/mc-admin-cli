@@ -54,12 +54,6 @@ git clone https://github.com/m-cmp/mc-admin-cli.git -b v0.4.1
 cd mc-admin-cli/bin
 ```
 
-
-For [mc-data-manager](https://github.com/cloud-barista/mc-data-manager/blob/main/docs/Datamanager-Docker-Guide.md) configuration, you need to copy and edit `profile.json` which will be used for csp credenticals.
-```shell
-cp ../conf/docker/conf/mc-data-manager/data/var/run/data-manager/profile/sample.json ./profile.json
-```
-
 After downloading mc-admin-cli, move to the bin folder and run the installAll.sh shell script.
 ```shell 
 ./installAll.sh
@@ -74,12 +68,6 @@ Domain and certificates are required, so select the appropriate mode during inst
 ./mcc infra run
 ```
 Run the above command to start platform installation.
-
-For [mc-data-manager](https://github.com/cloud-barista/mc-data-manager/blob/main/docs/Datamanager-Docker-Guide.md) configuration, you need to copy the profile.json into mc-data-manager container. Try `./mcc infra stop` and `./mcc infra run` if mc-date-manager keeps unhealthy.
-```shell
-docker cp profile.json  mc-data-manager:/app/data/var/run/data-manager/profile/profile.json
-```
-(optionally, remove the profile.json file since it is not secure)
 
 After a while, check that all required containers are in healthy status without any unhealthy status.   
 Especially, make sure that the mc-web-console-api container, which runs last, is healthy.

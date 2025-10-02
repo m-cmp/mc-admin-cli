@@ -54,11 +54,6 @@ git clone https://github.com/m-cmp/mc-admin-cli.git -b v0.4.1
 cd mc-admin-cli/bin
 ```
 
-[mc-data-manager](https://github.com/cloud-barista/mc-data-manager/blob/main/docs/Datamanager-Docker-Guide.md) 설정을 위해 csp 자격 증명에 사용될 `profile.json`을 복사하고 편집해야 합니다.
-```shell
-cp ../conf/docker/conf/mc-data-manager/data/var/run/data-manager/profile/sample.json ./profile.json
-```
-
 mc-admin-cli를 다운로드한 후, bin 폴더로 이동하여 installAll.sh 셸 스크립트를 실행합니다.
 ```shell 
 ./installAll.sh
@@ -74,12 +69,6 @@ mc-admin-cli를 다운로드한 후, bin 폴더로 이동하여 installAll.sh �
 ./mcc infra run
 ```
 위 명령어를 실행하여 플랫폼 설치를 시작합니다.
-
-[mc-data-manager](https://github.com/cloud-barista/mc-data-manager/blob/main/docs/Datamanager-Docker-Guide.md) 설정을 위해 profile.json을 mc-data-manager 컨테이너에 복사해야 합니다. mc-date-manager가 계속 unhealthy 상태라면 `./mcc infra stop`과 `./mcc infra run`을 시도해보세요.
-```shell
-docker cp profile.json  mc-data-manager:/app/data/var/run/data-manager/profile/profile.json
-```
-(선택사항: 보안상 profile.json 파일을 제거하세요)
 
 잠시 후, 모든 필수 컨테이너가 unhealthy 상태 없이 healthy 상태인지 확인하세요.   
 특히 마지막에 실행되는 mc-web-console-api 컨테이너가 healthy 상태인지 확인하세요.
