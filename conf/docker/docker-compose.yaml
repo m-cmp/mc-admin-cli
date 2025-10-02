@@ -15,6 +15,9 @@ networks:
   mc-observability-network:
   mc-web-console-network:
 
+volumes:
+  grafana_shared_config:
+
 services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
@@ -888,14 +891,18 @@ services:
 ##### MC-OBSERVABILITY #########################################################################################################################
 
   mc-observability-manager:
-    image: cloudbaristaorg/mc-observability:0.4.0
+    image: cloudbaristaorg/mc-observability:0.4.1
     container_name: mc-observability-manager
+    depends_on:
+      mc-observability-maria:
+        condition: service_healthy
+      mc-observability-infra:
+        condition: service_healthy
+      mc-observability-grafana:
+        condition: service_healthy
     ports:
       - target: 18080
         published: 18080
-        protocol: tcp
-      - target: 18081
-        published: 18081
         protocol: tcp
     networks:
       - mc-observability-network
@@ -904,28 +911,152 @@ services:
       - mc-infra-connector-network
       - mc-web-console-network
     environment:
-      - TARGET_ID=mc-o11y
-      - TUMBLEBUG_URL=http://mc-infra-manager:1323
-      - TUMBLEBUG_ID=default
-      - TUMBLEBUG_PW=default
-      - SPIDER_URL=http://mc-infra-connector:1024
-      - DATABASE_HOST=mc-observability-maria
+      - JAVA_TOOL_OPTIONS=-javaagent:/opentelemetry-javaagent.jar -XX:-UseContainerSupport
+      - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://cb-tumblebug:1323}
+      - TUMBLEBUG_ID=${TUMBLEBUG_ID:-default}
+      - TUMBLEBUG_PW=${TUMBLEBUG_PW:-default}
+      - SPIDER_URL=${SPIDER_URL:-http://cb-spider:1024}
+      - SPIDER_ID=${SPIDER_ID:-}
+      - SPIDER_PW=${SPIDER_PW:-}
       - INSIGHT_URL=http://mc-observability-insight:9001
-      - SPIDER_MONITORING_INFLUXDB_URL=http://mc-observability-influx:8086
-      - AGENT_MANAGER_IP=http://mc-observability-manager:18080
+      - SPRING_DATASOURCE_URL=jdbc:mariadb://mc-observability-maria:3306/mc_observability
+      - SPRING_DATASOURCE_USERNAME=mc-agent
+      - SPRING_DATASOURCE_PASSWORD=mc-agent
+      - OTEL_INSTRUMENTATION_RUNTIME_METRICS_ENABLED=false
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-observability-manager}
+      - OTEL_METRICS_EXPORTER=none
+      - OTEL_LOGS_EXPORTER=none
+      - OTEL_TRACES_EXPORTER=otlp
+      - OTEL_EXPORTER_OTLP_ENDPOINT=${OTEL_EXPORTER_OTLP_ENDPOINT:-http://mc-observability-tempo:4318}
+      - OTEL_INSTRUMENTATION_MICROMETER_ENABLED=false
+      - MAX_FILE_SIZE=200MB
+      # --- RabbitMQ connection ---
+      - SPRING_RABBITMQ_HOST=mc-observability-rabbitmq
+      - SPRING_RABBITMQ_PORT=5672
+      - SPRING_RABBITMQ_USERNAME=mc-agent
+      - SPRING_RABBITMQ_PASSWORD=mc-agent
+      - SPRING_RABBITMQ_VIRTUAL_HOST=/test
+
+      # --- Custom alert config ---
+      - SPRING_RABBITMQ_ALERT_QUEUENAME=alert.queue
+      - SPRING_RABBITMQ_ALERT_EXCHANGENAME=alert.exchange
+      - SPRING_RABBITMQ_ALERT_ROUTINGKEY=alert
+      - SPRING_RABBITMQ_ALERT_DEADLETTERQUEUENAME=alert.dlq
+      - SPRING_RABBITMQ_ALERT_DEADLETTEREXCHANGENAME=alert.dlx
+      - SPRING_RABBITMQ_ALERT_DEADLETTERROUTINGKEY=alert.dlq
+      - SPRING_RABBITMQ_ALERT_MQTTEXCHANGENAME=mqtt.topic
     env_file:
       - ./conf/mc-observability/manager/.env
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - /var/log/syslog:/var/log/syslog:ro
-      - ./conf/mc-observability/manager/manager-conf/c_1.conf:/etc/mc-observability-agent/conf/c_1.conf:ro
-      - ./conf/mc-observability/manager/manager-conf/c_2.conf:/etc/mc-observability-agent/conf/c_2.conf:ro
+      - ./conf/mc-observability/manager:/config
+      - grafana_shared_config:/grafana_config:ro
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18080/api/o11y/readyz" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18080/api/docs" ]
       <<: *default-health-check
 
+  mc-observability-infra:
+    image: cloudbaristaorg/mc-observability-infra:0.4.1
+    container_name: mc-observability-infra
+    restart: always
+    networks:
+      - mc-observability-network
+    ports:
+      - target: 3000
+        published: 33000
+        protocol: tcp
+    depends_on:
+      mc-observability-maria:
+        condition: service_healthy
+    environment:
+      SEMAPHORE_DB_DIALECT: mysql
+      SEMAPHORE_DB_HOST: mc-observability-maria
+      SEMAPHORE_DB_NAME: semaphore
+      SEMAPHORE_DB_USER: semaphore
+      SEMAPHORE_DB_PASS: semaphorepass
+      SEMAPHORE_ADMIN: admin
+      SEMAPHORE_ADMIN_PASSWORD: semaphorepass
+      SEMAPHORE_ADMIN_NAME: rnd-admin
+      SEMAPHORE_ADMIN_EMAIL: rnd-admin@innogrid.com
+      MAX_TASK_DURATION_SEC: 600
+      SEMAPHORE_MAX_PARALLEL_TASKS: 10
+      SEMAPHORE_MAX_TASKS_PER_TEMPLATE: 10
+      ANSIBLE_HOST_KEY_CHECKING: False
+    volumes:
+      - ./ansible:/ansible
+    healthcheck:
+      start_period: 120s
+      test: 'curl -s http://127.0.0.1:3000/api/ping ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  mc-observability-rabbitmq-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-rabbitmq-init-volumes
+    restart: no
+    networks:
+      - mc-observability-network
+    command:
+      - sh
+      - -c
+      - |
+        set -eux && \
+        mkdir -p /var/lib/rabbitmq /var/log/rabbitmq && \
+        if [ ! -s /var/lib/rabbitmq/.erlang.cookie ] || \
+           [ "$(wc -c < /var/lib/rabbitmq/.erlang.cookie)" -lt 20 ]; then
+          umask 177
+          tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48 > /var/lib/rabbitmq/.erlang.cookie
+        fi && \
+        chmod 600 /var/lib/rabbitmq/.erlang.cookie && \
+        chown -R 999:999 /var/lib/rabbitmq /var/log/rabbitmq
+    volumes:
+      - ./container-volume/mc-observability/rabbitmq/data:/var/lib/rabbitmq
+    user: root
+    init: true
+
+  mc-observability-rabbitmq:
+    image: rabbitmq:4-management-alpine
+    container_name: mc-observability-rabbitmq
+    restart: always
+    networks:
+      - mc-observability-network
+    ports:
+      - target: 5672
+        published: 5672
+        protocol: tcp
+      - target: 1883
+        published: 1883
+        protocol: tcp
+      - target: 15672
+        published: 15672
+        protocol: tcp
+      # - target: 8883
+      #   published: 8883
+      #   protocol: tcp
+      # - target: 15675
+      #   published: 15675
+      #   protocol: tcp
+    depends_on:
+      mc-observability-rabbitmq-init-volumes:
+        condition: service_completed_successfully
+    environment:
+      - RABBITMQ_ENABLED_PLUGINS_FILE=/etc/rabbitmq/enabled_plugins
+      - RABBITMQ_LOAD_DEFINITIONS=/etc/rabbitmq/definitions.json
+    volumes:
+      - ./conf/mc-observability/rabbitmq/etc:/etc/rabbitmq
+      - ./container-volume/mc-observability/rabbitmq/data:/var/lib/rabbitmq
+      - ./conf/mc-observability/rabbitmq/etc/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf:ro
+    healthcheck:
+      start_period: 120s
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
   mc-observability-maria:
-    image: mariadb:10.7.6
+    image: mariadb:10.11.11
     container_name: mc-observability-maria
     ports:
       - target: 3306
@@ -939,168 +1070,295 @@ services:
       - ./container-volume/mc-observability/maria/log:/var/log/maria
     environment:
       - TZ="Asia/Seoul"
-      - ALLOW_EMPTY_PASSWORD=yes
-      - MYSQL_ROOT_PASSWORD=qwe1212!Q
-      - MYSQL_USER=mc-agent
-      - MYSQL_DATABASE=mc_observability
-      - MYSQL_PASSWORD=mc-agent
+      - ALLOW_EMPTY_PASSWORD=no
+      - MARIADB_ROOT_PASSWORD=qwe1212!Q
+      - MARIADB_USER=mc-agent
+      - MARIADB_DATABASE=mc_observability
+      - MARIADB_PASSWORD=mc-agent
     networks:
       - mc-observability-network
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--connect"]
       <<: *default-health-check
 
+  mc-observability-influx-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-influx-init-volumes
+    restart: no
+    command: ["sh", "-c", "chown -R 1500:1500 /var/lib/influxdb"]
+    volumes:
+      - ./container-volume/mc-observability/influxdb/influxdb_data:/var/lib/influxdb
+    user: root
+    init: true
+    networks:
+      - mc-observability-network
+
   mc-observability-influx:
-    image: influxdb:1.8
+    image: cloudbaristaorg/mc-observability-influx:0.4.1
     container_name: mc-observability-influx
     ports:
       - target: 8086
         published: 8086
         protocol: tcp
-      - target: 8082
-        published: 8082
-        protocol: tcp
+    depends_on:
+      mc-observability-influx-init-volumes:
+        condition: service_completed_successfully
     environment:
-      - INFLUXDB_USER=mc-agent
-      - INFLUXDB_PASSWORD=mc-agent
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+      - INFLUXDB_ADMIN_USER=mc-agent
+      - INFLUXDB_ADMIN_PASSWORD=mc-agent
       - INFLUXDB_DB="mc-observability"
     volumes:
       - ./conf/mc-observability/influxdb/influxdb_init:/docker-entrypoint-initdb.d
-      - ./container-volume/mc-observability/influxdb/config:/etc/influxdb
-      - ./container-volume/mc-observability/influxdb:/root/.influxdb
+      - ./container-volume/mc-observability/influxdb/influxdb_data:/var/lib/influxdb
     networks:
       - mc-observability-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
       <<: *default-health-check
 
-  mc-observability-chronograf:
-    image: chronograf:1.9.4
-    container_name: mc-observability-chronograf
-    ports:
-      - target: 8888
-        published: 8888
-        protocol: tcp
-    volumes:
-      - ./container-volume/mc-observability/chronograf/chronograf_data:/var/lib/chronograf
-    networks:
-      - mc-web-console-network
-      - mc-observability-network
-    healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8888/chronograf/v1/health"]
-      <<: *default-health-check
-
-  mc-observability-kapacitor-init-volumes:
+  mc-observability-influx-2-init-volumes:
     image: busybox:stable
-    container_name: mc-observability-kapacitor-init-volumes
-    command: ["sh", "-c", "chown -R 999:999 /var/lib/kapacitor"]
+    container_name: mc-observability-influx-2-init-volumes
+    restart: no
+    command: ["sh", "-c", "chown -R 1500:1500 /var/lib/influxdb"]
     volumes:
-      - ./container-volume/mc-observability/kapacitor:/var/lib/kapacitor
+      - ./container-volume/mc-observability/influxdb/influxdb2_data:/var/lib/influxdb
     user: root
     init: true
     networks:
       - mc-observability-network
 
-  mc-observability-kapacitor:
-    image: kapacitor:1.7.5
-    container_name: mc-observability-kapacitor
+  mc-observability-influx-2:
+    image: cloudbaristaorg/mc-observability-influx:0.4.1
+    container_name: mc-observability-influx-2
     ports:
-      - target: 9092
-        published: 9092
+      - target: 8086
+        published: 8087
         protocol: tcp
+    depends_on:
+      mc-observability-influx-init-volumes:
+        condition: service_completed_successfully
     environment:
-      - KAPACITOR_INFLUXDB_0_URLS_0=http://mc-observability-influx:8086
+      - INFLUXDB_HTTP_AUTH_ENABLED=true
+      - INFLUXDB_ADMIN_USER=mc-agent
+      - INFLUXDB_ADMIN_PASSWORD=mc-agent
+      - INFLUXDB_DB="mc-observability-2"
     volumes:
-      - ./container-volume/mc-observability/kapacitor:/var/lib/kapacitor
+      - ./conf/mc-observability/influxdb/influxdb_init:/docker-entrypoint-initdb.d
+      - ./container-volume/mc-observability/influxdb/influxdb2_data:/var/lib/influxdb
     networks:
       - mc-observability-network
-    restart: unless-stopped
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9092/kapacitor/v1/ping"]
+      test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
       <<: *default-health-check
 
-  mc-observability-opensearch-init-volumes:
+##### Remove annotations if data inquiry is required with chronograf during development phase #####
+#  mc-observability-chronograf:
+#    image: chronograf:1.9.4
+#    container_name: mc-observability-chronograf
+#    ports:
+#      - target: 8888
+#        published: 8888
+#        protocol: tcp
+#    volumes:
+#      - ./container-volume/mc-observability/chronograf/chronograf_data:/var/lib/chronograf
+#    networks:
+#      - mc-web-console-network
+#      - mc-observability-network
+#    healthcheck:
+#      test: ["CMD", "curl", "-f", "http://localhost:8888/chronograf/v1/health"]
+#      <<: *default-health-check
+
+  mc-observability-loki-init-volumes:
     image: busybox:stable
-    container_name: mc-observability-opensearch-init-volumes
-    command: ["sh", "-c", "chown -R 1000:1000 /usr/share/opensearch/data"]
+    container_name: mc-observability-loki-init-volumes
+    restart: no
+    command: ["sh", "-c", "chown -R 10001:10001 /loki"]
     volumes:
-      - ./container-volume/mc-observability/opensearch:/usr/share/opensearch/data
+      - ./container-volume/mc-observability/loki/loki_data:/loki
     user: root
     init: true
     networks:
       - mc-observability-network
 
-  opensearch-node1:
-    image: opensearchproject/opensearch:1.3.19
-    container_name: opensearch-node1
+  mc-observability-loki:
+    image: grafana/loki:3.4.2
+    container_name: mc-observability-loki
+    restart: always
+    networks:
+      - mc-observability-network
+    ports:
+      - target: 3100
+        published: 3100
+        protocol: tcp
+    depends_on:
+      mc-observability-loki-init-volumes:
+        condition: service_completed_successfully
+      mc-observability-minio:
+        condition: service_healthy
     environment:
-      - cluster.name=opensearch-cluster
-      - node.name=opensearch-node1
-      - bootstrap.memory_lock=true
-      - "OPENSEARCH_JAVA_OPTS=-Xms512m -Xmx512m"
-      - "DISABLE_INSTALL_DEMO_CONFIG=true"
-      - "DISABLE_SECURITY_PLUGIN=true"
-      - "discovery.type=single-node"
-    ulimits:
-      memlock:
-        soft: -1
-        hard: -1
-      nofile:
-        soft: 65536
-        hard: 65536
+      - TZ=Asia/Seoul
     volumes:
-      - ./container-volume/mc-observability/opensearch:/usr/share/opensearch/data
-    ports:
-      - target: 9200
-        published: 9200
-        protocol: tcp
-      - target: 9600
-        published: 9600
-        protocol: tcp
+      - /etc/localtime:/etc/localtime:ro
+      - ./conf/mc-observability/loki/config.yml:/etc/loki/local-config.yaml
+      - ./container-volume/mc-observability/loki/loki_data:/loki
+    command: -config.file=/etc/loki/local-config.yaml
+    healthcheck:
+      start_period: 120s
+      test: 'wget --quiet --spider http://127.0.0.1:3100/metrics || exit 1'
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  mc-observability-minio:
+    image: cloudbaristaorg/mc-observability-minio:0.4.1
+    container_name: mc-observability-minio
+    restart: always
     networks:
       - mc-observability-network
+    environment:
+      - MINIO_ROOT_USER=admin
+      - MINIO_ROOT_PASSWORD=mc-agent
+    volumes:
+      - /docker/minio_data:/minio/data
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:9200/_cluster/health"]
-      <<: *default-health-check
+      start_period: 120s
+      test: 'curl -s http://127.0.0.1:9001/api/docs ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
+      interval: 10s
+      timeout: 10s
+      retries: 30
 
-  mc-observability-opensearch-dashboards:
-    image: opensearchproject/opensearch-dashboards:1.3.19
-    container_name: mc-observability-opensearch-dashboards
+  mc-observability-tempo-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-tempo-init-volumes
+    restart: no
+    networks:
+      - mc-observability-network
+    command: ["sh", "-c", "chown -R 10001:10001 /var/tempo"]
+    volumes:
+      - ./container-volume/mc-observability/tempo/tempo_data:/var/tempo
+    user: root
+    init: true
+
+  mc-observability-tempo:
+    image: grafana/tempo:2.8.2
+    container_name: mc-observability-tempo
+    restart: always
+    networks:
+      - mc-observability-network
     ports:
-      - target: 5601
-        published: 5601
+      - target: 3200
+        published: 3200
+        protocol: tcp
+      - target: 4317
+        published: 4317
+        protocol: tcp
+      - target: 4318
+        published: 4318
         protocol: tcp
     environment:
-      - 'OPENSEARCH_HOSTS=["http://opensearch-node1:9200"]'
-      - "DISABLE_SECURITY_DASHBOARDS_PLUGIN=true"
+      - TZ=Asia/Seoul
+    command: [ "-config.file=/etc/tempo-config.yaml" ]
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./container-volume/mc-observability/tempo/tempo_data:/var/tempo
+      - ./conf/mc-observability/tempo/config.yaml:/etc/tempo-config.yaml
+
+  mc-observability-grafana-init-volumes:
+    image: busybox:stable
+    container_name: mc-observability-grafana-init-volumes
+    restart: no
+    command: ["sh", "-c", "chown -R 472:472 /var/lib/grafana && chown -R 472:472 /var/log/grafana && chown -R 472:472 /grafana_config"]
+    volumes:
+      - ./container-volume/mc-observability/grafana/grafana_data/data:/var/lib/grafana
+      - ./container-volume/mc-observability/grafana/grafana_data/log:/var/log/grafana
+      - grafana_shared_config:/grafana_config
+    user: root
+    init: true
     networks:
-      - mc-web-console-network
       - mc-observability-network
+
+  mc-observability-grafana:
+    image: cloudbaristaorg/mc-observability-grafana:0.4.1
+    container_name: mc-observability-grafana
+    restart: always
+    networks:
+      - mc-observability-network
+    ports:
+      - target: 3000
+        published: 33001
+        protocol: tcp
+    depends_on:
+      mc-observability-grafana-init-volumes:
+        condition: service_completed_successfully
+    environment:
+      - TZ=Asia/Seoul
+      - GF_DATE_FORMATS_DEFAULT_TIMEZONE=Asia/Seoul
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=mc-agent
+      - GF_SECURITY_ALLOW_EMBEDDING=true
+      - GF_LOG_FILTERS=debug
+      - GF_ALERTING_PROVISIONING_ENABLED=true
+      - GF_UNIFIED_ALERTING_ENABLED=true
+      - GF_SMTP_ENABLED=true
+      - GF_ALERTING_EVALUATION_INTERVAL=10s
+      - ALARM_END_POINT_URL=http://mc-observability-alarm:8888/api/alarm/send-alarm
+      - ALARM_END_POINT_USERNAME=admin
+      - ALARM_END_POINT_PASSWORD=mc-agent
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+      - ./conf/mc-observability/grafana/grafana.ini:/etc/grafana/grafana.ini
+      - ./conf/mc-observability/grafana/provisioning/datasources:/etc/grafana/provisioning/datasources
+      - ./container-volume/mc-observability/grafana/grafana_data/data:/var/lib/grafana
+      - ./container-volume/mc-observability/grafana/grafana_data/log:/var/log/grafana
+      - grafana_shared_config:/grafana_config
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:5601/api/status"]
-      <<: *default-health-check
+      start_period: 120s
+      test: |
+        curl -s http://127.0.0.1:3000
+        STATUS=`echo $$?`
+        if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then
+          exit 1
+        fi
+        curl -k -s https://127.0.0.1:8443
+        STATUS=`echo $$?`
+        if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then
+          exit 1
+        fi
+      interval: 10s
+      timeout: 10s
+      retries: 30
 
   mc-observability-insight:
-    image: cloudbaristaorg/mc-o11y-insight:0.4.0
+    image: cloudbaristaorg/mc-observability-insight:0.4.1
     container_name: mc-observability-insight
     ports:
       - target: 9001
         published: 9001
         protocol: tcp
+    depends_on:
+      mc-observability-maria:
+        condition: service_healthy
+      mc-observability-influx:
+        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+      - OTEL_SERVICE_NAME=${OTEL_SERVICE_NAME:-mc-observability-insight}
+      - MODE=${MODE:-otlp-http}
+      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=${OTEL_EXPORTER_OTLP_TRACES_ENDPOINT:-http://mc-observability-tempo:4318/v1/traces}
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./container-volume/mc-observability/insight/log:/mc-insight/log
     networks:
       - mc-observability-network
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9001/docs" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9001/readyz" ]
       <<: *default-health-check
 
   mc-observability-insight-scheduler:
-    image: cloudbaristaorg/mc-o11y-insight-scheduler:0.4.0
+    image: cloudbaristaorg/mc-observability-insight-scheduler:0.4.1
     container_name: mc-observability-insight-scheduler
     ports:
       - target: 9002
@@ -1157,21 +1415,67 @@ services:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9002/health" ]
       <<: *default-health-check
 
-  mc-observability-mcp-grafana:
-    image: mcp/grafana:latest
-    container_name: mc-observability-mcp-grafana
-    tty: true
-    stdin_open: true
-    ports:
-      - target: 8000
-        published: 8000
-        protocol: tcp
-    environment:
-      - GRAFANA_URL=${GRAFANA_URL:-}
-      - GRAFANA_API_KEY=${GRAFANA_API_KEY:-}
-    command:
-      - "--disable-sift"
-      - "--disable-incident"
-      - "--disable-search"
-    networks:
-      - mc-observability-network
+##### Remove annotations when using LLM-based log and alarm analysis #####
+#  mc-observability-mcp-grafana:
+#    image: mcp/grafana:latest
+#    container_name: mc-observability-mcp-grafana
+#    restart: always
+#    tty: true
+#    stdin_open: true
+#    ports:
+#      - target: 8000
+#        published: 8000
+#        protocol: tcp
+#    environment:
+#      - GRAFANA_URL=${GRAFANA_URL:-}
+#      - GRAFANA_API_KEY=${GRAFANA_API_KEY:-}
+#    command:
+#      - "--disable-sift"
+#      - "--disable-incident"
+#      - "--disable-search"
+#    networks:
+#      - mc-observability-network
+#
+#  mc-observability-mcp-maria:
+#    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.4.1
+#    container_name: mc-observability-mcp-maria
+#    restart: always
+#    ports:
+#      - target: 8001
+#        published: 8001
+#        protocol: tcp
+#    depends_on:
+#      mc-observability-maria:
+#        condition: service_started
+#    environment:
+#      - TZ=Asia/Seoul
+#      - DB_HOST=mc-observability-maria
+#      - DB_PORT=3306
+#      - DB_USER=mc-agent
+#      - DB_PASSWORD=mc-agent
+#      - DB_NAME=mc_observability
+#      - MCP_READ_ONLY=true
+#      - MCP_MAX_POOL_SIZE=10
+#      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+#    networks:
+#      - mc-observability-network
+#
+#  mc-observability-mcp-influx:
+#    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.4.1
+#    container_name: mc-observability-mcp-influx
+#    restart: always
+#    ports:
+#      - target: 8000
+#        published: 8002
+#        protocol: tcp
+#    depends_on:
+#      mc-observability-influx:
+#        condition: service_started
+#    environment:
+#      - TZ=Asia/Seoul
+#      - INFLUXDB_URL=http://mc-observability-influx:8086
+#      - INFLUXDB_USER=mc-agent
+#      - INFLUXDB_PASSWORD=mc-agent
+#      - INFLUXDB_DATABASE=mc-observability
+#    networks:
+#      - mc-observability-network

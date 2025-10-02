@@ -35,15 +35,17 @@ EXPECTED_CONTAINERS=(
     "mc-web-console-api"
     "mc-web-console-front"
     "mc-observability-manager"
+    "mc-observability-infra"
+    "mc-observability-rabbitmq"
     "mc-observability-maria"
     "mc-observability-influx"
-    "mc-observability-chronograf"
-    "mc-observability-kapacitor"
-    "opensearch-node1"
-    "mc-observability-opensearch-dashboards"
+    "mc-observability-influx-2"
+    "mc-observability-loki"
+    "mc-observability-tempo"
+    "mc-observability-minio"
+    "mc-observability-grafana"
     "mc-observability-insight"
     "mc-observability-insight-scheduler"
-    "mc-observability-mcp-grafana"
 )
 
 # Health Check가 없는 컨테이너 목록 (Up 상태로 성공 처리)
@@ -54,7 +56,7 @@ NO_HEALTH_CHECK_CONTAINERS=(
     "mc-cost-optimizer-cost-collector"
     "mc-cost-optimizer-cost-processor"
     "mc-cost-optimizer-cost-selector"
-    "mc-observability-mcp-grafana"
+    "mc-observability-tempo"
 )
 
 # =============================================================================
