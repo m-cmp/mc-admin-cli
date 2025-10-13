@@ -843,10 +843,10 @@ services:
       - mc-web-console-network
     environment:
       - JAVA_TOOL_OPTIONS=-javaagent:/opentelemetry-javaagent.jar -XX:-UseContainerSupport
-      - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://cb-tumblebug:1323}
+      - TUMBLEBUG_URL=${TUMBLEBUG_URL:-http://mc-infra-manager:1323}
       - TUMBLEBUG_ID=${TUMBLEBUG_ID:-default}
       - TUMBLEBUG_PW=${TUMBLEBUG_PW:-default}
-      - SPIDER_URL=${SPIDER_URL:-http://cb-spider:1024}
+      - SPIDER_URL=${SPIDER_URL:-http://mc-infra-connector:1024}
       - SPIDER_ID=${SPIDER_ID:-}
       - SPIDER_PW=${SPIDER_PW:-}
       - INSIGHT_URL=http://mc-observability-insight:9001
