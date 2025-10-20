@@ -1367,9 +1367,9 @@ services:
 #    networks:
 #      - mc-observability-network
 #
-#  mc-observability-mcp-maria:
+#  mc-observability-mcp-mariadb:
 #    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.4.1
-#    container_name: mc-observability-mcp-maria
+#    container_name: mc-observability-mcp-mariadb
 #    restart: always
 #    ports:
 #      - target: 8001
