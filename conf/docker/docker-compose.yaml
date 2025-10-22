@@ -891,7 +891,7 @@ services:
     container_name: mc-observability-rabbitmq-init-volumes
     restart: no
     networks:
-      - internal_network
+      - mc-observability-network
     command:
       - sh
       - -c
