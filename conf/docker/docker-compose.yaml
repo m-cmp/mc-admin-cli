@@ -1233,9 +1233,6 @@ services:
     environment:
       - TZ=Asia/Seoul
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
-      - OTEL_SERVICE_NAME=mc-observability-insight
-      - MODE=otlp-http
-      - OTEL_EXPORTER_OTLP_TRACES_ENDPOINT=http://mc-observability-tempo:4318/v1/traces
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./container-volume/mc-observability/insight/log:/mc-insight/log
