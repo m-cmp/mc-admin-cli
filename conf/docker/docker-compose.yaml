@@ -17,6 +17,7 @@ networks:
 
 volumes:
   grafana_shared_config:
+  shared_logs:
 
 services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
@@ -855,6 +856,7 @@ services:
       - ./conf/mc-observability/manager/.env
     volumes:
       - ./tool/mcc:/app/tool/mcc
+      - shared_logs:/applog/mc-o11y-manager:rw
       - grafana_shared_config:/grafana_config:ro
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18080/api/docs" ]
@@ -1235,7 +1237,7 @@ services:
       - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
     volumes:
       - ./tool/mcc:/app/tool/mcc
-      - ./container-volume/mc-observability/insight/log:/mc-insight/log
+      - shared_logs:/mc-insight/log:rw
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9001/readyz" ]
       <<: *default-health-check
