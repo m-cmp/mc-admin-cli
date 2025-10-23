@@ -1076,7 +1076,7 @@ services:
       - MINIO_ROOT_USER=admin
       - MINIO_ROOT_PASSWORD=mc-agent
     volumes:
-      - /docker/minio_data:/minio/data
+      - ./container-volume/mc-observability/minio/minio_data:/minio/data
     healthcheck:
       start_period: 120s
       test: 'curl -s http://127.0.0.1:9001/api/docs ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
