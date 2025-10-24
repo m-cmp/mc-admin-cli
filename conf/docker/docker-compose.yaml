@@ -822,7 +822,7 @@ services:
       <<: *default-health-check
 ##### MC-OBSERVABILITY #########################################################################################################################
   mc-observability-manager:
-    image: cloudbaristaorg/mc-observability:edge
+    image: cloudbaristaorg/mc-observability:0.4.3
     container_name: mc-observability-manager
     restart: on-failure
     networks:
@@ -863,7 +863,7 @@ services:
       <<: *default-health-check
 
   mc-observability-infra:
-    image: cloudbaristaorg/mc-observability-infra:edge
+    image: cloudbaristaorg/mc-observability-infra:0.4.3
     container_name: mc-observability-infra
     restart: on-failure
     networks:
@@ -988,7 +988,7 @@ services:
     init: true
 
   mc-observability-influx:
-    image: cloudbaristaorg/mc-observability-influx:edge
+    image: cloudbaristaorg/mc-observability-influx:0.4.3
     container_name: mc-observability-influx
     restart: on-failure
     networks:
@@ -1025,7 +1025,7 @@ services:
       - mc-observability-network
 
   mc-observability-influx-2:
-    image: cloudbaristaorg/mc-observability-influx:edge
+    image: cloudbaristaorg/mc-observability-influx:0.4.3
     container_name: mc-observability-influx-2
     restart: on-failure
     networks:
@@ -1041,7 +1041,7 @@ services:
       - INFLUXDB_HTTP_AUTH_ENABLED=true
       - INFLUXDB_ADMIN_USER=mc-agent
       - INFLUXDB_ADMIN_PASSWORD=mc-agent
-      - INFLUXDB_DB="mc-observability-2"
+      - INFLUXDB_DB="mc-observability"
     volumes:
       - ./conf/mc-observability/influxdb/influxdb_init:/docker-entrypoint-initdb.d
       - ./container-volume/mc-observability/influxdb/influxdb2_data:/var/lib/influxdb
@@ -1067,7 +1067,7 @@ services:
 #      <<: *default-health-check
 
   mc-observability-minio:
-    image: cloudbaristaorg/mc-observability-minio:edge
+    image: cloudbaristaorg/mc-observability-minio:0.4.3
     container_name: mc-observability-minio
     restart: on-failure
     networks:
@@ -1185,7 +1185,7 @@ services:
     init: true
 
   mc-observability-grafana:
-    image: cloudbaristaorg/mc-observability-grafana:edge
+    image: cloudbaristaorg/mc-observability-grafana:0.4.3
     container_name: mc-observability-grafana
     restart: on-failure
     networks:
@@ -1223,7 +1223,7 @@ services:
       retries: 30
 
   mc-observability-insight:
-    image: cloudbaristaorg/mc-observability-insight:edge
+    image: cloudbaristaorg/mc-observability-insight:0.4.3
     container_name: mc-observability-insight
     networks:
       - mc-observability-network
@@ -1245,7 +1245,7 @@ services:
       <<: *default-health-check
 
   mc-observability-insight-scheduler:
-    image: cloudbaristaorg/mc-observability-insight-scheduler:edge
+    image: cloudbaristaorg/mc-observability-insight-scheduler:0.4.3
     container_name: mc-observability-insight-scheduler
     networks:
       - mc-observability-network
@@ -1349,7 +1349,7 @@ services:
 #    stdin_open: true
 #
 #  mc-observability-mcp-mariadb:
-#    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.4.2
+#    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.4.3
 #    container_name: mc-observability-mcp-mariadb
 #    restart: on-failure
 #    networks:
@@ -1373,7 +1373,7 @@ services:
 #      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
 #
 #  mc-observability-mcp-influx:
-#    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.4.2
+#    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.4.3
 #    container_name: mc-observability-mcp-influx
 #    restart: always
 #    networks:
