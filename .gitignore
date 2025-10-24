@@ -69,3 +69,12 @@ conf/docker/conf/mc-data-manager/data/var/log/
 conf/docker/conf/mc-iam-manager/menu.yaml
 conf/docker/conf/mc-iam-manager/nginx.conf
 conf/docker/conf/mc-iam-manager/api.yaml
+
+
+# mc-observability
+conf/docker/conf/mc-observability/**/Dockerfile
+conf/docker/conf/mc-observability/grafana/nginx.conf
+conf/docker/conf/mc-observability/grafana/run.sh
+conf/docker/conf/mc-observability/influxdb/influxdb.conf
+conf/docker/conf/mc-observability/mc-infra-manager
+conf/docker/conf/mc-observability/minio
