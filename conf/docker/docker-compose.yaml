@@ -72,7 +72,7 @@ services:
       mc-infra-connector:
         condition: service_started
       mc-infra-manager-postgres:
-        condition: service_healthy      
+        condition: service_healthy
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-infra-manager/:/app/conf/:ro
@@ -83,7 +83,7 @@ services:
       - TB_SPIDER_REST_URL=http://mc-infra-connector:1024/spider
       - TB_ETCD_ENDPOINTS=http://mc-infra-manager-etcd:2379
       - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
-      - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000      
+      - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
       # - TB_ETCD_AUTH_ENABLED=true
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
@@ -522,7 +522,7 @@ services:
     container_name: mc-cost-optimizer-db
     depends_on:
       mc-cost-optimizer-init-volume:
-        condition: service_completed_successfully    
+        condition: service_completed_successfully
     environment:
       - ALLOW_EMPTY_PASSWORD=no
       - MYSQL_ROOT_PASSWORD=${CO_MYSQL_ROOT_PASSWORD}
@@ -545,55 +545,6 @@ services:
       <<: *default-health-check
 
 ##### MC-APPLICATION-MANAGER #########################################################################################################################
-
-  mc-application-manager-jenkins:
-    image: bitnami/jenkins:2.462.3
-    user: root
-    container_name: mc-application-manager-jenkins
-    platform: linux/amd64
-    networks:
-      - mc-application-manager-network
-      - mc-web-console-network
-    ports:
-      - target: 8080
-        published: 9800
-        protocol: tcp
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - /usr/bin/docker:/usr/bin/docker
-      - ./container-volume/mc-application-manager/jenkins/:/bitnami/jenkins/home:rw
-    environment:
-      JENKINS_USERNAME: admin
-      JENKINS_PASSWORD: 123456 # Please CHANGE ME
-      JENKINS_PLUGINS: >-
-        workflow-api,
-        swarm,
-        authorize-project,
-        antisamy-markup-formatter,
-        pipeline-github-lib,
-        pipeline-rest-api,
-        git,
-        github-branch-source,
-        gradle,
-        pipeline-model-definition,
-        pipeline-build-step,
-        workflow-aggregator,
-        matrix-project,
-        email-ext,
-        durable-task,
-        checks-api,
-        build-timeout,
-        timestamper,
-        ws-cleanup,
-        ssh-slaves,
-        ssh-agent,
-        publish-over-ssh
-    healthcheck:
-      test: [ "CMD", "curl", "-f", "http://localhost:8080/login" ]
-      interval: 1m
-      timeout: 5s
-      retries: 3
-      start_period: 10s
 
   mc-application-manager-sonatype-nexus:
     image: sonatype/nexus3:latest
@@ -650,7 +601,7 @@ services:
 ##### MC-WORKFLOW-MANAGER #########################################################################################################################
 
   mc-workflow-manager-jenkins:
-    image: bitnami/jenkins:2.462.3
+    image: jenkins/jenkins:2.462.3-lts
     container_name: mc-workflow-manager-jenkins
     platform: linux/amd64
     networks:
@@ -664,34 +615,14 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - /usr/bin/docker:/usr/bin/docker
-      - ./container-volume/mc-workflow-manager/jenkins/:/bitnami/jenkins/home:rw
+      - ./container-volume/mc-workflow-manager/jenkins/:/var/jenkins_home:rw
+      - ./tool/init.groovy.d:/usr/share/jenkins/ref/init.groovy.d
     environment:
       JENKINS_USERNAME: admin
       JENKINS_PASSWORD: 123456 # Please CHANGE ME
-      JENKINS_PLUGINS: >-
-        workflow-api,
-        swarm,
-        authorize-project,
-        antisamy-markup-formatter,
-        pipeline-github-lib,
-        pipeline-rest-api,
-        git,
-        github-branch-source,
-        gradle,
-        pipeline-model-definition,
-        pipeline-build-step,
-        workflow-aggregator,
-        matrix-project,
-        email-ext,
-        durable-task,
-        checks-api,
-        build-timeout,
-        timestamper,
-        ws-cleanup,
-        ssh-slaves,
-        ssh-agent,
-        publish-over-ssh
+      JAVA_OPTS: -Djenkins.install.runSetupWizard=false
     user: root
+    restart: always
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
       <<: *default-health-check
@@ -887,7 +818,7 @@ services:
       - ./tool/mcc:/app/tool/mcc
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:3001" ]
-      <<: *default-health-check 
+      <<: *default-health-check
 ##### MC-OBSERVABILITY #########################################################################################################################
 
   mc-observability-manager:
