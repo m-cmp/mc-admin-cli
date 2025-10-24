@@ -6,6 +6,8 @@ cloud:
       interval: "10"
       timeout: "9"
       threshold: "3"
+    k8scluster:
+      enable: "y"
   aws:
     enable: "y"
     nlb:
@@ -13,6 +15,8 @@ cloud:
       interval: "10"
       timeout: "-1"
       threshold: "3"
+    k8scluster:
+      enable: "y"
   azure:
     enable: "y"
     nlb:
@@ -20,6 +24,8 @@ cloud:
       interval: "10"
       timeout: "9"
       threshold: "3"
+    k8scluster:
+      enable: "y"
   gcp:
     enable: "y"
     nlb:
@@ -27,6 +33,8 @@ cloud:
       interval: "10"
       timeout: "9"
       threshold: "3"
+    k8scluster:
+      enable: "y"
   alibaba:
     enable: "y"
     nlb:
@@ -34,6 +42,8 @@ cloud:
       interval: "10"
       timeout: "9"
       threshold: "3"
+    k8scluster:
+      enable: "y"
   tencent:
     enable: "y"
     nlb:
@@ -41,6 +51,8 @@ cloud:
       interval: "10"
       timeout: "9"
       threshold: "3"
+    k8scluster:
+      enable: "y"
   ibm:
     enable: "y"
     nlb:
@@ -48,6 +60,12 @@ cloud:
       interval: "10"
       timeout: "9"
       threshold: "3"
+    k8scluster:
+      enable: "n"
+  nhn:
+    enable: "y"
+    k8scluster:
+      enable: "y"
   openstack:
     enable: "y"
     nlb:
@@ -55,6 +73,8 @@ cloud:
       interval: "10"
       timeout: "9"
       threshold: "3"
+    k8scluster:
+      enable: "n"
   cloudit	:
     enable: "y"
     nlb:
@@ -62,13 +82,15 @@ cloud:
       interval: "10"
       timeout: "9"
       threshold: "3"
+    k8scluster:
+      enable: "n"
 nlbsw:
   sw: "HAProxy"
   version: "latest"
-  commandNlbPrepare: "wget https://raw.githubusercontent.com/mcc/cb-tumblebug/main/scripts/nlb/deployNlb.sh; wget https://raw.githubusercontent.com/mcc/cb-tumblebug/main/scripts/nlb/addTargetNode.sh; wget https://raw.githubusercontent.com/mcc/cb-tumblebug/main/scripts/nlb/applyConfig.sh; chmod +x ~/deployNlb.sh ~/addTargetNode.sh ~/applyConfig.sh"
+  commandNlbPrepare: "wget https://raw.githubusercontent.com/cloud-barista/cb-tumblebug/main/scripts/nlb/deployNlb.sh; wget https://raw.githubusercontent.com/cloud-barista/cb-tumblebug/main/scripts/nlb/addTargetNode.sh; wget https://raw.githubusercontent.com/cloud-barista/cb-tumblebug/main/scripts/nlb/applyConfig.sh; chmod +x ~/deployNlb.sh ~/addTargetNode.sh ~/applyConfig.sh"
   commandNlbDeploy: "sudo ~/deployNlb.sh"
   commandNlbAddTargetNode: "sudo ~/addTargetNode.sh"
   commandNlbApplyConfig: "sudo ~/applyConfig.sh"
-  nlbMcisCommonSpec: "aws-ap-northeast-2-t2-small"
-  nlbMcisCommonImage: "ubuntu18.04"
+  nlbMcisSpecId: "aws-ap-northeast-2-t2-small"
+  nlbMcisImageId: "ubuntu18.04"
   nlbMcisSubGroupSize: "2"
