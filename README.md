@@ -166,18 +166,22 @@ The following ports should be registered in the firewall if needed:
 ### **MC-OBSERVABILITY**
 | Service | Port | Protocol | Description |
 |---------|------|----------|-------------|
-| mc-observability-manager | 18080, 18081 | TCP | Observability Manager |
+| mc-observability-manager | 18080 | TCP | Observability Manager |
+| mc-observability-infra | 33000 | TCP | Observability Infrastructure |
+| mc-observability-rabbitmq | 5672, 1883, 15672 | TCP | RabbitMQ (AMQP, MQTT, Management) |
 | mc-observability-maria | 3306 | TCP | MariaDB |
-| mc-observability-influx | 8086, 8082 | TCP | InfluxDB |
-| mc-observability-chronograf | 8888 | TCP | Chronograf |
-| mc-observability-kapacitor | 9092 | TCP | Kapacitor |
-| opensearch-node1 | 9200, 9600 | TCP | OpenSearch |
-| mc-observability-opensearch-dashboards | 5601 | TCP | OpenSearch Dashboards |
+| mc-observability-influx | 8086 | TCP | InfluxDB |
+| mc-observability-influx-2 | 8087 | TCP | InfluxDB 2 |
+| mc-observability-loki | 3100 | TCP | Loki Log Aggregation |
+| mc-observability-tempo | 3200, 4317, 4318 | TCP | Tempo Distributed Tracing |
+| mc-observability-grafana | 33001 | TCP | Grafana |
 | mc-observability-insight | 9001 | TCP | Observability Insight |
 | mc-observability-insight-scheduler | 9002 | TCP | Insight Scheduler |
-| mc-observability-mcp-grafana | 8000 | TCP | MCP Grafana |
+| mc-observability-mcp-grafana | 8000 | TCP | MCP Grafana Server (LLM-based analysis) |
+| mc-observability-mcp-mariadb | 8001 | TCP | MCP MariaDB Server (LLM-based analysis) |
+| mc-observability-mcp-influx | 8002 | TCP | MCP InfluxDB Server (LLM-based analysis) |
 
-**Total 39 ports** are configured for external access.
+**Total 46 ports** are configured for external access.
 
 The following ports must be registered in the firewall:
 ### **Required Firewall Services**
