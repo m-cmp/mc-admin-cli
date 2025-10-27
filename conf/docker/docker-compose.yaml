@@ -23,7 +23,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.11.13
+    image: cloudbaristaorg/cb-spider:0.11.15
     pull_policy: missing
     container_name: mc-infra-connector
     platform: linux/amd64
@@ -48,6 +48,7 @@ services:
       - SPIDER_LOG_LEVEL=error
       - SPIDER_HISCALL_LOG_LEVEL=error
       - ID_TRANSFORM_MODE=OFF
+      - ADMINWEB=OFF      
     healthcheck: # for CB-Spider
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:1024/spider/readyz" ]
       <<: *default-health-check
@@ -55,7 +56,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.11.14
+    image: cloudbaristaorg/cb-tumblebug:0.11.15
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
