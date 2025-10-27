@@ -42,6 +42,25 @@ sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 ```
 
+Optionally: Grant Docker Permission to Current User. 
+- After installation, you may need to allow your current user to access the Docker daemon socket to avoid permission denied errors.
+
+```shell
+# Start Docker service
+sudo systemctl start docker
+sudo systemctl enable docker
+
+# Add current user to the 'docker' group
+sudo usermod -aG docker $USER
+
+# Apply changes immediately (no need to log out)
+newgrp docker
+
+# Verify Docker access
+docker ps
+```
+
+
 # Quick Guide
 This section describes the minimal process for those who want to set up quickly.   
 For more detailed installation guide, please refer to the [Running on Single Instance Guide](https://github.com/m-cmp/mc-admin-cli/blob/main/docs/running-on-instance.md) document.   
@@ -51,6 +70,12 @@ For stable infrastructure deployment, it is recommended to explicitly clone a sp
 (Example) v0.4.1
 ```shell
 git clone https://github.com/m-cmp/mc-admin-cli.git -b v0.4.1
+cd mc-admin-cli/bin
+```
+
+For Contributors, If you are contributing to M-CMP, clone the latest development branch instead.
+```shell
+git clone https://github.com/m-cmp/mc-admin-cli.git
 cd mc-admin-cli/bin
 ```
 
