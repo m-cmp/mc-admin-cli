@@ -670,7 +670,7 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: cloudbaristaorg/mc-data-manager:0.4.6
+    image: cloudbaristaorg/mc-data-manager:0.4.7
     container_name: mc-data-manager
     depends_on:
       mc-data-manager-init-volumes:
@@ -695,10 +695,16 @@ services:
       - ./data:/app/data/ # container-volume
       - ./scripts:/app/scripts/ # container-volume
       - /etc/localtime:/etc/localtime:ro # timezone
+    environment:
+      - TUMBLEBUG_URL=http://mc-infra-manager:1323
     env_file:
       - ./conf/mc-data-manager/.env
     # Health check configuration
     # OK [ 2xx ,3xx}, ERR [4xx,5xx,...etc]
+    networks:
+      - mc-data-manager-network
+      - mc-web-console-network
+      - mc-infra-manager-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3300/readyZ"]
       interval: 30s
