@@ -595,6 +595,7 @@ services:
       - TUMBLEBUG_PORT=1323
       - TUMBLEBUG_ID=default
       - TUMBLEBUG_PASSWORD=default
+      - SPIDER_URL=mc-infra-connector
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18084/readyz" ]
       <<: *default-health-check
