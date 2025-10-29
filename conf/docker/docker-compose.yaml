@@ -759,7 +759,7 @@ services:
             exec docker-entrypoint.sh postgres"
 
   mc-web-console-api:
-    image: cloudbaristaorg/mc-web-console-api:0.4.10
+    image: cloudbaristaorg/mc-web-console-api:0.4.11
     container_name: mc-web-console-api
     platform: linux/amd64
     restart: unless-stopped
@@ -798,7 +798,7 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    image: cloudbaristaorg/mc-web-console-front:0.4.10
+    image: cloudbaristaorg/mc-web-console-front:0.4.11
     container_name: mc-web-console-front
     platform: linux/amd64
     restart: unless-stopped
