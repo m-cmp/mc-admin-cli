@@ -88,6 +88,11 @@ After downloading mc-admin-cli, move to the bin folder and run the installAll.sh
 - **Developer Mode (Local Certificate)**: For development and testing environments (Temporary credential features are not available)
 - **Production Mode (CA Certificate)**: For production environments (Domain required. Target CSP work required for temporary credentials)
 
+For non-interactive excution, use the following command with the parameters.
+```shell 
+./installAll.sh --mode dev --run background
+```
+
 Domain and certificates are required, so select the appropriate mode during installation to issue certificates and create nginx configuration files.
 ```shell
 ./mcc infra run
