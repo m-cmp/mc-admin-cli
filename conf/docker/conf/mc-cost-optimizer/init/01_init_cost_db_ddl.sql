@@ -265,3 +265,108 @@ CREATE TABLE `unused_process_mart` (
                                        `metric_avg_amount` double DEFAULT NULL,
                                        PRIMARY KEY (`resource_id`,`collect_dt`,`metric_type`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
+
+-- cost.azure_cost_service_daily definition
+
+CREATE TABLE `azure_cost_service_daily` (
+                                            `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '아이디',
+                                            `created` datetime DEFAULT NULL COMMENT 'row insert 시간',
+                                            `updated` datetime DEFAULT NULL COMMENT 'row update 시간',
+                                            `tenant_id` varchar(255) NOT NULL COMMENT '테넌트 아이디. ex) 00000000-0000-0000-0000-00000000000',
+                                            `subscription_id` varchar(255) NOT NULL COMMENT 'subscriptions 아이디. ex) 00000000-0000-0000-0000-00000000000',
+                                            `pre_tax_cost` double NOT NULL COMMENT '비용. ex) 16345.824',
+                                            `usage_date` varchar(255) NOT NULL COMMENT '날짜. ex) 20250903',
+                                            `service_name` varchar(255) NOT NULL COMMENT '서비스 이름. ex) Virtual Machines',
+                                            `currency` varchar(255) NOT NULL COMMENT '통화 단위. ex) KRW',
+                                            PRIMARY KEY (`id`) COMMENT 'Azure Service 일별 요금을 목록'
+) ENGINE=InnoDB AUTO_INCREMENT=17 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- cost.azure_cost_vm_daily definition
+
+CREATE TABLE `azure_cost_vm_daily` (
+                                       `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '아이디',
+                                       `created` datetime DEFAULT NULL COMMENT 'row insert 시간',
+                                       `updated` datetime DEFAULT NULL COMMENT 'row update 시간',
+                                       `tenant_id` varchar(255) NOT NULL COMMENT '테넌트 아이디. ex) 00000000-0000-0000-0000-00000000000',
+                                       `subscription_id` varchar(255) NOT NULL COMMENT 'subscriptions 아이디. ex) 00000000-0000-0000-0000-00000000000',
+                                       `pre_tax_cost` double NOT NULL COMMENT '비용. ex) 16345.824',
+                                       `usage_date` varchar(255) NOT NULL COMMENT '날짜. ex) 20250903',
+                                       `resource_group_name` varchar(255) NOT NULL COMMENT '리소스 그룹. ex) rg-dongwoo-1',
+                                       `resource_id` varchar(255) NOT NULL COMMENT '리소스 아이디.(AWS의 ARN과 비슷) ex) "/subscriptions/00000000-0000-0000-0000-00000000000/resourcegroups/rg-dongwoo-1/providers/microsoft.compute/virtualmachines/vm-1"',
+                                       `region` varchar(255) NOT NULL COMMENT 'region 명. ex) koreacentral',
+                                       `instance_type` varchar(255) NOT NULL COMMENT '인스턴스 타입. ex) Standard_DS3_v2',
+                                       `os_type` varchar(255) NOT NULL COMMENT '인스턴스 os 타입. ex) WINDOWS',
+                                       `vm_id` varchar(255) NOT NULL COMMENT 'vm 아이디 ex) vm-1',
+                                       `resource_guid` varchar(255) NOT NULL COMMENT '리소스 고유 아이디. ex) 00000000-0000-0000-0000-00000000000',
+                                       `currency` varchar(255) NOT NULL COMMENT '통화 단위. ex) KRW',
+                                       PRIMARY KEY (`id`) COMMENT 'Azure Virtual Machines 별 요금 목록'
+) ENGINE=InnoDB AUTO_INCREMENT=7 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- cost.ncp_cost_service_month definition
+
+CREATE TABLE `ncp_cost_service_month` (
+                                          `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '아이디',
+                                          `created` datetime DEFAULT NULL COMMENT 'row insert 시간',
+                                          `updated` datetime DEFAULT NULL COMMENT 'row update 시간',
+                                          `member_no` varchar(255) NOT NULL COMMENT '회원 번호. ex) 0000000',
+                                          `product_demand_type` varchar(255) NOT NULL COMMENT '상품 청구 유형 이름. ex) Virtual Private Cloud',
+                                          `demand_month` varchar(255) NOT NULL COMMENT '청구 월. ex) 202509',
+                                          `use_amount` double NOT NULL COMMENT '사용 금액. ex) 2580.0',
+                                          `demand_amount` double NOT NULL COMMENT '청구 금액. ex) 2580.0',
+                                          `write_date` datetime NOT NULL COMMENT '작성 일시(YYYY-MM-DDThh:mm:ssZ). ex) 2025-09-11 08:02:40+0900',
+                                          `pay_currency` varchar(255) NOT NULL COMMENT '결제 통화. ex) KRW',
+                                          PRIMARY KEY (`id`) COMMENT '서비스별 청구 비용 목록'
+) ENGINE=InnoDB AUTO_INCREMENT=76 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+-- cost.ncp_cost_vm_daily definition
+
+CREATE TABLE `ncp_cost_vm_daily` (
+                                     `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                                     `created` timestamp NULL DEFAULT current_timestamp() COMMENT '생성일시',
+                                     `updated` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp() COMMENT '수정일시',
+                                     `member_no` varchar(100) NOT NULL COMMENT '회원 번호',
+                                     `demand_month` varchar(6) NOT NULL COMMENT '청구 월. ex) 202510',
+                                     `region_code` varchar(10) NOT NULL COMMENT '리전 코드. ex) KR, JPN',
+                                     `server_spec_code` varchar(100) NOT NULL COMMENT '서버 스펙 코드. ex) s2-g2-s50',
+                                     `instance_no` varchar(100) NOT NULL COMMENT '인스턴스 번호',
+                                     `instance_name` varchar(200) NOT NULL COMMENT '인스턴스 이름',
+                                     `usage_unit_code` varchar(50) NOT NULL COMMENT '사용량 단위 코드. ex) USAGE_HH',
+                                     `usage_unit_name` varchar(100) NOT NULL COMMENT '사용량 단위 이름',
+                                     `product_price` double NOT NULL COMMENT '상품 가격',
+                                     `unit_usage_quantity` double NOT NULL COMMENT '단위 사용량',
+                                     `total_unit_usage_quantity` double NOT NULL COMMENT '총 단위 사용량',
+                                     `use_amount` double NOT NULL COMMENT '사용 금액(누적)',
+                                     `demand_amount` double NOT NULL COMMENT '청구 금액(누적)',
+                                     `write_date` timestamp NOT NULL COMMENT '작성 일시',
+                                     `pay_currency` varchar(10) NOT NULL COMMENT '결제 통화. ex) KRW',
+                                     `target_date` date NOT NULL COMMENT '대상 날짜 (일별)',
+                                     `daily_charge_amount` double NOT NULL COMMENT '일별 청구 금액 (전일 대비 차이)',
+                                     PRIMARY KEY (`id`),
+                                     KEY `idx_instance_date` (`instance_no`,`target_date`),
+                                     KEY `idx_target_date` (`target_date`)
+) ENGINE=InnoDB AUTO_INCREMENT=5 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci COMMENT='NCP VM 일별 비용 데이터 (월별 데이터에서 계산)';
+
+-- cost.ncp_cost_vm_month definition
+
+CREATE TABLE `ncp_cost_vm_month` (
+                                     `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT '아이디',
+                                     `created` datetime DEFAULT NULL COMMENT 'row insert 시간',
+                                     `updated` datetime DEFAULT NULL COMMENT 'row update 시간',
+                                     `member_no` varchar(255) NOT NULL COMMENT '회원 번호. ex) 0000000',
+                                     `demand_month` varchar(255) NOT NULL COMMENT '청구 월. ex) 202509',
+                                     `instance_no` varchar(255) NOT NULL COMMENT '인스턴스 번호. ex) 00000000',
+                                     `instance_name` varchar(255) NOT NULL COMMENT '인스턴스 이름. ex) dongwoo-abc-abc-abc',
+                                     `usage_unit_code` varchar(255) NOT NULL COMMENT '사용량 단위 코드. ex) USAGE_HH',
+                                     `usage_unit_name` varchar(255) NOT NULL COMMENT '사용량 단위 이름. ex) Usage time (per hour)',
+                                     `product_price` double NOT NULL COMMENT '상품 가격. ex) 123',
+                                     `unit_usage_quantity` double NOT NULL COMMENT '단위 사용량. ex) 240',
+                                     `total_unit_usage_quantity` double NOT NULL COMMENT '총 단위 사용량. ex) 240',
+                                     `use_amount` double NOT NULL COMMENT '사용 금액. ex) 29520',
+                                     `demand_amount` double NOT NULL COMMENT '청구 금액. ex) 29520',
+                                     `write_date` datetime NOT NULL COMMENT '작성 일시(YYYY-MM-DDThh:mm:ssZ). ex) 2025-09-11 08:02:40+0900',
+                                     `pay_currency` varchar(255) NOT NULL COMMENT '결제 통화. ex) KRW',
+                                     `region_code` varchar(10) NOT NULL DEFAULT 'KR' COMMENT '리전 코드. ex) KR',
+                                     `server_spec_code` varchar(100) NOT NULL DEFAULT '' COMMENT '서버 스펙 코드. ex) s2-g2-s50',
+                                     PRIMARY KEY (`id`) COMMENT 'VM별 청구 비용 목록'
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
