@@ -671,7 +671,7 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: cloudbaristaorg/mc-data-manager:0.4.7
+    image: cloudbaristaorg/mc-data-manager:0.5.0
     container_name: mc-data-manager
     depends_on:
       mc-data-manager-init-volumes:
@@ -730,6 +730,8 @@ services:
       timeout: 10s
       retries: 3
       <<: *default-health-check
+    networks:
+      - mc-data-manager-network
     environment:
       - MYSQL_DATABASE=mcmp
       - MYSQL_USER=mcmp
