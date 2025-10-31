@@ -1444,7 +1444,7 @@ serviceActions:
     PostMciSubGroupDynamic:
       method: post
       resourcePath: /ns/{nsId}/mci/{mciId}/subGroupDynamic
-      description: 'Dynamically add new virtual machines to an existing MCI using common specifications and automated resource management.
+      description: "Dynamically add new virtual machines to an existing MCI using common specifications and automated resource management"
     Postutiltodesignnetwork:
       method: post
       resourcePath: /util/net/design
