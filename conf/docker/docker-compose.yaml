@@ -326,7 +326,7 @@ services:
   mc-cost-optimizer-fe:
     restart: on-failure
     container_name: mc-cost-optimizer-fe
-    image: cloudbaristaorg/mc-costopti-ui:0.4.0
+    image: cloudbaristaorg/mc-costopti-ui:edge
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -347,7 +347,7 @@ services:
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: cloudbaristaorg/mc-costopti-api:0.4.0
+    image: cloudbaristaorg/mc-costopti-api:edge
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -506,6 +506,138 @@ services:
       costopti.be.url: ${CO_API_URL}
       asset.collect.url: ${CO_ASSET_MONITORING_SERVER}
       assetCollectBatchCronSchedule: ${CO_ASSET_COLLECT_BATCH_CRON_SCHEDULE}
+
+  mc-cost-optimizer-cost-azure-collector:
+    restart: on-failure
+    container_name: mc-cost-optimizer-cost-azure-collector
+    image: cloudbaristaorg/mc-costopti-azure-collector:edge
+    networks:
+      - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
+      - mc-web-console-network
+    ports:
+      - target: 8093
+        published: 18093
+        protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    environment:
+      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+
+      AZURE_CREDENTIAL_TENANT_ID: ${CO_AZURE_TENANT_ID}
+      AZURE_CREDENTIAL_CLIENT_ID: ${CO_AZURE_CLIENT_ID}
+      AZURE_CREDENTIAL_CLIENT_SECRET: ${CO_AZURE_CLIENT_SECRET}
+      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${CO_AZURE_SUBSCRIPTION_ID}
+
+      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+
+  mc-cost-optimizer-cost-ncp-collector:
+    restart: on-failure
+    container_name: mc-cost-optimizer-cost-ncp-collector
+    image: cloudbaristaorg/mc-costopti-ncp-collector:edge
+    networks:
+      - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
+      - mc-web-console-network
+    ports:
+      - target: 8094
+        published: 18094
+        protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    environment:
+      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+
+      NCP_CREDENTIAL_IAM_ACCESS_KEY: ${CO_NCP_IAM_ACCESS_KEY}
+      NCP_CREDENTIAL_IAM_SECRET_KEY: ${CO_NCP_IAM_SECRET_KEY}
+
+      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+
+      ##timezone setting
+      TZ: Asia/Seoul
+
+  mc-cost-optimizer-azure-vm-rightsizer:
+    restart: on-failure
+    container_name: mc-cost-optimizer-azure-vm-rightsizer
+    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:edge
+    networks:
+      - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
+      - mc-web-console-network
+    ports:
+      - target: 8092
+        published: 18092
+        protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    environment:
+      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+
+      AZURE_CREDENTIAL_TENANT_ID: ${CO_AZURE_TENANT_ID}
+      AZURE_CREDENTIAL_CLIENT_ID: ${CO_AZURE_CLIENT_ID}
+      AZURE_CREDENTIAL_CLIENT_SECRET: ${CO_AZURE_CLIENT_SECRET}
+      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${CO_AZURE_SUBSCRIPTION_ID}
+
+      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+
+
+  mc-cost-optimizer-ncp-vm-rightsizer:
+      restart: on-failure
+      container_name: mc-cost-optimizer-ncp-vm-rightsizer
+      image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:edge
+      networks:
+        - mc-cost-optimizer-network
+        - mc-observability-network
+        - mc-infra-manager-network
+        - mc-web-console-network
+      ports:
+        - target: 8095
+          published: 18095
+          protocol: tcp
+      depends_on:
+        - mc-cost-optimizer-db
+      volumes:
+        - ./tool/mcc:/app/tool/mcc
+      environment:
+        SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+        SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+        SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+
+        NCP_CREDENTIAL_IAM_ACCESS_KEY: ${CO_NCP_IAM_ACCESS_KEY}
+        NCP_CREDENTIAL_IAM_SECRET_KEY: ${CO_NCP_IAM_SECRET_KEY}
+
+        COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+        COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+        COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+        COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+        COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
 
   mc-cost-optimizer-init-volume:
     image: busybox:stable
