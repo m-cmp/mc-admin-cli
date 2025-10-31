@@ -20,7 +20,7 @@ If you have any difficulties in using mcc, please let us know.
 - If you want to checkout how to run the whole subsystem on the single instance on CSP Instance, see [this document](./docs/mc-admin-cli-infra.md).
 
 ## Development & Test Environment
-- Go 1.23
+- Go 1.25.0 (minimum required version)
 - Docker version 27.3.1
 - Docker Compose version v2.29
 
