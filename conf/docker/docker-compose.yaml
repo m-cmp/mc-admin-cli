@@ -671,7 +671,7 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: cloudbaristaorg/mc-data-manager:0.4.6
+    image: cloudbaristaorg/mc-data-manager:0.5.0
     container_name: mc-data-manager
     depends_on:
       mc-data-manager-init-volumes:
@@ -696,10 +696,16 @@ services:
       - ./data:/app/data/ # container-volume
       - ./scripts:/app/scripts/ # container-volume
       - /etc/localtime:/etc/localtime:ro # timezone
+    environment:
+      - TUMBLEBUG_URL=http://mc-infra-manager:1323
     env_file:
       - ./conf/mc-data-manager/.env
     # Health check configuration
     # OK [ 2xx ,3xx}, ERR [4xx,5xx,...etc]
+    networks:
+      - mc-data-manager-network
+      - mc-web-console-network
+      - mc-infra-manager-network
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:3300/readyZ"]
       interval: 30s
@@ -713,7 +719,7 @@ services:
     command:
       - --skip-character-set-client-handshake
     volumes:
-      - ./data/mariadb:/var/lib/mysql
+      - ./container-volume/mc-data-manager/mariadb:/var/lib/mysql
     ports:
       - target: 3306
         published: 3301
@@ -724,6 +730,8 @@ services:
       timeout: 10s
       retries: 3
       <<: *default-health-check
+    networks:
+      - mc-data-manager-network
     environment:
       - MYSQL_DATABASE=mcmp
       - MYSQL_USER=mcmp
