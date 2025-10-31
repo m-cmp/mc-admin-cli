@@ -719,7 +719,7 @@ services:
     command:
       - --skip-character-set-client-handshake
     volumes:
-      - ./data/mariadb:/var/lib/mysql
+      - ./container-volume/mc-data-manager/mariadb:/var/lib/mysql
     ports:
       - target: 3306
         published: 3301
