@@ -1441,10 +1441,10 @@ serviceActions:
       method: get
       resourcePath: /ns/{nsId}/control/k8sCluster/{k8sClusterId}
       description: "Control the creation of K8sCluster (continue, withdraw)"
-    Postmcivmdynamic:
+    PostMciSubGroupDynamic:
       method: post
-      resourcePath: /ns/{nsId}/mci/{mciId}/vmDynamic
-      description: "Create VM Dynamically and add it to MCI"
+      resourcePath: /ns/{nsId}/mci/{mciId}/subGroupDynamic
+      description: 'Dynamically add new virtual machines to an existing MCI using common specifications and automated resource management.
     Postutiltodesignnetwork:
       method: post
       resourcePath: /util/net/design
