@@ -1,3 +1,7 @@
+.PHONY: check-go-version
+check-go-version:
+	@cd src && $(MAKE) check-go-version
+
 .PHONY: default
 default:
 	@cd src && $(MAKE) default
