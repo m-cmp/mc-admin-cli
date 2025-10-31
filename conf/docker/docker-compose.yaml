@@ -56,7 +56,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.11.16
+    image: cloudbaristaorg/cb-tumblebug:0.11.18
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
