@@ -1993,11 +1993,11 @@ serviceActions:
       method: get
       resourcePath: /api/o11y/insight/predictions/options
       description: "getPredictionOptions"
-    GetPredictionHistoryForVm:
+    GetPredictionVMHistory:
       method: get
       resourcePath: /api/o11y/insight/predictions/ns/{nsId}/mci/{mciId}/vm/{vmId}/history
       description: "getPredictionHistoryForVm"
-    GetPredictionHistoryForMci:
+    GetPredictionMCIHistory:
       method: get
       resourcePath: /api/o11y/insight/predictions/ns/{nsId}/mci/{mciId}/history
       description: "getPredictionHistoryForMci"
@@ -2029,11 +2029,11 @@ serviceActions:
       method: get
       resourcePath: /api/o11y/insight/anomaly-detection/options
       description: "getOptions"
-    GetAnomalyHistoryForVm:
+    GetAnomalyDetectionVMHistory:
       method: get
       resourcePath: /api/o11y/insight/anomaly-detection/ns/{nsId}/mci/{mciId}/vm/{vmId}/history
       description: "getAnomalyHistoryForVm"
-    GetAnomalyHistoryForMci:
+    GetAnomalyDetectionMCIHistory:
       method: get
       resourcePath: /api/o11y/insight/anomaly-detection/ns/{nsId}/mci/{mciId}/history
       description: "getAnomalyHistoryForMci"
