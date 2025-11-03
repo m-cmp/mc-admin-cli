@@ -370,3 +370,17 @@ CREATE TABLE `ncp_cost_vm_month` (
                                      PRIMARY KEY (`id`) COMMENT 'VM별 청구 비용 목록'
 ) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
+CREATE TABLE `budget_monthly` (
+                                  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+                                  `csp` varchar(50) NOT NULL,
+                                  `year` int(11) NOT NULL,
+                                  `month` int(11) NOT NULL,
+                                  `budget` decimal(18,3) DEFAULT 0.000,
+                                  `currency` varchar(10) NOT NULL DEFAULT 'USD',
+                                  `created_at` timestamp NULL DEFAULT current_timestamp(),
+                                  `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+                                  PRIMARY KEY (`id`),
+                                  UNIQUE KEY `uq_csp_year_month` (`csp`,`year`,`month`)
+) ENGINE=InnoDB AUTO_INCREMENT=384 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
+
+
