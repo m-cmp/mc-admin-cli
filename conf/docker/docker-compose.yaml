@@ -362,7 +362,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL_NEW}
       spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
       tumblebug.url: http://mc-infra-manager:1323/tumblebug
