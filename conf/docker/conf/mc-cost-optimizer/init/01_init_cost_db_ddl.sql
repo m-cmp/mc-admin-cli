@@ -383,4 +383,83 @@ CREATE TABLE `budget_monthly` (
                                   UNIQUE KEY `uq_csp_year_month` (`csp`,`year`,`month`)
 ) ENGINE=InnoDB AUTO_INCREMENT=384 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
+CREATE TABLE TASM_AZR_RSRC_OPT_MODN_L
+(
+    PREV_GENTH  VARCHAR(50)  NOT NULL COMMENT 'Previous Generation',
+    NEW_GENTH   VARCHAR(50)  NULL COMMENT 'Current Generation',
+    RSRC_TYPE   VARCHAR(100) NOT NULL COMMENT 'Resource Type',
+    RGN_ID      VARCHAR(50)  NOT NULL COMMENT 'Region',
+    INST_FAMILY VARCHAR(50)  NULL COMMENT 'Instance Family',
+    PRIMARY KEY (RSRC_TYPE, RGN_ID, PREV_GENTH)
+)
+    CHARSET = utf8mb3;
+
+create index TASM_AZR_RSRC_OPT_MODN_L_IDX_01 ON TASM_AZR_RSRC_OPT_MODN_L (PREV_GENTH);
+
+CREATE TABLE TASM_AZR_VM_PRICING_L
+(
+    SKU                          VARCHAR(150) NOT NULL,
+    REGION                       VARCHAR(50)  NOT NULL,
+    INSTANCE_TYPE                VARCHAR(50)  NULL,
+    CORES                        DOUBLE       NULL,
+    RAM                          DOUBLE       NULL,
+    SERIES                       VARCHAR(50)  NULL,
+    OS                           VARCHAR(50)  NULL,
+    PER_HOUR                     DOUBLE       NULL,
+    PER_HOUR_ONE_YEAR_RESERVED   DOUBLE       NULL,
+    PER_HOUR_THREE_YEAR_RESERVED DOUBLE       NULL,
+    PER_HOUR_SPOT                DOUBLE       NULL,
+    IS_VCPU                      VARCHAR(50)  NULL,
+    AVAILABLE_FOR_ML             VARCHAR(50)  NULL,
+    IS_HIDDEN                    VARCHAR(50)  NULL,
+    DISK_SIZE                    DOUBLE       NULL,
+    GPU                          VARCHAR(50)  NULL,
+    PRICING_TYPES                VARCHAR(50)  NULL,
+    CREA_DT                      DATETIME     NULL COMMENT '생성일시',
+    PRIMARY KEY (SKU, REGION)
+);
+
+CREATE INDEX IX_TASM_AZR_VM_PRICING_L_02
+    ON TASM_AZR_VM_PRICING_L (REGION, INSTANCE_TYPE, OS, PRICING_TYPES);
+
+create table TASM_CLOUD_RGN_M
+(
+    CLOUD_VNDR_ID  VARCHAR(50)            NOT NULL COMMENT 'CLOUD VENDOR ID',
+    RGN_ID         VARCHAR(50)            NOT NULL COMMENT 'REGION ID',
+    RGN_NM         VARCHAR(100)           NOT NULL COMMENT 'REGION 명',
+    RGN_CODE       VARCHAR(100)           NULL,
+    UNIT_PRICE_RGN VARCHAR(100)           NULL,
+    MT_RGN_NM      VARCHAR(100)           NULL COMMENT 'REGION 명 (METERING)',
+    SVC_TYPE       VARCHAR(10)            NOT NULL COMMENT 'SERVICE TYPE( GLOBAL, CHINA)',
+    USE_YN         VARCHAR(1) DEFAULT 'Y' NOT NULL COMMENT 'CLOUD 사용 여부 (''N'':사용안함, ''Y'':사용)',
+    CREA_DT        DATETIME               NOT NULL COMMENT '생성일시',
+    CREA_ID        VARCHAR(50)            NOT NULL COMMENT '생성자 ID',
+    CREA_IPADDR    VARCHAR(39)            NOT NULL COMMENT '생성자 IP주소',
+    UPDT_DT        DATETIME               NULL COMMENT '수정일시',
+    UPDT_ID        VARCHAR(50)            NULL COMMENT '수정자 ID',
+    UPDT_IPADDR    VARCHAR(39)            NULL COMMENT '수정자 IP주소',
+    PRIMARY KEY (CLOUD_VNDR_ID, RGN_ID)
+)
+    COMMENT 'Cloud Region Informations' CHARSET = utf8mb3;
+
+create table TASM_NCP_INSTANCE_PRICING_L
+(
+    SKU            varchar(150) not null,
+    REGION         varchar(50)  not null,
+    INSTANCE_TYPE  varchar(50)  null,
+    SERIES         varchar(50)  null,
+    PRODUCT_NAME   varchar(150) null,
+    PRODUCT_CODE   varchar(100) null,
+    CORES          double       null,
+    MEMORY         double       null,
+    DISK_SIZE      double       null,
+    GPU            double       null,
+    UNIT_CODE      varchar(50)  not null,
+    UNIT_CODE_NAME varchar(150) not null,
+    USD            double       null,
+    CREA_DT        datetime     null comment '생성일시',
+    primary key (SKU, REGION, UNIT_CODE)
+);
+
+
 
