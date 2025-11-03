@@ -326,7 +326,7 @@ services:
   mc-cost-optimizer-fe:
     restart: on-failure
     container_name: mc-cost-optimizer-fe
-    image: cloudbaristaorg/mc-costopti-ui:edge
+    image: cloudbaristaorg/mc-costopti-ui:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -347,7 +347,7 @@ services:
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: cloudbaristaorg/mc-costopti-api:edge
+    image: cloudbaristaorg/mc-costopti-api:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -380,7 +380,7 @@ services:
   mc-cost-optimizer-cost-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
-    image: cloudbaristaorg/mc-costopti-costcollector:0.4.0
+    image: cloudbaristaorg/mc-costopti-costcollector:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -408,7 +408,7 @@ services:
   mc-cost-optimizer-cost-processor:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
-    image: cloudbaristaorg/mc-costopti-costprocessor:0.4.0
+    image: cloudbaristaorg/mc-costopti-costprocessor:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -434,7 +434,7 @@ services:
   mc-cost-optimizer-cost-selector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
-    image: cloudbaristaorg/mc-costopti-costselector:0.4.0
+    image: cloudbaristaorg/mc-costopti-costselector:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -457,7 +457,7 @@ services:
   mc-cost-optimizer-alarm-service:
     restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
-    image: cloudbaristaorg/mc-costopti-alarm:0.4.0
+    image: cloudbaristaorg/mc-costopti-alarm:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -485,7 +485,7 @@ services:
   mc-cost-optimizer-asset-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-asset-collector
-    image: cloudbaristaorg/mc-costopti-assetcollector:0.4.0
+    image: cloudbaristaorg/mc-costopti-assetcollector:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -510,7 +510,7 @@ services:
   mc-cost-optimizer-cost-azure-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-azure-collector
-    image: cloudbaristaorg/mc-costopti-azure-collector:edge
+    image: cloudbaristaorg/mc-costopti-azure-collector:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -543,7 +543,7 @@ services:
   mc-cost-optimizer-cost-ncp-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-ncp-collector
-    image: cloudbaristaorg/mc-costopti-ncp-collector:edge
+    image: cloudbaristaorg/mc-costopti-ncp-collector:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -577,7 +577,7 @@ services:
   mc-cost-optimizer-azure-vm-rightsizer:
     restart: on-failure
     container_name: mc-cost-optimizer-azure-vm-rightsizer
-    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:edge
+    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -611,7 +611,7 @@ services:
   mc-cost-optimizer-ncp-vm-rightsizer:
       restart: on-failure
       container_name: mc-cost-optimizer-ncp-vm-rightsizer
-      image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:edge
+      image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:0.5.0
       networks:
         - mc-cost-optimizer-network
         - mc-observability-network
