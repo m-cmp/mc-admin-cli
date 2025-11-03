@@ -192,7 +192,8 @@ services:
   mc-iam-manager:
     container_name: mc-iam-manager
     # image: mc-iam-manager:latest
-    image: cloudbaristaorg/mc-iam-manager:edge
+    #image: cloudbaristaorg/mc-iam-manager:edge
+    image: cloudbaristaorg/mc-iam-manager:0.4.5
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
