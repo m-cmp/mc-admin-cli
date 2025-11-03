@@ -78,3 +78,6 @@ conf/docker/conf/mc-observability/grafana/run.sh
 conf/docker/conf/mc-observability/influxdb/influxdb.conf
 conf/docker/conf/mc-observability/mc-infra-manager
 conf/docker/conf/mc-observability/minio
+
+# junk folder
+.idea
