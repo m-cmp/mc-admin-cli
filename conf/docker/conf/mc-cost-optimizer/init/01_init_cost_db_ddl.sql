@@ -173,34 +173,6 @@ CREATE TABLE `servicegroup_meta` (
                                      PRIMARY KEY (`csp_type`,`csp_instanceid`,`service_cd`,`vm_id`,`mci_id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 
--- cost.tbl_table_billing_detail_202409 definition
-
-CREATE TABLE `tbl_table_billing_detail_202409` (
-                                                   `lineitem_usageaccountid` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_productcode` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_resourceid` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_lineitemtype` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `product_instancetype` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `pricing_unit` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_usageamount` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_unblendedcost` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_blendedcost` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_usagestartdate` timestamp NULL DEFAULT NULL,
-                                                   `lineitem_usageenddate` timestamp NULL DEFAULT NULL,
-                                                   `pricing_publicondemandcost` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `pricing_publicondemandrate` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_currencycode` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `product_sku` varchar(100) DEFAULT NULL,
-                                                   `product_region` varchar(50) DEFAULT NULL,
-                                                   `product_instanceFamily` varchar(100) DEFAULT NULL,
-                                                   `product_location` varchar(100) DEFAULT NULL,
-                                                   `lineitem_operation` varchar(100) DEFAULT NULL,
-                                                   `product_instancetypefamily` varchar(20) DEFAULT NULL,
-                                                   `lineitem_usagetype` varchar(100) DEFAULT NULL,
-                                                   `product_vcpu` varchar(30) DEFAULT NULL,
-                                                   `product_memory` varchar(30) DEFAULT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
-
 -- cost.temp_cmp_user_info definition
 
 CREATE TABLE `temp_cmp_user_info` (
