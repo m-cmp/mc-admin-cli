@@ -347,12 +347,13 @@ CREATE TABLE `budget_monthly` (
                                   `csp` varchar(50) NOT NULL,
                                   `year` int(11) NOT NULL,
                                   `month` int(11) NOT NULL,
+                                  `project_cd` varchar(100) NOT NULL COMMENT '프로젝트 코드 (service_cd)',
                                   `budget` decimal(18,3) DEFAULT 0.000,
                                   `currency` varchar(10) NOT NULL DEFAULT 'USD',
                                   `created_at` timestamp NULL DEFAULT current_timestamp(),
                                   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
                                   PRIMARY KEY (`id`),
-                                  UNIQUE KEY `uq_csp_year_month` (`csp`,`year`,`month`)
+                                  UNIQUE KEY `uq_csp_year_month_project` (`csp`,`year`,`month`,`project_cd`)
 ) ENGINE=InnoDB AUTO_INCREMENT=384 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 CREATE TABLE TASM_AZR_RSRC_OPT_MODN_L
