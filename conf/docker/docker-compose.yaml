@@ -192,7 +192,8 @@ services:
   mc-iam-manager:
     container_name: mc-iam-manager
     # image: mc-iam-manager:latest
-    image: cloudbaristaorg/mc-iam-manager:edge
+    #image: cloudbaristaorg/mc-iam-manager:edge
+    image: cloudbaristaorg/mc-iam-manager:0.4.5
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
@@ -966,7 +967,7 @@ services:
       <<: *default-health-check
 ##### MC-OBSERVABILITY #########################################################################################################################
   mc-observability-manager:
-    image: cloudbaristaorg/mc-observability:0.4.4
+    image: cloudbaristaorg/mc-observability:0.5.0
     container_name: mc-observability-manager
     restart: on-failure
     networks:
@@ -1007,7 +1008,7 @@ services:
       <<: *default-health-check
 
   mc-observability-infra:
-    image: cloudbaristaorg/mc-observability-infra:0.4.3
+    image: cloudbaristaorg/mc-observability-infra:0.5.0
     container_name: mc-observability-infra
     restart: on-failure
     networks:
@@ -1132,7 +1133,7 @@ services:
     init: true
 
   mc-observability-influx:
-    image: cloudbaristaorg/mc-observability-influx:0.4.3
+    image: cloudbaristaorg/mc-observability-influx:0.5.0
     container_name: mc-observability-influx
     restart: on-failure
     networks:
@@ -1169,7 +1170,7 @@ services:
       - mc-observability-network
 
   mc-observability-influx-2:
-    image: cloudbaristaorg/mc-observability-influx:0.4.3
+    image: cloudbaristaorg/mc-observability-influx:0.5.0
     container_name: mc-observability-influx-2
     restart: on-failure
     networks:
@@ -1211,7 +1212,7 @@ services:
 #      <<: *default-health-check
 
   mc-observability-minio:
-    image: cloudbaristaorg/mc-observability-minio:0.4.3
+    image: cloudbaristaorg/mc-observability-minio:0.5.0
     container_name: mc-observability-minio
     restart: on-failure
     networks:
@@ -1329,7 +1330,7 @@ services:
     init: true
 
   mc-observability-grafana:
-    image: cloudbaristaorg/mc-observability-grafana:0.4.3
+    image: cloudbaristaorg/mc-observability-grafana:0.5.0
     container_name: mc-observability-grafana
     restart: on-failure
     networks:
@@ -1367,7 +1368,7 @@ services:
       retries: 30
 
   mc-observability-insight:
-    image: cloudbaristaorg/mc-observability-insight:0.4.3
+    image: cloudbaristaorg/mc-observability-insight:0.5.0
     container_name: mc-observability-insight
     networks:
       - mc-observability-network
@@ -1389,7 +1390,7 @@ services:
       <<: *default-health-check
 
   mc-observability-insight-scheduler:
-    image: cloudbaristaorg/mc-observability-insight-scheduler:0.4.3
+    image: cloudbaristaorg/mc-observability-insight-scheduler:0.5.0
     container_name: mc-observability-insight-scheduler
     networks:
       - mc-observability-network
@@ -1493,7 +1494,7 @@ services:
 #    stdin_open: true
 #
 #  mc-observability-mcp-mariadb:
-#    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.4.3
+#    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.5.0
 #    container_name: mc-observability-mcp-mariadb
 #    restart: on-failure
 #    networks:
@@ -1517,7 +1518,7 @@ services:
 #      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
 #
 #  mc-observability-mcp-influx:
-#    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.4.3
+#    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.5.0
 #    container_name: mc-observability-mcp-influx
 #    restart: always
 #    networks:
