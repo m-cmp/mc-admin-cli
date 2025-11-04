@@ -56,7 +56,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.11.16
+    image: cloudbaristaorg/cb-tumblebug:0.11.18
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
@@ -192,7 +192,8 @@ services:
   mc-iam-manager:
     container_name: mc-iam-manager
     # image: mc-iam-manager:latest
-    image: cloudbaristaorg/mc-iam-manager:edge
+    #image: cloudbaristaorg/mc-iam-manager:edge
+    image: cloudbaristaorg/mc-iam-manager:0.4.5
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
@@ -326,7 +327,7 @@ services:
   mc-cost-optimizer-fe:
     restart: on-failure
     container_name: mc-cost-optimizer-fe
-    image: cloudbaristaorg/mc-costopti-ui:0.4.0
+    image: cloudbaristaorg/mc-costopti-ui:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -347,7 +348,7 @@ services:
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: cloudbaristaorg/mc-costopti-api:0.4.0
+    image: cloudbaristaorg/mc-costopti-api:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -362,7 +363,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL_NEW}
       spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
       spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
       tumblebug.url: http://mc-infra-manager:1323/tumblebug
@@ -380,7 +381,7 @@ services:
   mc-cost-optimizer-cost-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
-    image: cloudbaristaorg/mc-costopti-costcollector:0.4.0
+    image: cloudbaristaorg/mc-costopti-costcollector:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -408,7 +409,7 @@ services:
   mc-cost-optimizer-cost-processor:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
-    image: cloudbaristaorg/mc-costopti-costprocessor:0.4.0
+    image: cloudbaristaorg/mc-costopti-costprocessor:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -434,7 +435,7 @@ services:
   mc-cost-optimizer-cost-selector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
-    image: cloudbaristaorg/mc-costopti-costselector:0.4.0
+    image: cloudbaristaorg/mc-costopti-costselector:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -457,7 +458,7 @@ services:
   mc-cost-optimizer-alarm-service:
     restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
-    image: cloudbaristaorg/mc-costopti-alarm:0.4.0
+    image: cloudbaristaorg/mc-costopti-alarm:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -485,7 +486,7 @@ services:
   mc-cost-optimizer-asset-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-asset-collector
-    image: cloudbaristaorg/mc-costopti-assetcollector:0.4.0
+    image: cloudbaristaorg/mc-costopti-assetcollector:0.5.0
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -506,6 +507,138 @@ services:
       costopti.be.url: ${CO_API_URL}
       asset.collect.url: ${CO_ASSET_MONITORING_SERVER}
       assetCollectBatchCronSchedule: ${CO_ASSET_COLLECT_BATCH_CRON_SCHEDULE}
+
+  mc-cost-optimizer-cost-azure-collector:
+    restart: on-failure
+    container_name: mc-cost-optimizer-cost-azure-collector
+    image: cloudbaristaorg/mc-costopti-azure-collector:0.5.0
+    networks:
+      - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
+      - mc-web-console-network
+    ports:
+      - target: 8093
+        published: 18093
+        protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    environment:
+      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+
+      AZURE_CREDENTIAL_TENANT_ID: ${CO_AZURE_TENANT_ID}
+      AZURE_CREDENTIAL_CLIENT_ID: ${CO_AZURE_CLIENT_ID}
+      AZURE_CREDENTIAL_CLIENT_SECRET: ${CO_AZURE_CLIENT_SECRET}
+      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${CO_AZURE_SUBSCRIPTION_ID}
+
+      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+
+  mc-cost-optimizer-cost-ncp-collector:
+    restart: on-failure
+    container_name: mc-cost-optimizer-cost-ncp-collector
+    image: cloudbaristaorg/mc-costopti-ncp-collector:0.5.0
+    networks:
+      - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
+      - mc-web-console-network
+    ports:
+      - target: 8094
+        published: 18094
+        protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    environment:
+      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+
+      NCP_CREDENTIAL_IAM_ACCESS_KEY: ${CO_NCP_IAM_ACCESS_KEY}
+      NCP_CREDENTIAL_IAM_SECRET_KEY: ${CO_NCP_IAM_SECRET_KEY}
+
+      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+
+      ##timezone setting
+      TZ: Asia/Seoul
+
+  mc-cost-optimizer-azure-vm-rightsizer:
+    restart: on-failure
+    container_name: mc-cost-optimizer-azure-vm-rightsizer
+    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:0.5.0
+    networks:
+      - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
+      - mc-web-console-network
+    ports:
+      - target: 8092
+        published: 18092
+        protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    environment:
+      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+
+      AZURE_CREDENTIAL_TENANT_ID: ${CO_AZURE_TENANT_ID}
+      AZURE_CREDENTIAL_CLIENT_ID: ${CO_AZURE_CLIENT_ID}
+      AZURE_CREDENTIAL_CLIENT_SECRET: ${CO_AZURE_CLIENT_SECRET}
+      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${CO_AZURE_SUBSCRIPTION_ID}
+
+      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+
+
+  mc-cost-optimizer-ncp-vm-rightsizer:
+      restart: on-failure
+      container_name: mc-cost-optimizer-ncp-vm-rightsizer
+      image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:0.5.0
+      networks:
+        - mc-cost-optimizer-network
+        - mc-observability-network
+        - mc-infra-manager-network
+        - mc-web-console-network
+      ports:
+        - target: 8095
+          published: 18095
+          protocol: tcp
+      depends_on:
+        - mc-cost-optimizer-db
+      volumes:
+        - ./tool/mcc:/app/tool/mcc
+      environment:
+        SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+        SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+        SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+
+        NCP_CREDENTIAL_IAM_ACCESS_KEY: ${CO_NCP_IAM_ACCESS_KEY}
+        NCP_CREDENTIAL_IAM_SECRET_KEY: ${CO_NCP_IAM_SECRET_KEY}
+
+        COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+        COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+        COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+        COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+        COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
 
   mc-cost-optimizer-init-volume:
     image: busybox:stable
@@ -834,7 +967,7 @@ services:
       <<: *default-health-check
 ##### MC-OBSERVABILITY #########################################################################################################################
   mc-observability-manager:
-    image: cloudbaristaorg/mc-observability:0.4.4
+    image: cloudbaristaorg/mc-observability:0.5.0
     container_name: mc-observability-manager
     restart: on-failure
     networks:
@@ -875,7 +1008,7 @@ services:
       <<: *default-health-check
 
   mc-observability-infra:
-    image: cloudbaristaorg/mc-observability-infra:0.4.3
+    image: cloudbaristaorg/mc-observability-infra:0.5.0
     container_name: mc-observability-infra
     restart: on-failure
     networks:
@@ -1000,7 +1133,7 @@ services:
     init: true
 
   mc-observability-influx:
-    image: cloudbaristaorg/mc-observability-influx:0.4.3
+    image: cloudbaristaorg/mc-observability-influx:0.5.0
     container_name: mc-observability-influx
     restart: on-failure
     networks:
@@ -1037,7 +1170,7 @@ services:
       - mc-observability-network
 
   mc-observability-influx-2:
-    image: cloudbaristaorg/mc-observability-influx:0.4.3
+    image: cloudbaristaorg/mc-observability-influx:0.5.0
     container_name: mc-observability-influx-2
     restart: on-failure
     networks:
@@ -1079,7 +1212,7 @@ services:
 #      <<: *default-health-check
 
   mc-observability-minio:
-    image: cloudbaristaorg/mc-observability-minio:0.4.3
+    image: cloudbaristaorg/mc-observability-minio:0.5.0
     container_name: mc-observability-minio
     restart: on-failure
     networks:
@@ -1197,7 +1330,7 @@ services:
     init: true
 
   mc-observability-grafana:
-    image: cloudbaristaorg/mc-observability-grafana:0.4.3
+    image: cloudbaristaorg/mc-observability-grafana:0.5.0
     container_name: mc-observability-grafana
     restart: on-failure
     networks:
@@ -1235,7 +1368,7 @@ services:
       retries: 30
 
   mc-observability-insight:
-    image: cloudbaristaorg/mc-observability-insight:0.4.3
+    image: cloudbaristaorg/mc-observability-insight:0.5.0
     container_name: mc-observability-insight
     networks:
       - mc-observability-network
@@ -1257,7 +1390,7 @@ services:
       <<: *default-health-check
 
   mc-observability-insight-scheduler:
-    image: cloudbaristaorg/mc-observability-insight-scheduler:0.4.3
+    image: cloudbaristaorg/mc-observability-insight-scheduler:0.5.0
     container_name: mc-observability-insight-scheduler
     networks:
       - mc-observability-network
@@ -1361,7 +1494,7 @@ services:
 #    stdin_open: true
 #
 #  mc-observability-mcp-mariadb:
-#    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.4.3
+#    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.5.0
 #    container_name: mc-observability-mcp-mariadb
 #    restart: on-failure
 #    networks:
@@ -1385,7 +1518,7 @@ services:
 #      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
 #
 #  mc-observability-mcp-influx:
-#    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.4.3
+#    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.5.0
 #    container_name: mc-observability-mcp-influx
 #    restart: always
 #    networks:
