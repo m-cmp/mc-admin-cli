@@ -12,7 +12,7 @@ CREATE TABLE `alarm_history` (
                                  `account_id` varchar(100) DEFAULT NULL,
                                  `urgency` varchar(20) DEFAULT NULL,
                                  `plan` varchar(20) DEFAULT NULL,
-                                 `note` varchar(200) DEFAULT NULL,
+                                 `note` varchar(300) DEFAULT NULL,
                                  `occure_date` timestamp NOT NULL,
                                  `csp_type` varchar(10) NOT NULL,
                                  `alarm_impl` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -434,5 +434,18 @@ create table TASM_NCP_INSTANCE_PRICING_L
     primary key (SKU, REGION, UNIT_CODE)
 );
 
+-- Azure/NCP용 Unused Daily Mart 테이블
+CREATE TABLE `unused_daily_mart` (
+                                     `create_dt` timestamp NOT NULL COMMENT '생성일시 (배치 실행 시점)',
+                                     `csp_type` varchar(10) NOT NULL COMMENT 'CSP 타입 (AZURE, NCP)',
+                                     `resource_id` varchar(200) NOT NULL COMMENT '리소스 ID (vm_id, instance_no)',
+                                     `collect_dt` date NOT NULL COMMENT '수집 날짜',
+                                     `metric_type` varchar(100) NOT NULL COMMENT '메트릭 타입 (cpu, memory 등)',
+                                     `metric_avg_amount` double DEFAULT NULL COMMENT '메트릭 평균값',
+                                     PRIMARY KEY (`csp_type`, `resource_id`, `collect_dt`, `metric_type`),
+                                     KEY `idx_collect_dt` (`collect_dt`),
+                                     KEY `idx_csp_resource` (`csp_type`, `resource_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci
+COMMENT='Azure/NCP Unused 자원 분석용 일별 메트릭 마트';
 
 
