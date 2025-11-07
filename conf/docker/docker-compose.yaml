@@ -706,11 +706,12 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:0.5.0
+    image: cloudbaristaorg/mc-application-manager:0.5.1
     container_name: mc-application-manager
     networks:
       - mc-application-manager-network
       - mc-web-console-network
+      - mc-observability-network
     ports:
       - target: 18084
         published: 18084
@@ -729,6 +730,8 @@ services:
       - TUMBLEBUG_ID=default
       - TUMBLEBUG_PASSWORD=default
       - SPIDER_URL=mc-infra-connector
+#      - ALERT_SLACK_CHANNEL_ID= # I You need Slack Alram. Please CHANGE ME.
+      - RABBITMQ_URL=mc-observability-rabbitmq
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18084/readyz" ]
       <<: *default-health-check
