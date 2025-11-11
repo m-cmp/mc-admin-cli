@@ -193,7 +193,7 @@ services:
     container_name: mc-iam-manager
     # image: mc-iam-manager:latest
     #image: cloudbaristaorg/mc-iam-manager:edge
-    image: cloudbaristaorg/mc-iam-manager:0.4.5
+    image: cloudbaristaorg/mc-iam-manager:0.5.0
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
@@ -904,8 +904,8 @@ services:
             exec docker-entrypoint.sh postgres"
 
   mc-web-console-api:
-    #image: cloudbaristaorg/mc-web-console-api:0.4.11
-    image: cloudbaristaorg/mc-web-console-api:edge
+    image: cloudbaristaorg/mc-web-console-api:0.5.1
+    #image: cloudbaristaorg/mc-web-console-api:edge
     container_name: mc-web-console-api
     platform: linux/amd64
     restart: unless-stopped
@@ -944,8 +944,8 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    #image: cloudbaristaorg/mc-web-console-front:0.4.11
-    image: cloudbaristaorg/mc-web-console-front:edge
+    image: cloudbaristaorg/mc-web-console-front:0.5.1
+    #image: cloudbaristaorg/mc-web-console-front:edge
     container_name: mc-web-console-front
     platform: linux/amd64
     restart: unless-stopped
