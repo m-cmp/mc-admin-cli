@@ -69,7 +69,7 @@ First, clone the repository.
 For stable infrastructure deployment, it is recommended to explicitly clone a specific [released version](https://github.com/m-cmp/mc-admin-cli/releases) using the `-b` flag instead of using the latest development version.
 (Example) v0.4.1
 ```shell
-git clone https://github.com/m-cmp/mc-admin-cli.git -b v0.4.1
+git clone https://github.com/m-cmp/mc-admin-cli.git -b v0.5.0
 cd mc-admin-cli/bin
 ```
 
