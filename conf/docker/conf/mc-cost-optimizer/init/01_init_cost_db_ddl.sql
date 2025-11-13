@@ -12,7 +12,7 @@ CREATE TABLE `alarm_history` (
                                  `account_id` varchar(100) DEFAULT NULL,
                                  `urgency` varchar(20) DEFAULT NULL,
                                  `plan` varchar(20) DEFAULT NULL,
-                                 `note` varchar(200) DEFAULT NULL,
+                                 `note` varchar(300) DEFAULT NULL,
                                  `occure_date` timestamp NOT NULL,
                                  `csp_type` varchar(10) NOT NULL,
                                  `alarm_impl` varchar(10) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
@@ -171,34 +171,6 @@ CREATE TABLE `servicegroup_meta` (
                                      `mci_nm` varchar(100) DEFAULT NULL,
                                      `instance_running_status` varchar(1) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT 'N',
                                      PRIMARY KEY (`csp_type`,`csp_instanceid`,`service_cd`,`vm_id`,`mci_id`)
-) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
-
--- cost.tbl_table_billing_detail_202409 definition
-
-CREATE TABLE `tbl_table_billing_detail_202409` (
-                                                   `lineitem_usageaccountid` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_productcode` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_resourceid` varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_lineitemtype` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `product_instancetype` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `pricing_unit` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_usageamount` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_unblendedcost` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_blendedcost` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_usagestartdate` timestamp NULL DEFAULT NULL,
-                                                   `lineitem_usageenddate` timestamp NULL DEFAULT NULL,
-                                                   `pricing_publicondemandcost` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `pricing_publicondemandrate` varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `lineitem_currencycode` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
-                                                   `product_sku` varchar(100) DEFAULT NULL,
-                                                   `product_region` varchar(50) DEFAULT NULL,
-                                                   `product_instanceFamily` varchar(100) DEFAULT NULL,
-                                                   `product_location` varchar(100) DEFAULT NULL,
-                                                   `lineitem_operation` varchar(100) DEFAULT NULL,
-                                                   `product_instancetypefamily` varchar(20) DEFAULT NULL,
-                                                   `lineitem_usagetype` varchar(100) DEFAULT NULL,
-                                                   `product_vcpu` varchar(30) DEFAULT NULL,
-                                                   `product_memory` varchar(30) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
 
 -- cost.temp_cmp_user_info definition
@@ -375,12 +347,13 @@ CREATE TABLE `budget_monthly` (
                                   `csp` varchar(50) NOT NULL,
                                   `year` int(11) NOT NULL,
                                   `month` int(11) NOT NULL,
+                                  `project_cd` varchar(100) NOT NULL COMMENT '프로젝트 코드 (service_cd)',
                                   `budget` decimal(18,3) DEFAULT 0.000,
                                   `currency` varchar(10) NOT NULL DEFAULT 'USD',
                                   `created_at` timestamp NULL DEFAULT current_timestamp(),
                                   `updated_at` timestamp NULL DEFAULT current_timestamp() ON UPDATE current_timestamp(),
                                   PRIMARY KEY (`id`),
-                                  UNIQUE KEY `uq_csp_year_month` (`csp`,`year`,`month`)
+                                  UNIQUE KEY `uq_csp_year_month_project` (`csp`,`year`,`month`,`project_cd`)
 ) ENGINE=InnoDB AUTO_INCREMENT=384 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
 CREATE TABLE TASM_AZR_RSRC_OPT_MODN_L
@@ -461,5 +434,18 @@ create table TASM_NCP_INSTANCE_PRICING_L
     primary key (SKU, REGION, UNIT_CODE)
 );
 
+-- Azure/NCP용 Unused Daily Mart 테이블
+CREATE TABLE `unused_daily_mart` (
+                                     `create_dt` timestamp NOT NULL COMMENT '생성일시 (배치 실행 시점)',
+                                     `csp_type` varchar(10) NOT NULL COMMENT 'CSP 타입 (AZURE, NCP)',
+                                     `resource_id` varchar(200) NOT NULL COMMENT '리소스 ID (vm_id, instance_no)',
+                                     `collect_dt` date NOT NULL COMMENT '수집 날짜',
+                                     `metric_type` varchar(100) NOT NULL COMMENT '메트릭 타입 (cpu, memory 등)',
+                                     `metric_avg_amount` double DEFAULT NULL COMMENT '메트릭 평균값',
+                                     PRIMARY KEY (`csp_type`, `resource_id`, `collect_dt`, `metric_type`),
+                                     KEY `idx_collect_dt` (`collect_dt`),
+                                     KEY `idx_csp_resource` (`csp_type`, `resource_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci
+COMMENT='Azure/NCP Unused 자원 분석용 일별 메트릭 마트';
 
 
