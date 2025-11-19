@@ -23,7 +23,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.11.16
+    image: cloudbaristaorg/cb-spider:0.11.18
     pull_policy: missing
     container_name: mc-infra-connector
     platform: linux/amd64
@@ -56,7 +56,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.11.18
+    image: cloudbaristaorg/cb-tumblebug:0.11.21
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
@@ -77,7 +77,8 @@ services:
         condition: service_healthy
     volumes:
       - ./tool/mcc:/app/tool/mcc
-      - ./conf/mc-infra-manager/:/app/conf/:ro
+      - ./conf/mc-infra-manager/conf/:/app/conf/
+      - ./conf/mc-infra-manager/assets/:/app/assets/
       - ./container-volume/mc-infra-manager/meta_db/:/app/meta_db/
       - ./container-volume/mc-infra-manager/log/:/app/log/
     environment:
@@ -115,7 +116,7 @@ services:
       <<: *default-health-check
 
   mc-infra-manager-etcd:
-    image: gcr.io/etcd-development/etcd:v3.5.14
+    image: gcr.io/etcd-development/etcd:v3.5.21
     container_name: mc-infra-manager-etcd
     networks:
       - mc-infra-manager-network
@@ -180,7 +181,7 @@ services:
       - POSTGRES_PASSWORD=tumblebug
       - POSTGRES_DB=tumblebug
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cb_tumblebug"]
+      test: ["CMD-SHELL", "pg_isready -U tumblebug"]
       interval: 10s
       timeout: 5s
       retries: 5
