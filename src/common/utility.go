@@ -40,3 +40,36 @@ func SysCall(cmdStr string) {
 	}
 
 }
+
+// SysCallWithError executes user-passed command via system call and returns error.
+func SysCallWithError(cmdStr string) error {
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+
+	cmdReader, _ := cmd.StdoutPipe()
+	cmd.Stderr = cmd.Stdout
+
+	err := cmd.Start()
+	if err != nil {
+		return err
+	}
+
+	scanner := bufio.NewScanner(cmdReader)
+	for scanner.Scan() {
+		fmt.Printf("%s\n", scanner.Text())
+	}
+
+	err = cmd.Wait()
+	return err
+}
+
+// SysCallWithOutput executes user-passed command via system call and returns output.
+func SysCallWithOutput(cmdStr string) string {
+	cmd := exec.Command("/bin/sh", "-c", cmdStr)
+
+	output, err := cmd.Output()
+	if err != nil {
+		return ""
+	}
+
+	return string(output)
+}

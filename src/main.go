@@ -21,6 +21,7 @@ import (
 	_ "github.com/mc-admin-cli/mcc/src/cmd/docker"
 	_ "github.com/mc-admin-cli/mcc/src/cmd/k8s"
 	_ "github.com/mc-admin-cli/mcc/src/cmd/rest"
+	_ "github.com/mc-admin-cli/mcc/src/cmd/setup"
 )
 
 func main() {
