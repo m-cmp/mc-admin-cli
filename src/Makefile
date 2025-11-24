@@ -1,3 +1,6 @@
+# Default target - build the project
+.DEFAULT_GOAL := default
+
 # Check Go version (minimum: 1.25.0)
 check-go-version:
 	@GO_VERSION=$$(go version | awk '{print $$3}' | sed 's/go//'); \
@@ -15,7 +18,9 @@ check-go-version:
 	echo "✓ Go version $$GO_VERSION meets requirement ($$REQUIRED_VERSION)"
 
 default: check-go-version health-check-tool
+	@echo "Building mcc..."
 	@go build -o ../bin/mcc
+	@echo "✓ Build completed: ../bin/mcc"
 linux-arm: check-go-version
 	@GOOS=linux GOARCH=arm go build -o ../bin/mcc
 #windows 64bint
@@ -31,4 +36,6 @@ mac-arm: check-go-version
 clean:
 	@rm -v ../bin/mcc ../bin/mcc.exe
 health-check-tool:
+	@echo "Building health-check-tool..."
 	@CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ../conf/docker/tool/mcc
+	@echo "✓ Health-check-tool built: ../conf/docker/tool/mcc"

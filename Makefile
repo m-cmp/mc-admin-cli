@@ -1,3 +1,6 @@
+# Default target - build the project
+.DEFAULT_GOAL := default
+
 .PHONY: check-go-version
 check-go-version:
 	@cd src && $(MAKE) check-go-version
