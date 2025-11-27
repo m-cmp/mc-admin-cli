@@ -818,7 +818,7 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: cloudbaristaorg/mc-data-manager:0.5.0
+    image: cloudbaristaorg/mc-data-manager:0.5.3
     container_name: mc-data-manager
     depends_on:
       mc-data-manager-init-volumes:
