@@ -23,7 +23,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.11.18
+    image: cloudbaristaorg/cb-spider:0.12.0
     pull_policy: missing
     container_name: mc-infra-connector
     platform: linux/amd64
@@ -56,7 +56,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.11.21
+    image: cloudbaristaorg/cb-tumblebug:0.12.1
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
