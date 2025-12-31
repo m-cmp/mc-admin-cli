@@ -130,7 +130,7 @@ func SetAuth() {
 // Tumblebug의 정보를 확인 함.
 func checkServiceInfo() error {
 	fmt.Printf("Configuration file[%s] processing...\n", configFile)
-	serviceName := "cb-tumblebug"
+	serviceName := "mc-infra-manager"
 	// 서비스 검증
 	if !viper.IsSet("services." + serviceName) {
 		return errors.New("the name of the service[" + serviceName + "] you want to call is not on the list of supported services.\nPlease check the api.yaml configuration file or the list of available services")
@@ -638,18 +638,22 @@ func sendCredentials(payload map[string]interface{}) (map[string]interface{}, er
 	fmt.Println("Sending encrypted credentials to server")
 
 	// POST_CREDENTIAL_URL = "/credential"
+	url := serviceInfo.BaseURL + POST_CREDENTIAL_URL
+	if isVerbose {
+		fmt.Println("Request Url : ", url)
+	}
 
-	client := &http.Client{}
+	httpClient := &http.Client{}
 	reqBody, _ := json.Marshal(payload)
-	req, err := http.NewRequest("POST", "http://localhost:1323/tumblebug/credential", bytes.NewBuffer(reqBody))
+	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
 		panic(err)
 	}
 
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Basic ZGVmYXVsdDpkZWZhdWx0")
+	httpReq.Header.Set("Content-Type", "application/json")
+	httpReq.Header.Set("Authorization", "Basic ZGVmYXVsdDpkZWZhdWx0")
 
-	resp, err := client.Do(req)
+	resp, err := httpClient.Do(httpReq)
 	if err != nil {
 		panic(err)
 	}
