@@ -3,7 +3,7 @@
 
 services:
   mc-infra-connector:
-    version: 0.11.1
+    version: 0.12.14
     baseurl: http://mc-infra-connector:1024/spider
     auth:
       type: basic
@@ -11,13 +11,13 @@ services:
       password:
 
   mc-iam-manager:
-    version: 0.4.5
+    version: 0.5.1
     baseurl: http://mc-iam-manager:5000
     auth:
       type: bearer
 
   mc-infra-manager:
-    version: 0.11.1
+    version: 0.12.6
     baseurl: http://mc-infra-manager:1323/tumblebug
     auth:
       type: basic
@@ -25,7 +25,7 @@ services:
       password: default
 
   mc-web-console:
-    version: 0.4.5
+    version: 0.5.2
     baseurl: http://mc-web-console:3000
     auth:
       type: bearer
