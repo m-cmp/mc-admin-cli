@@ -26,7 +26,7 @@ services:
 
   mc-web-console:
     version: 0.5.2
-    baseurl: http://mc-web-console:3000
+    baseurl: http://mc-web-console-api:3000
     auth:
       type: bearer
 
@@ -47,7 +47,12 @@ services:
 
   mc-cost-optimizer:
     version: 0.4.0
-    baseurl: http://mc-cost-optimizer:7780
+    baseurl: http://mc-cost-optimizer-be:9090
+    auth:
+
+  mc-cost-optimizer-fe:
+    version: 0.4.0
+    baseurl: http://mc-cost-optimizer-fe:80
     auth:
 
   mc-data-manager:
@@ -660,6 +665,18 @@ serviceActions:
       description: "Unregister a Disk with the specified name."
 
   mc-iam-manager:
+    ListMcmpApisServices:
+      method: post
+      resourcePath: /api/mcmp-apis/list
+      description: "전체 프레임워크 서비스 목록 및 BaseURL 조회."
+    UpdateFrameworkService:
+      method: put
+      resourcePath: /api/mcmp-apis/name/{serviceName}
+      description: "프레임워크 서비스 BaseURL 수정."
+    mciamCheckHealth:
+      method: get
+      resourcePath: /readyz
+      description: "mc-iam-manager 헬스체크."
     Searchrolesbyname:
       method: get
       resourcePath: /api/role/name/{roleName}
@@ -977,6 +994,14 @@ serviceActions:
       description: "Platform Role 할당"
 
   mc-infra-manager:
+    GetCredentialHolderList:
+      method: get
+      resourcePath: /credentialHolder
+      description: "List all credential holders derived from registered connection configs."
+    GetAssetsSummary:
+      method: get
+      resourcePath: /assetsSummary
+      description: "Returns CSP-wise summary of specs and images in DB for a namespace."
     Lookupspeclist:
       method: post
       resourcePath: /lookupSpecs
@@ -1743,6 +1768,10 @@ serviceActions:
       description: "Create MCI Dynamically from common spec and image"
 
   mc-web-console:
+    getSetupYamlCheck:
+      method: get
+      resourcePath: /api/admin/setup-yaml-check
+      description: "외부 raw YAML(menu/api) 도달성 확인 BFF endpoint. query: which=menu|api"
     Anycontroller:
       method: post
       resourcePath: /api/{operationId}
@@ -2547,6 +2576,10 @@ serviceActions:
       method: get
       resourcePath: /api/v2/getWorkspaces
       description: "워크스페이스 목록을 조회합니다."
+    GetCostReadyz:
+      method: get
+      resourcePath: /api/costopti/be/readyz
+      description: "mc-cost-optimizer 헬스체크."
 
   mc-data-manager:
     GenerateWindows:

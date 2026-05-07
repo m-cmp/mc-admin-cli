@@ -48,7 +48,7 @@ services:
       - SPIDER_LOG_LEVEL=error
       - SPIDER_HISCALL_LOG_LEVEL=error
       - ID_TRANSFORM_MODE=OFF
-      - ADMINWEB=OFF
+      - ADMINWEB=ON
     healthcheck: # for CB-Spider
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:1024/spider/readyz" ]
       <<: *default-health-check
@@ -56,7 +56,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.12.6
+    image: cloudbaristaorg/cb-tumblebug:0.12.9
     container_name: mc-infra-manager
     pull_policy: missing
     platform: linux/amd64
@@ -75,10 +75,13 @@ services:
         condition: service_started
       mc-infra-manager-postgres:
         condition: service_healthy
+      openbao:
+        condition: service_healthy
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-infra-manager/conf/:/app/conf/
       - ./conf/mc-infra-manager/assets/:/app/assets/
+      - ~/.cloud-barista/credentials.yaml:/root/.cloud-barista/credentials.yaml:ro
       - ./container-volume/mc-infra-manager/meta_db/:/app/meta_db/
       - ./container-volume/mc-infra-manager/log/:/app/log/
     environment:
@@ -94,6 +97,8 @@ services:
       - TB_POSTGRES_DATABASE=tumblebug
       - TB_POSTGRES_USER=tumblebug
       - TB_POSTGRES_PASSWORD=tumblebug
+      - VAULT_ADDR=http://openbao:${OPENBAO_PORT:-8200}
+      - VAULT_TOKEN=${VAULT_TOKEN:-}
       # - TB_ALLOW_ORIGINS=*
       # - TB_AUTH_ENABLED=true
       # - TB_API_USERNAME=default
@@ -162,6 +167,32 @@ services:
       <<: *default-health-check
 
 
+  openbao:
+    image: openbao/openbao:2.5.1
+    container_name: openbao
+    restart: unless-stopped
+    networks:
+      - mc-infra-manager-network
+    ports:
+      - target: ${OPENBAO_PORT:-8200}
+        published: ${OPENBAO_PORT:-8200}
+        protocol: tcp
+    cap_add:
+      - IPC_LOCK
+    environment:
+      - BAO_ADDR=http://0.0.0.0:${OPENBAO_PORT:-8200}
+      - BAO_DEV_LISTEN_ADDRESS=0.0.0.0:${OPENBAO_PORT:-8200}
+      - SKIP_SETCAP=true
+      - BAO_DEV_ROOT_TOKEN_ID=${VAULT_TOKEN:-dev-only-token}
+    volumes:
+      - ./container-volume/openbao-data:/openbao/file
+    healthcheck:
+      test: ["CMD", "bao", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
   # mc-infra-manager PostgreSQL
   # This is used for storing CB-Tumblebug Spec and Image.
   mc-infra-manager-postgres:
@@ -194,7 +225,7 @@ services:
     container_name: mc-iam-manager
     # image: mc-iam-manager:latest
     #image: cloudbaristaorg/mc-iam-manager:edge
-    image: cloudbaristaorg/mc-iam-manager:0.5.1
+    image: csescsta/mc-iam-manager:edge
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
@@ -207,6 +238,7 @@ services:
     depends_on:
       - mc-iam-manager-db
       - mc-iam-manager-kc
+      - mc-iam-manager-nginx
     environment:
       DATABASE_URL: postgres://${MC_IAM_MANAGER_DATABASE_USER}:${MC_IAM_MANAGER_DATABASE_PASSWORD}@${MC_IAM_MANAGER_DATABASE_HOST}:5432/${MC_IAM_MANAGER_DATABASE_NAME}
       PORT: ${MC_IAM_MANAGER_PORT}
@@ -263,14 +295,15 @@ services:
       KC_DB_URL: jdbc:postgresql://mc-iam-manager-db:5432/${MC_IAM_MANAGER_KEYCLOAK_DATABASE_NAME}
       KC_DB_USERNAME: ${MC_IAM_MANAGER_DATABASE_USER}
       KC_DB_PASSWORD: ${MC_IAM_MANAGER_DATABASE_PASSWORD}
-      KC_HOSTNAME_PORT: 8080
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
-      KC_HOSTNAME: localhost
+      KC_HOSTNAME: ${MC_IAM_MANAGER_KEYCLOAK_EXTERNAL_DOMAIN:-localhost}
+      KC_HTTP_RELATIVE_PATH: /auth
       KEYCLOAK_ADMIN: ${MC_IAM_MANAGER_KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${MC_IAM_MANAGER_KEYCLOAK_ADMIN_PASSWORD:-admin_password}
       KC_HTTP_ENABLED: "true"
       KC_PROXY: edge
+      KC_FEATURES: token-exchange,admin-fine-grained-authz
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./container-volume/mc-iam-manager/keycloak/data/:/opt/keycloak/data/
@@ -279,7 +312,7 @@ services:
     depends_on:
       - mc-iam-manager-db
     healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8080/" ]
+      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8080/auth/" ]
       # test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:8080/health/ready" ]
       <<: *default-health-check
 
@@ -290,11 +323,12 @@ services:
     ports:
       - "80:80"
       - "443:443"
+      - "3001:3001"
     environment:
       - DOMAIN_NAME=${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}
     volumes:
       - ./container-volume/mc-iam-manager/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
-      - ./container-volume/certs:/etc/nginx/certs:ro
+      - ./container-volume/mc-iam-manager/certs:/etc/nginx/certs:ro
       - ./container-volume/certbot/www:/var/www/certbot:ro
     depends_on:
       - mc-iam-manager-kc
@@ -326,7 +360,7 @@ services:
 ##### MC-COST-OPTIMIZER #########################################################################################################################
 
   mc-cost-optimizer-fe:
-    restart: on-failure
+    restart: unless-stopped
     container_name: mc-cost-optimizer-fe
     image: cloudbaristaorg/mc-costopti-ui:0.5.2
     networks:
@@ -915,8 +949,8 @@ services:
             exec docker-entrypoint.sh postgres"
 
   mc-web-console-api:
-    image: cloudbaristaorg/mc-web-console-api:0.5.2
-    #image: cloudbaristaorg/mc-web-console-api:edge
+    image: csescsta/mc-web-console-api:edge
+    pull_policy: always
     container_name: mc-web-console-api
     platform: linux/amd64
     restart: unless-stopped
@@ -942,10 +976,15 @@ services:
       GODEBUG: netdns=go
       API_ADDR: "0.0.0.0"
       API_PORT: "3000"
-      DATABASE_URL: postgres://${CONSOLE_POSTGRES_USER}:${CONSOLE_POSTGRES_PASSWORD}@mc-web-console-db:5432/${CONSOLE_POSTGRES_DB}
+      DB_HOST: mc-web-console-db
+      DB_PORT: 5432
+      DB_USER: ${CONSOLE_POSTGRES_USER}
+      DB_PASSWORD: ${CONSOLE_POSTGRES_PASSWORD}
+      DB_NAME: ${CONSOLE_POSTGRES_DB}
       MCIAM_USE: true
       MCIAM_TICKET_USE: false
       IFRAME_TARGET_IS_HOST: true
+      MC_IAM_MANAGER_HOST: mc-iam-manager
       MC_IAM_MANAGER_PORT: ${MC_IAM_MANAGER_PORT}
     volumes:
       - ./tool/mcc:/app/tool/mcc
@@ -955,8 +994,8 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    image: cloudbaristaorg/mc-web-console-front:0.5.2
-    #image: cloudbaristaorg/mc-web-console-front:edge
+    image: csescsta/mc-web-console-front:edge
+    pull_policy: always
     container_name: mc-web-console-front
     platform: linux/amd64
     restart: unless-stopped
@@ -965,10 +1004,6 @@ services:
     networks:
       - mc-web-console-network
       - mc-iam-manager-network
-    ports:
-      - target: 3001
-        published: 3001
-        protocol: tcp
     environment:
       API_ADDR: mc-web-console-api
       API_PORT: 3000
