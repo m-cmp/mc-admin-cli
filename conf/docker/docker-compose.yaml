@@ -23,7 +23,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.12.14
+    image: cloudbaristaorg/cb-spider:0.12.18
     pull_policy: missing
     container_name: mc-infra-connector
     platform: linux/amd64
