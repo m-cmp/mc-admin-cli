@@ -930,6 +930,7 @@ services:
     restart: unless-stopped
     volumes:
       - ./container-volume/mc-web-console/postgres/postgres_data:/var/lib/postgresql/data
+      - ./conf/mc-web-console/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     environment:
       POSTGRES_DB: ${CONSOLE_POSTGRES_DB}
       POSTGRES_USER: ${CONSOLE_POSTGRES_USER}

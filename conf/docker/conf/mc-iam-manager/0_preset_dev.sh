@@ -13,7 +13,8 @@ ENV_FILE="${PROJECT_ROOT}/.env"
 
 
 # 인증서 파일 생성할 경로 (Let's Encrypt 구조와 동일)
-CERT_PARENT_DIR="${PROJECT_ROOT}/container-volume" # dockercontainer-volume 디렉토리
+# nginx 볼륨 마운트: ./container-volume/mc-iam-manager/certs:/etc/nginx/certs
+CERT_PARENT_DIR="${PROJECT_ROOT}/container-volume/mc-iam-manager"
 
 # --- 3. 필요한 디렉토리 생성 (Let's Encrypt 구조와 동일) ---
 echo "Creating necessary directories..."
