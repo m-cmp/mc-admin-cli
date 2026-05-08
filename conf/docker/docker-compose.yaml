@@ -97,8 +97,8 @@ services:
       - TB_POSTGRES_DATABASE=tumblebug
       - TB_POSTGRES_USER=tumblebug
       - TB_POSTGRES_PASSWORD=tumblebug
-      - VAULT_ADDR=http://openbao:${OPENBAO_PORT:-8200}
-      - VAULT_TOKEN=${VAULT_TOKEN:-}
+      - VAULT_ADDR=http://openbao:${MC_INFRA_MANAGER_OPENBAO_PORT:-8200}
+      - VAULT_TOKEN=${MC_INFRA_MANAGER_VAULT_TOKEN:-}
       # - TB_ALLOW_ORIGINS=*
       # - TB_AUTH_ENABLED=true
       # - TB_API_USERNAME=default
@@ -174,16 +174,16 @@ services:
     networks:
       - mc-infra-manager-network
     ports:
-      - target: ${OPENBAO_PORT:-8200}
-        published: ${OPENBAO_PORT:-8200}
+      - target: ${MC_INFRA_MANAGER_OPENBAO_PORT:-8200}
+        published: ${MC_INFRA_MANAGER_OPENBAO_PORT:-8200}
         protocol: tcp
     cap_add:
       - IPC_LOCK
     environment:
-      - BAO_ADDR=http://0.0.0.0:${OPENBAO_PORT:-8200}
-      - BAO_DEV_LISTEN_ADDRESS=0.0.0.0:${OPENBAO_PORT:-8200}
+      - BAO_ADDR=http://0.0.0.0:${MC_INFRA_MANAGER_OPENBAO_PORT:-8200}
+      - BAO_DEV_LISTEN_ADDRESS=0.0.0.0:${MC_INFRA_MANAGER_OPENBAO_PORT:-8200}
       - SKIP_SETCAP=true
-      - BAO_DEV_ROOT_TOKEN_ID=${VAULT_TOKEN:-dev-only-token}
+      - BAO_DEV_ROOT_TOKEN_ID=${MC_INFRA_MANAGER_VAULT_TOKEN:-dev-only-token}
     volumes:
       - ./container-volume/openbao-data:/openbao/file
     healthcheck:
@@ -1430,7 +1430,7 @@ services:
         condition: service_healthy
     environment:
       - TZ=Asia/Seoul
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+      - OLLAMA_BASE_URL=${MC_INFRA_MANAGER_OLLAMA_BASE_URL:-}
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - shared_logs:/mc-insight/log:rw
@@ -1564,7 +1564,7 @@ services:
 #      - DB_NAME=mc_observability
 #      - MCP_READ_ONLY=true
 #      - MCP_MAX_POOL_SIZE=10
-#      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+#      - OPENAI_API_KEY=${MC_INFRA_MANAGER_OPENAI_API_KEY:-}
 #
 #  mc-observability-mcp-influx:
 #    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.5.0
