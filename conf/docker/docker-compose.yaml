@@ -727,6 +727,29 @@ services:
 
 ##### MC-APPLICATION-MANAGER #########################################################################################################################
 
+  mc-application-manager-db:
+    image: postgres:16-alpine
+    container_name: mc-application-manager-db
+    restart: always
+    networks:
+      - mc-application-manager-network
+    ports:
+      - target: 5432
+        published: 18085
+        protocol: tcp
+    volumes:
+      - ./container-volume/mc-application-manager/am_db/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${AM_POSTGRES_USER:-application}
+      - POSTGRES_PASSWORD=${AM_POSTGRES_PASSWORD:-application!23}
+      - POSTGRES_DB=${AM_POSTGRES_DB:-appmgr}
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${AM_POSTGRES_USER:-application} -d ${AM_POSTGRES_DB:-appmgr}" ]
+      <<: *default-health-check
+    command: >
+      sh -c "chown -R postgres:postgres /var/lib/postgresql/data &&
+            exec docker-entrypoint.sh postgres"
+
   mc-application-manager-sonatype-nexus:
     image: sonatype/nexus3:latest
     container_name: mc-application-manager-sonatype-nexus
@@ -754,6 +777,9 @@ services:
   mc-application-manager:
     image: cloudbaristaorg/mc-application-manager:0.5.1
     container_name: mc-application-manager
+    depends_on:
+      mc-application-manager-db:
+        condition: service_healthy
     networks:
       - mc-application-manager-network
       - mc-web-console-network
@@ -768,8 +794,9 @@ services:
     user: root
     environment:
       - DDL_AUTO=update
-      - DB_USER=application # Please CHANGE ME
-      - DB_PASS=application!23 # Please CHANGE ME
+      - DB_URL=jdbc:postgresql://mc-application-manager-db:5432/${AM_POSTGRES_DB:-appmgr}
+      - DB_USER=${AM_POSTGRES_USER:-application} # Please CHANGE ME
+      - DB_PASS=${AM_POSTGRES_PASSWORD:-application!23} # Please CHANGE ME
       - SQL_DATA_INIT=never
       - TUMBLEBUG_URL=mc-infra-manager
       - TUMBLEBUG_PORT=1323
