@@ -1,8 +1,8 @@
 x-default-health-check: &default-health-check
-  interval: ${HEALTH_CHECK_INTERVAL}
-  timeout: ${HEALTH_CHECK_TIMEOUT}
-  retries: ${HEALTH_CHECK_RETRIES}
-  start_period: ${HEALTH_CHECK_START_PERIOD}
+  interval: ${HEALTH_CHECK_INTERVAL:-1m}
+  timeout: ${HEALTH_CHECK_TIMEOUT:-5s}
+  retries: ${HEALTH_CHECK_RETRIES:-3}
+  start_period: ${HEALTH_CHECK_START_PERIOD:-60s}
 
 networks:
   mc-infra-connector-network:
