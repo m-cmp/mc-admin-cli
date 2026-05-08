@@ -43,8 +43,8 @@ services:
       - PLUGIN_SW=OFF
       - SERVER_ADDRESS=0.0.0.0:1024
       # if you leave these values empty, REST Auth will be disabled.
-      - API_USERNAME=${MC_INFRA_CONNECTOR_API_USERNAME:-}                                                                                                      
-      - API_PASSWORD=${MC_INFRA_CONNECTOR_API_PASSWORD:-}
+      - SPIDER_USERNAME=${MC_INFRA_CONNECTOR_API_USERNAME:-default}                                                                             
+      - SPIDER_PASSWORD=${MC_INFRA_CONNECTOR_API_PASSWORD:-default}
       - SPIDER_LOG_LEVEL=${MC_INFRA_CONNECTOR_LOG_LEVEL:-error}
       - SPIDER_HISCALL_LOG_LEVEL=${MC_INFRA_CONNECTOR_HISCALL_LOG_LEVEL:-error}
       - ID_TRANSFORM_MODE=OFF
