@@ -43,8 +43,8 @@ services:
       - PLUGIN_SW=OFF
       - SERVER_ADDRESS=0.0.0.0:1024
       # if you leave these values empty, REST Auth will be disabled.
-      # - API_USERNAME=
-      # - API_PASSWORD=
+      - API_USERNAME=${MC_INFRA_CONNECTOR_API_USERNAME:-}                                                                                                      
+      - API_PASSWORD=${MC_INFRA_CONNECTOR_API_PASSWORD:-}
       - SPIDER_LOG_LEVEL=${MC_INFRA_CONNECTOR_LOG_LEVEL:-error}
       - SPIDER_HISCALL_LOG_LEVEL=${MC_INFRA_CONNECTOR_HISCALL_LOG_LEVEL:-error}
       - ID_TRANSFORM_MODE=OFF
@@ -101,11 +101,10 @@ services:
       - VAULT_TOKEN=${MC_INFRA_MANAGER_VAULT_TOKEN:-}
       # - TB_ALLOW_ORIGINS=*
       # - TB_AUTH_ENABLED=true
-      # - TB_API_USERNAME=default
-      # - TB_API_PASSWORD=default
+      - TB_API_USERNAME=${MC_INFRA_MANAGER_API_USERNAME:-default}                                                                                              
+      - TB_API_PASSWORD=${MC_INFRA_MANAGER_API_PASSWORD:-default} 
       # - TB_AUTOCONTROL_DURATION_MS=10000
-      # - TB_SELF_ENDPOINT=localhost:1323
-      # - TB_DRAGONFLY_REST_URL=http://cb-dragonfly:9090/dragonfly
+      # - TB_SELF_ENDPOINT=localhost:1323      
       # - TB_DEFAULT_NAMESPACE=ns01
       # - TB_DEFAULT_CREDENTIALHOLDER=admin
       # - TB_LOGFILE_PATH=/app/log/tumblebug.log
@@ -116,6 +115,8 @@ services:
       # - TB_LOGLEVEL=debug
       # - TB_LOGWRITER=both
       # - TB_NODE_ENV=development
+      - TB_TERRARIUM_API_USERNAME=${MC_TERRARIUM_API_USERNAME:-}
+      - TB_TERRARIUM_API_PASSWORD=${MC_TERRARIUM_API_PASSWORD:-}
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:1323/tumblebug/readyz" ]
       <<: *default-health-check
