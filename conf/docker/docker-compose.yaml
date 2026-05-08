@@ -45,8 +45,8 @@ services:
       # if you leave these values empty, REST Auth will be disabled.
       # - API_USERNAME=
       # - API_PASSWORD=
-      - SPIDER_LOG_LEVEL=error
-      - SPIDER_HISCALL_LOG_LEVEL=error
+      - SPIDER_LOG_LEVEL=${MC_INFRA_CONNECTOR_LOG_LEVEL:-error}
+      - SPIDER_HISCALL_LOG_LEVEL=${MC_INFRA_CONNECTOR_HISCALL_LOG_LEVEL:-error}
       - ID_TRANSFORM_MODE=OFF
       - ADMINWEB=ON
     healthcheck: # for CB-Spider
@@ -86,7 +86,7 @@ services:
       - ./container-volume/mc-infra-manager/log/:/app/log/
     environment:
       # - TB_ROOT_PATH=/app
-      - TB_SPIDER_REST_URL=http://mc-infra-connector:1024/spider
+      - TB_SPIDER_REST_URL=${MC_INFRA_CONNECTOR_REST_URL:-http://mc-infra-connector:1024/spider}
       - TB_ETCD_ENDPOINTS=http://mc-infra-manager-etcd:2379
       - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
       - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
@@ -774,7 +774,7 @@ services:
       - TUMBLEBUG_PORT=1323
       - TUMBLEBUG_ID=default
       - TUMBLEBUG_PASSWORD=default
-      - SPIDER_URL=mc-infra-connector
+      - SPIDER_URL=${MC_INFRA_CONNECTOR_URL:-mc-infra-connector}
 #      - ALERT_SLACK_CHANNEL_ID= # I You need Slack Alram. Please CHANGE ME.
       - RABBITMQ_URL=mc-observability-rabbitmq
     healthcheck:
