@@ -84,7 +84,6 @@ conf/docker/docker-compose.dev.yaml
 conf/docker/.env.dev
 
 # Secret / environment files (contains passwords, tokens, keys)
-conf/docker/.env
 conf/docker/conf/mc-iam-manager/.env
 
 # Claude Code internal scripts and commands
