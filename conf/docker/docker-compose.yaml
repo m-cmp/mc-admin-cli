@@ -96,13 +96,14 @@ services:
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
       - TB_POSTGRES_ENDPOINT=mc-infra-manager-postgres:5432
-      - TB_POSTGRES_DATABASE=tumblebug
-      - TB_POSTGRES_USER=tumblebug
-      - TB_POSTGRES_PASSWORD=tumblebug
+      - TB_POSTGRES_DATABASE=${MC_INFRA_MANAGER_POSTGRES_DB:-tumblebug}
+      - TB_POSTGRES_USER=${MC_INFRA_MANAGER_POSTGRES_USER:-tumblebug}
+      - TB_POSTGRES_PASSWORD=${MC_INFRA_MANAGER_POSTGRES_PASSWORD:-tumblebug}
       - VAULT_ADDR=http://openbao:${MC_INFRA_MANAGER_OPENBAO_PORT:-8200}
       - VAULT_TOKEN=${MC_INFRA_MANAGER_VAULT_TOKEN:-}
       # - TB_ALLOW_ORIGINS=*
-      # - TB_AUTH_ENABLED=true
+      - TB_AUTH_ENABLED=true
+      - TB_AUTH_MODE=basic
       - TB_API_USERNAME=${MC_INFRA_MANAGER_API_USERNAME:-default}
       - TB_API_PASSWORD=${MC_INFRA_MANAGER_API_PASSWORD:-default}
       # - TB_AUTOCONTROL_DURATION_MS=10000
@@ -209,11 +210,11 @@ services:
     volumes:
       - ./container-volume/mc-infra-manager/meta_db/postgres:/var/lib/postgresql/data
     environment:
-      - POSTGRES_USER=tumblebug
-      - POSTGRES_PASSWORD=tumblebug
-      - POSTGRES_DB=tumblebug
+      - POSTGRES_USER=${MC_INFRA_MANAGER_POSTGRES_USER:-tumblebug}
+      - POSTGRES_PASSWORD=${MC_INFRA_MANAGER_POSTGRES_PASSWORD:-tumblebug}
+      - POSTGRES_DB=${MC_INFRA_MANAGER_POSTGRES_DB:-tumblebug}
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U tumblebug"]
+      test: ["CMD-SHELL", "pg_isready -U ${MC_INFRA_MANAGER_POSTGRES_USER:-tumblebug}"]
       interval: 10s
       timeout: 5s
       retries: 5
@@ -399,17 +400,17 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL_NEW}
-      spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
-      spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
+      spring.datasource.hikari.cost.optimize.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL_NEW}
+      spring.datasource.hikari.cost.optimize.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
+      spring.datasource.hikari.cost.optimize.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
       tumblebug.url: http://mc-infra-manager:1323/tumblebug
-      tumblebug.username: default
-      tumblebug.password: default
-      costopti.alarmservice.url: ${CO_ALARM_URL}
-      costopti.assetcollector.url: ${CO_COST_ASSET_COLLECTOR_URL}
-      costopti.costcollector.url: ${CO_COST_COLLECTOR_URL}
-      costopti.costprocessor.url: ${CO_COST_PROCESSOR_URL}
-      costopti.costselector.url: ${CO_COST_SELECTOR_URL}
+      tumblebug.username: ${MC_COST_OPTIMIZER_TUMBLEBUG_USERNAME:-spider}
+      tumblebug.password: ${MC_COST_OPTIMIZER_TUMBLEBUG_PASSWORD:-spider}
+      costopti.alarmservice.url: ${MC_COST_OPTIMIZER_ALARM_URL}
+      costopti.assetcollector.url: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
+      costopti.costcollector.url: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
+      costopti.costprocessor.url: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
+      costopti.costselector.url: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get",  "http://localhost:9090/api/costopti/be/readyz" ]
       <<: *default-health-check
@@ -432,15 +433,15 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
-      spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
-      spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
-      unusedBatchCronSchedule: ${CO_COST_COLLECT_UNUSED_CRON_SCHEDULE}
-      curBatchCronSchedule: ${CO_COST_COLLECT_CUR_CRON_SCHEDULE}
-      aws.data.export.name: ${CO_AWS_CUR_EXPORT_NAME}
-      aws.data.export.path.prefix: ${CO_AWS_CUR_EXPORT_PATH_PREFIX}
-      AWS_ACCESS_KEY_ID: ${CO_AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${CO_AWS_SECRET_ACCESS_KEY}
+      spring.datasource.hikari.batch.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
+      spring.datasource.hikari.batch.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
+      spring.datasource.hikari.batch.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      unusedBatchCronSchedule: ${MC_COST_OPTIMIZER_COST_COLLECT_UNUSED_CRON_SCHEDULE}
+      curBatchCronSchedule: ${MC_COST_OPTIMIZER_COST_COLLECT_CUR_CRON_SCHEDULE}
+      aws.data.export.name: ${MC_COST_OPTIMIZER_AWS_CUR_EXPORT_NAME}
+      aws.data.export.path.prefix: ${MC_COST_OPTIMIZER_AWS_CUR_EXPORT_PATH_PREFIX}
+      AWS_ACCESS_KEY_ID: ${MC_COST_OPTIMIZER_AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${MC_COST_OPTIMIZER_AWS_SECRET_ACCESS_KEY}
 
   mc-cost-optimizer-cost-processor:
     restart: on-failure
@@ -460,13 +461,13 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
-      spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
-      spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
-      unusedProcessCronSchedule: ${CO_COST_PROCESS_UNUSED_CRON_SCHEDULE}
-      abnormalProcessCronSchedule: ${CO_COST_PROCESS_ABNORMAL_CRON_SCHEDULE}
-      cost.selector.url: ${CO_COST_SELECTOR_URL}
-      opti.alarm.url: ${CO_ALARM_URL}
+      spring.datasource.hikari.batch.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
+      spring.datasource.hikari.batch.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
+      spring.datasource.hikari.batch.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      unusedProcessCronSchedule: ${MC_COST_OPTIMIZER_COST_PROCESS_UNUSED_CRON_SCHEDULE}
+      abnormalProcessCronSchedule: ${MC_COST_OPTIMIZER_COST_PROCESS_ABNORMAL_CRON_SCHEDULE}
+      cost.selector.url: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
+      opti.alarm.url: ${MC_COST_OPTIMIZER_ALARM_URL}
 
   mc-cost-optimizer-cost-selector:
     restart: on-failure
@@ -486,10 +487,10 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
-      spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
-      spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
-      opti.alarm.url: ${CO_ALARM_URL}
+      spring.datasource.hikari.cost.optimize.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
+      spring.datasource.hikari.cost.optimize.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
+      spring.datasource.hikari.cost.optimize.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      opti.alarm.url: ${MC_COST_OPTIMIZER_ALARM_URL}
 
   mc-cost-optimizer-alarm-service:
     restart: on-failure
@@ -509,15 +510,15 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.slack.jdbc-url: ${CO_SLACK_DB_URL}
-      spring.datasource.hikari.slack.username: ${CO_MYSQL_USER}
-      spring.datasource.hikari.slack.password: ${CO_MYSQL_PASSWORD}
-      spring.datasource.hikari.mailing.jdbc-url: ${CO_MAIL_DB_URL}
-      spring.datasource.hikari.mailing.username: ${CO_MYSQL_USER}
-      spring.datasource.hikari.mailing.password: ${CO_MYSQL_PASSWORD}
-      spring.datasource.hikari.history.jdbc-url: ${CO_COST_DB_URL}
-      spring.datasource.hikari.history.username: ${CO_MYSQL_USER}
-      spring.datasource.hikari.history.password: ${CO_MYSQL_PASSWORD}
+      spring.datasource.hikari.slack.jdbc-url: ${MC_COST_OPTIMIZER_SLACK_DB_URL}
+      spring.datasource.hikari.slack.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
+      spring.datasource.hikari.slack.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      spring.datasource.hikari.mailing.jdbc-url: ${MC_COST_OPTIMIZER_MAIL_DB_URL}
+      spring.datasource.hikari.mailing.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
+      spring.datasource.hikari.mailing.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      spring.datasource.hikari.history.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
+      spring.datasource.hikari.history.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
+      spring.datasource.hikari.history.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
 
   mc-cost-optimizer-asset-collector:
     restart: on-failure
@@ -537,12 +538,12 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
-      spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
-      spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
-      costopti.be.url: ${CO_API_URL}
-      asset.collect.url: ${CO_ASSET_MONITORING_SERVER}
-      assetCollectBatchCronSchedule: ${CO_ASSET_COLLECT_BATCH_CRON_SCHEDULE}
+      spring.datasource.hikari.batch.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
+      spring.datasource.hikari.batch.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
+      spring.datasource.hikari.batch.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      costopti.be.url: ${MC_COST_OPTIMIZER_API_URL}
+      asset.collect.url: ${MC_COST_OPTIMIZER_ASSET_MONITORING_SERVER}
+      assetCollectBatchCronSchedule: ${MC_COST_OPTIMIZER_ASSET_COLLECT_BATCH_CRON_SCHEDULE}
 
   mc-cost-optimizer-cost-azure-collector:
     restart: on-failure
@@ -562,23 +563,23 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
-      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
-      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+      SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
 
-      AZURE_CREDENTIAL_TENANT_ID: ${CO_AZURE_TENANT_ID}
-      AZURE_CREDENTIAL_CLIENT_ID: ${CO_AZURE_CLIENT_ID}
-      AZURE_CREDENTIAL_CLIENT_SECRET: ${CO_AZURE_CLIENT_SECRET}
-      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${CO_AZURE_SUBSCRIPTION_ID}
+      AZURE_CREDENTIAL_TENANT_ID: ${MC_COST_OPTIMIZER_AZURE_TENANT_ID}
+      AZURE_CREDENTIAL_CLIENT_ID: ${MC_COST_OPTIMIZER_AZURE_CLIENT_ID}
+      AZURE_CREDENTIAL_CLIENT_SECRET: ${MC_COST_OPTIMIZER_AZURE_CLIENT_SECRET}
+      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${MC_COST_OPTIMIZER_AZURE_SUBSCRIPTION_ID}
 
-      AZURE_SERVICE_BATCH_CRON_SCHEDULE: ${CO_AZURE_SERVICE_BATCH_CRON_SCHEDULE}
-      AZURE_VM_BATCH_CRON_SCHEDULE: ${CO_AZURE_VM_BATCH_CRON_SCHEDULE}
+      AZURE_SERVICE_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_AZURE_SERVICE_BATCH_CRON_SCHEDULE}
+      AZURE_VM_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_AZURE_VM_BATCH_CRON_SCHEDULE}
 
-      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
-      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
-      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
-      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
-      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+      COSTOPTI_ALARMSERVICE_URL: ${MC_COST_OPTIMIZER_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
 
   mc-cost-optimizer-cost-ncp-collector:
     restart: on-failure
@@ -598,21 +599,21 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
-      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
-      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+      SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
 
-      NCP_CREDENTIAL_IAM_ACCESS_KEY: ${CO_NCP_IAM_ACCESS_KEY}
-      NCP_CREDENTIAL_IAM_SECRET_KEY: ${CO_NCP_IAM_SECRET_KEY}
+      NCP_CREDENTIAL_IAM_ACCESS_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_ACCESS_KEY}
+      NCP_CREDENTIAL_IAM_SECRET_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_SECRET_KEY}
 
-      NCP_SERVICE_BATCH_CRON_SCHEDULE: ${CO_NCP_SERVICE_BATCH_CRON_SCHEDULE}
-      NCP_VM_BATCH_CRON_SCHEDULE: ${CO_NCP_VM_BATCH_CRON_SCHEDULE}
+      NCP_SERVICE_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_NCP_SERVICE_BATCH_CRON_SCHEDULE}
+      NCP_VM_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_NCP_VM_BATCH_CRON_SCHEDULE}
 
-      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
-      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
-      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
-      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
-      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+      COSTOPTI_ALARMSERVICE_URL: ${MC_COST_OPTIMIZER_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
 
       ##timezone setting
       TZ: Asia/Seoul
@@ -635,22 +636,22 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
-      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
-      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+      SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
 
-      AZURE_CREDENTIAL_TENANT_ID: ${CO_AZURE_TENANT_ID}
-      AZURE_CREDENTIAL_CLIENT_ID: ${CO_AZURE_CLIENT_ID}
-      AZURE_CREDENTIAL_CLIENT_SECRET: ${CO_AZURE_CLIENT_SECRET}
-      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${CO_AZURE_SUBSCRIPTION_ID}
+      AZURE_CREDENTIAL_TENANT_ID: ${MC_COST_OPTIMIZER_AZURE_TENANT_ID}
+      AZURE_CREDENTIAL_CLIENT_ID: ${MC_COST_OPTIMIZER_AZURE_CLIENT_ID}
+      AZURE_CREDENTIAL_CLIENT_SECRET: ${MC_COST_OPTIMIZER_AZURE_CLIENT_SECRET}
+      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${MC_COST_OPTIMIZER_AZURE_SUBSCRIPTION_ID}
 
-      AZURE_RIGHTSIZER_BATCH_CRON_SCHEDULE: ${CO_AZURE_VM_RIGHTSIZER_SCHEDULE}
+      AZURE_RIGHTSIZER_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_AZURE_VM_RIGHTSIZER_SCHEDULE}
 
-      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
-      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
-      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
-      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
-      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+      COSTOPTI_ALARMSERVICE_URL: ${MC_COST_OPTIMIZER_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
 
 
   mc-cost-optimizer-ncp-vm-rightsizer:
@@ -671,20 +672,20 @@ services:
       volumes:
         - ./tool/mcc:/app/tool/mcc
       environment:
-        SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
-        SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
-        SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
+        SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
+        SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
+        SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
 
-        NCP_CREDENTIAL_IAM_ACCESS_KEY: ${CO_NCP_IAM_ACCESS_KEY}
-        NCP_CREDENTIAL_IAM_SECRET_KEY: ${CO_NCP_IAM_SECRET_KEY}
+        NCP_CREDENTIAL_IAM_ACCESS_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_ACCESS_KEY}
+        NCP_CREDENTIAL_IAM_SECRET_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_SECRET_KEY}
 
-        AZURE_RIGHTSIZER_BATCH_CRON_SCHEDULE: ${CO_NCP_VM_RIGHTSIZER_SCHEDULE}
+        AZURE_RIGHTSIZER_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_NCP_VM_RIGHTSIZER_SCHEDULE}
 
-        COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
-        COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
-        COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
-        COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
-        COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+        COSTOPTI_ALARMSERVICE_URL: ${MC_COST_OPTIMIZER_ALARM_URL}
+        COSTOPTI_ASSETCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
+        COSTOPTI_COSTCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
+        COSTOPTI_COSTPROCESSOR_URL: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
+        COSTOPTI_COSTSELECTOR_URL: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
 
   mc-cost-optimizer-init-volume:
     image: busybox:stable
@@ -706,9 +707,9 @@ services:
         condition: service_completed_successfully
     environment:
       - ALLOW_EMPTY_PASSWORD=no
-      - MYSQL_ROOT_PASSWORD=${CO_MYSQL_ROOT_PASSWORD}
-      - MYSQL_USER=${CO_MYSQL_USER}
-      - MYSQL_PASSWORD=${CO_MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${MC_COST_OPTIMIZER_MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${MC_COST_OPTIMIZER_MYSQL_USER}
+      - MYSQL_PASSWORD=${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
     command:
       - --skip-character-set-client-handshake
     ports:
@@ -726,6 +727,25 @@ services:
       <<: *default-health-check
 
 ##### MC-APPLICATION-MANAGER #########################################################################################################################
+
+  mc-application-manager-db:
+    image: postgres:16-alpine
+    container_name: mc-application-manager-db
+    networks:
+      - mc-application-manager-network
+    ports:
+      - target: 5432
+        published: 18085
+        protocol: tcp
+    volumes:
+      - ./container-volume/mc-application-manager/db/data:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${MC_APPLICATION_MANAGER_POSTGRES_USER:-application}
+      - POSTGRES_PASSWORD=${MC_APPLICATION_MANAGER_POSTGRES_PASSWORD:-application!23}
+      - POSTGRES_DB=${MC_APPLICATION_MANAGER_POSTGRES_DB:-appmgr}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MC_APPLICATION_MANAGER_POSTGRES_USER:-application} -d ${MC_APPLICATION_MANAGER_POSTGRES_DB:-appmgr}"]
+      <<: *default-health-check
 
   mc-application-manager-sonatype-nexus:
     image: sonatype/nexus3:latest
@@ -745,15 +765,18 @@ services:
       - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
     environment:
       NEXUS_SECURITY_RANDOMPASSWORD: 'false'
-      NEXUS_SECURITY_INITIAL_PASSWORD: 123456 # Please CHANGE ME
+      NEXUS_SECURITY_INITIAL_PASSWORD: ${MC_APPLICATION_MANAGER_NEXUS_INITIAL_PASSWORD:-123456}
     user: root
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8081"]
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:0.5.1
+    image: cloudbaristaorg/mc-application-manager:0.5.2
     container_name: mc-application-manager
+    depends_on:
+      mc-application-manager-db:
+        condition: service_healthy
     networks:
       - mc-application-manager-network
       - mc-web-console-network
@@ -768,13 +791,14 @@ services:
     user: root
     environment:
       - DDL_AUTO=update
-      - DB_USER=application # Please CHANGE ME
-      - DB_PASS=application!23 # Please CHANGE ME
+      - DB_URL=jdbc:postgresql://mc-application-manager-db:5432/${MC_APPLICATION_MANAGER_POSTGRES_DB:-appmgr}
+      - DB_USER=${MC_APPLICATION_MANAGER_POSTGRES_USER:-application}
+      - DB_PASS=${MC_APPLICATION_MANAGER_POSTGRES_PASSWORD:-application!23}
       - SQL_DATA_INIT=never
       - TUMBLEBUG_URL=mc-infra-manager
       - TUMBLEBUG_PORT=1323
-      - TUMBLEBUG_ID=default
-      - TUMBLEBUG_PASSWORD=default
+      - TUMBLEBUG_ID=${MC_INFRA_MANAGER_API_USERNAME:-default}
+      - TUMBLEBUG_PASSWORD=${MC_INFRA_MANAGER_API_PASSWORD:-default}
       - SPIDER_URL=${MC_INFRA_CONNECTOR_URL:-mc-infra-connector}
 #      - ALERT_SLACK_CHANNEL_ID= # I You need Slack Alram. Please CHANGE ME.
       - RABBITMQ_URL=mc-observability-rabbitmq
@@ -803,8 +827,8 @@ services:
       - ./container-volume/mc-workflow-manager/jenkins/:/var/jenkins_home:rw
       - ./tool/init.groovy.d:/usr/share/jenkins/ref/init.groovy.d
     environment:
-      JENKINS_USERNAME: admin
-      JENKINS_PASSWORD: 123456 # Please CHANGE ME
+      JENKINS_USERNAME: ${MC_WORKFLOW_MANAGER_JENKINS_USERNAME:-admin}
+      JENKINS_PASSWORD: ${MC_WORKFLOW_MANAGER_JENKINS_PASSWORD:-123456}
       JAVA_OPTS: -Djenkins.install.runSetupWizard=false
     user: root
     restart: always
@@ -814,7 +838,7 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:0.5.0
+    image: cloudbaristaorg/mc-workflow-manager:0.5.1
     container_name: mc-workflow-manager
     platform: linux/amd64
     networks:
@@ -828,10 +852,10 @@ services:
       - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-workflow-manager/document/:/document/
     environment:
-      - DB_INIT_YN=create
-      - DB_ID=workflow # Please CHANGE ME
-      - DB_PW=workflow!23 # Please CHANGE ME
-      - SQL_DATA_INIT=always
+      - DB_INIT_YN=update
+      - DB_ID=${MC_WORKFLOW_MANAGER_DB_ID:-workflow}
+      - DB_PW=${MC_WORKFLOW_MANAGER_DB_PW:-workflow!23}
+      - SQL_DATA_INIT=never
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18083/readyz" ]
       <<: *default-health-check
@@ -860,16 +884,6 @@ services:
         condition: service_completed_successfully
       mc-data-manager-db:
         condition: service_healthy
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        UID: ${UID:-0}
-        GID: ${GID:-0}
-        USER: ${USER_NAME:-root}
-        GROUP: ${GROUP_NAME:-root}
-        WEB_DIR : ${WEB_DIR:-/web}
-        APP_HOME: /app
     tty: true
     ports:
       - "3300:3300"
@@ -915,10 +929,10 @@ services:
     networks:
       - mc-data-manager-network
     environment:
-      - MYSQL_DATABASE=mcmp
-      - MYSQL_USER=mcmp
-      - MYSQL_PASSWORD=mcmp
-      - MYSQL_ROOT_PASSWORD=mcmp
+      - MYSQL_DATABASE=${MC_DATA_MANAGER_MYSQL_DATABASE:-mcmp}
+      - MYSQL_USER=${MC_DATA_MANAGER_MYSQL_USER:-mcmp}
+      - MYSQL_PASSWORD=${MC_DATA_MANAGER_MYSQL_PASSWORD:-mcmp}
+      - MYSQL_ROOT_PASSWORD=${MC_DATA_MANAGER_MYSQL_ROOT_PASSWORD:-mcmp}
 
 
 ##### MC-WEB-CONSOLE #########################################################################################################################
@@ -932,9 +946,9 @@ services:
       - ./container-volume/mc-web-console/postgres/postgres_data:/var/lib/postgresql/data
       - ./conf/mc-web-console/init.sql:/docker-entrypoint-initdb.d/init.sql:ro
     environment:
-      POSTGRES_DB: ${CONSOLE_POSTGRES_DB}
-      POSTGRES_USER: ${CONSOLE_POSTGRES_USER}
-      POSTGRES_PASSWORD: ${CONSOLE_POSTGRES_PASSWORD}
+      POSTGRES_DB: ${MC_WEB_CONSOLE_POSTGRES_DB}
+      POSTGRES_USER: ${MC_WEB_CONSOLE_POSTGRES_USER}
+      POSTGRES_PASSWORD: ${MC_WEB_CONSOLE_POSTGRES_PASSWORD}
     networks:
       - mc-web-console-network
     pull_policy: missing
@@ -944,7 +958,7 @@ services:
         published: 15432
         protocol: tcp
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${CONSOLE_POSTGRES_USER}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${MC_WEB_CONSOLE_POSTGRES_USER}" ]
       <<: *default-health-check
     command: >
       sh -c "chown -R 70:70 /var/lib/postgresql/data &&
@@ -980,9 +994,9 @@ services:
       API_PORT: "3000"
       DB_HOST: mc-web-console-db
       DB_PORT: 5432
-      DB_USER: ${CONSOLE_POSTGRES_USER}
-      DB_PASSWORD: ${CONSOLE_POSTGRES_PASSWORD}
-      DB_NAME: ${CONSOLE_POSTGRES_DB}
+      DB_USER: ${MC_WEB_CONSOLE_POSTGRES_USER}
+      DB_PASSWORD: ${MC_WEB_CONSOLE_POSTGRES_PASSWORD}
+      DB_NAME: ${MC_WEB_CONSOLE_POSTGRES_DB}
       MCIAM_USE: true
       MCIAM_TICKET_USE: false
       IFRAME_TARGET_IS_HOST: true
@@ -1085,7 +1099,7 @@ services:
   mc-observability-rabbitmq-init-volumes:
     image: busybox:stable
     container_name: mc-observability-rabbitmq-init-volumes
-    restart: no
+    restart: "no"
     networks:
       - mc-observability-network
     command:
@@ -1095,7 +1109,7 @@ services:
         set -eux && \
         mkdir -p /var/lib/rabbitmq /var/log/rabbitmq && \
         if [ ! -s /var/lib/rabbitmq/.erlang.cookie ] || \
-           [ "$(wc -c < /var/lib/rabbitmq/.erlang.cookie)" -lt 20 ]; then
+           [ "$$(wc -c < /var/lib/rabbitmq/.erlang.cookie)" -lt 20 ]; then
           umask 177
           tr -dc 'A-Za-z0-9' </dev/urandom | head -c 48 > /var/lib/rabbitmq/.erlang.cookie
         fi && \
@@ -1157,10 +1171,10 @@ services:
     environment:
       - TZ="Asia/Seoul"
       - ALLOW_EMPTY_PASSWORD=no
-      - MARIADB_ROOT_PASSWORD=qwe1212!Q
-      - MARIADB_USER=mc-agent
-      - MARIADB_DATABASE=mc_observability
-      - MARIADB_PASSWORD=mc-agent
+      - MARIADB_ROOT_PASSWORD=${MC_OBSERVABILITY_MARIADB_ROOT_PASSWORD:-qwe1212!Q}
+      - MARIADB_USER=${MC_OBSERVABILITY_MARIADB_USER:-mc-agent}
+      - MARIADB_DATABASE=${MC_OBSERVABILITY_MARIADB_DATABASE:-mc_observability}
+      - MARIADB_PASSWORD=${MC_OBSERVABILITY_MARIADB_PASSWORD:-mc-agent}
     volumes:
       - ./conf/mc-observability/mariadb/maria_init.sql:/docker-entrypoint-initdb.d/maria_init.sql
       - ./conf/mc-observability/mariadb/99-max-connections.cnf:/etc/mysql/mariadb.conf.d/99-max-connections.cnf
@@ -1174,7 +1188,7 @@ services:
   mc-observability-influx-init-volumes:
     image: busybox:stable
     container_name: mc-observability-influx-init-volumes
-    restart: no
+    restart: "no"
     networks:
       - mc-observability-network
     command: ["sh", "-c", "chown -R 1500:1500 /var/lib/influxdb"]
@@ -1197,10 +1211,10 @@ services:
       mc-observability-influx-init-volumes:
         condition: service_completed_successfully
     environment:
-      - INFLUXDB_HTTP_AUTH_ENABLED=true
-      - INFLUXDB_ADMIN_USER=mc-agent
-      - INFLUXDB_ADMIN_PASSWORD=mc-agent
-      - INFLUXDB_DB="mc-observability"
+      - INFLUXDB_HTTP_AUTH_ENABLED=${MC_OBSERVABILITY_INFLUXDB_HTTP_AUTH_ENABLED:-true}
+      - INFLUXDB_ADMIN_USER=${MC_OBSERVABILITY_INFLUXDB_ADMIN_USER:-mc-agent}
+      - INFLUXDB_ADMIN_PASSWORD=${MC_OBSERVABILITY_INFLUXDB_ADMIN_PASSWORD:-mc-agent}
+      - INFLUXDB_DB=${MC_OBSERVABILITY_INFLUXDB_DB:-mc-observability}
     volumes:
       - ./conf/mc-observability/influxdb/influxdb_init:/docker-entrypoint-initdb.d
       - ./container-volume/mc-observability/influxdb/influxdb_data:/var/lib/influxdb
@@ -1211,7 +1225,7 @@ services:
   mc-observability-influx-2-init-volumes:
     image: busybox:stable
     container_name: mc-observability-influx-2-init-volumes
-    restart: no
+    restart: "no"
     command: ["sh", "-c", "chown -R 1500:1500 /var/lib/influxdb"]
     volumes:
       - ./container-volume/mc-observability/influxdb/influxdb2_data:/var/lib/influxdb
@@ -1234,10 +1248,10 @@ services:
       mc-observability-influx-init-volumes:
         condition: service_completed_successfully
     environment:
-      - INFLUXDB_HTTP_AUTH_ENABLED=true
-      - INFLUXDB_ADMIN_USER=mc-agent
-      - INFLUXDB_ADMIN_PASSWORD=mc-agent
-      - INFLUXDB_DB="mc-observability"
+      - INFLUXDB_HTTP_AUTH_ENABLED=${MC_OBSERVABILITY_INFLUXDB_HTTP_AUTH_ENABLED:-true}
+      - INFLUXDB_ADMIN_USER=${MC_OBSERVABILITY_INFLUXDB_ADMIN_USER:-mc-agent}
+      - INFLUXDB_ADMIN_PASSWORD=${MC_OBSERVABILITY_INFLUXDB_ADMIN_PASSWORD:-mc-agent}
+      - INFLUXDB_DB=${MC_OBSERVABILITY_INFLUXDB_DB:-mc-observability}
     volumes:
       - ./conf/mc-observability/influxdb/influxdb_init:/docker-entrypoint-initdb.d
       - ./container-volume/mc-observability/influxdb/influxdb2_data:/var/lib/influxdb
@@ -1269,8 +1283,8 @@ services:
     networks:
       - mc-observability-network
     environment:
-      - MINIO_ROOT_USER=admin
-      - MINIO_ROOT_PASSWORD=mc-agent
+      - MINIO_ROOT_USER=${MC_OBSERVABILITY_MINIO_ROOT_USER:-admin}
+      - MINIO_ROOT_PASSWORD=${MC_OBSERVABILITY_MINIO_ROOT_PASSWORD:-mc-agent}
     volumes:
       - ./container-volume/mc-observability/minio/minio_data:/minio/data
     healthcheck:
@@ -1283,7 +1297,7 @@ services:
   mc-observability-loki-init-volumes:
     image: busybox:stable
     container_name: mc-observability-loki-init-volumes
-    restart: no
+    restart: "no"
     command: ["sh", "-c", "chown -R 10001:10001 /loki"]
     volumes:
       - ./container-volume/mc-observability/loki/loki_data:/loki
@@ -1324,7 +1338,7 @@ services:
   mc-observability-tempo-init-volumes:
     image: busybox:stable
     container_name: mc-observability-tempo-init-volumes
-    restart: no
+    restart: "no"
     networks:
       - mc-observability-network
     command: ["sh", "-c", "chown -R 10001:10001 /etc/tempo"]
@@ -1369,7 +1383,7 @@ services:
   mc-observability-grafana-init-volumes:
     image: busybox:stable
     container_name: mc-observability-grafana-init-volumes
-    restart: no
+    restart: "no"
     networks:
       - mc-observability-network
     command: ["sh", "-c", "chown -R 472:472 /var/lib/grafana && chown -R 472:472 /var/log/grafana && chown -R 472:472 /grafana_config"]
