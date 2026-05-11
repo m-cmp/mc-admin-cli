@@ -3,7 +3,7 @@
 
 services:
   mc-infra-connector:
-    version: 0.12.14
+    version: 0.12.18
     baseurl: http://mc-infra-connector:1024/spider
     auth:
       type: basic
@@ -11,18 +11,18 @@ services:
       password:
 
   mc-iam-manager:
-    version: 0.5.1
+    version: 0.5.2
     baseurl: http://mc-iam-manager:5000
     auth:
       type: bearer
 
   mc-infra-manager:
-    version: 0.12.6
+    version: 0.12.9
     baseurl: http://mc-infra-manager:1323/tumblebug
     auth:
       type: basic
-      username: default
-      password: default
+      username: spider
+      password: spider
 
   mc-web-console:
     version: 0.5.2
@@ -31,27 +31,27 @@ services:
       type: bearer
 
   mc-observability:
-    version: 0.4.0
+    version: 0.5.0
     baseurl: http://mc-observability-manager:18080
     auth:
 
   mc-application-manager:
-    version: 0.4.0
+    version: 0.5.2
     baseurl: http://mc-application-manager:18084
     auth:
 
   mc-workflow-manager:
-    version: 0.4.0
+    version: 0.5.1
     baseurl: http://mc-workflow-manager:18083
     auth:
 
   mc-cost-optimizer:
-    version: 0.4.0
+    version: 0.5.2
     baseurl: http://mc-cost-optimizer:7780
     auth:
 
   mc-data-manager:
-    version: 0.4.0
+    version: 0.5.3
     baseurl: http://mc-data-manager:3300
     auth:
 
