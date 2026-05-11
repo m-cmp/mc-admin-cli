@@ -28,8 +28,8 @@ CURRENT_GROUP=$(id -gn)
 
 echo "Current user: ${CURRENT_USER}:${CURRENT_GROUP}"
 
-sudo mkdir -p "${CERT_PARENT_DIR}" || { echo "Error: Failed to create ${CERT_PARENT_DIR}"; exit 1; }
-sudo chown -R "${CURRENT_USER}:${CURRENT_GROUP}" "${CERT_PARENT_DIR}" || { echo "Error: Failed to change ownership of ${CERT_PARENT_DIR}"; exit 1; }
+mkdir -p "${CERT_PARENT_DIR}" || { echo "Error: Failed to create ${CERT_PARENT_DIR}"; exit 1; }
+chown -R "${CURRENT_USER}:${CURRENT_GROUP}" "${CERT_PARENT_DIR}" || { echo "Error: Failed to change ownership of ${CERT_PARENT_DIR}"; exit 1; }
 echo "✓ Container volume directory created and permissions set"
 
 
@@ -128,11 +128,11 @@ if grep -E "^[[:space:]]*127\.0\.0\.1[[:space:]]+${MC_IAM_MANAGER_KEYCLOAK_DOMAI
 else
     # 기존에 다른 형태로 추가된 항목이 있는지 확인하고 제거
     echo "Removing any existing entries for ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}..."
-    sudo sed -i "/[[:space:]]*127\.0\.0\.1[[:space:]]\+${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}[[:space:]]*$/d" "${HOSTS_FILE}"
+    sed -i "/[[:space:]]*127\.0\.0\.1[[:space:]]\+${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}[[:space:]]*$/d" "${HOSTS_FILE}"
     
     # hosts 파일에 추가 (sudo 권한 필요)
     echo "Adding 127.0.0.1 ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN} to ${HOSTS_FILE}..."
-    echo "127.0.0.1 ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}" | sudo tee -a "${HOSTS_FILE}" > /dev/null
+    echo "Skipping hosts file update (no sudo)"; # echo "127.0.0.1 "${HOSTS_FILE}" > /dev/null
     if [ $? -eq 0 ]; then
         echo "✓ ${MC_IAM_MANAGER_KEYCLOAK_DOMAIN} added successfully to ${HOSTS_FILE}."
     else
