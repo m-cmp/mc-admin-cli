@@ -70,8 +70,17 @@ auto_setup() {
     fi
     echo "✓ Projects synced successfully"
     
-    # 7. 워크스페이스-프로젝트 매핑
-    echo "Step 7: Mapping workspace to all projects..."
+    # 7. Keycloak client redirect URI 설정
+    echo "Step 7: Configuring Keycloak client redirect URIs..."
+    configure_keycloak_client_uris
+    if [ $? -ne 0 ]; then
+        echo "WARNING: Keycloak client redirect URI configuration failed (non-fatal)"
+    else
+        echo "✓ Keycloak client redirect URIs configured successfully"
+    fi
+
+    # 8. 워크스페이스-프로젝트 매핑
+    echo "Step 8: Mapping workspace to all projects..."
     map_workspace_projects
     if [ $? -ne 0 ]; then
         echo "ERROR: Workspace-project mapping failed"
@@ -542,6 +551,73 @@ sync_projects() {
     echo "✓ Project sync completed successfully"
     echo "Response details:"
     echo "$response_body" | jq .
+    return 0
+}
+
+configure_keycloak_client_uris() {
+    echo "=== Configuring Keycloak Client Redirect URIs ==="
+
+    if [ -z "$MC_IAM_MANAGER_PUBLIC_HOST" ]; then
+        echo "ERROR: MC_IAM_MANAGER_PUBLIC_HOST is not set — cannot configure redirect URIs"
+        return 1
+    fi
+
+    PUBLIC_HOST="$MC_IAM_MANAGER_PUBLIC_HOST"
+    echo "Public host: $PUBLIC_HOST"
+
+    # Keycloak admin token 발급
+    KC_ADMIN_TOKEN=$(curl -s -X POST \
+        "${MC_IAM_MANAGER_KEYCLOAK_HOST}/realms/master/protocol/openid-connect/token" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "grant_type=password" \
+        -d "client_id=admin-cli" \
+        -d "username=${MC_IAM_MANAGER_KEYCLOAK_ADMIN}" \
+        -d "password=${MC_IAM_MANAGER_KEYCLOAK_ADMIN_PASSWORD}" \
+        | jq -r '.access_token' 2>/dev/null)
+
+    if [ -z "$KC_ADMIN_TOKEN" ] || [ "$KC_ADMIN_TOKEN" = "null" ]; then
+        echo "ERROR: Failed to obtain Keycloak admin token"
+        return 1
+    fi
+    echo "  ✓ Keycloak admin token obtained"
+
+    KC_ADMIN_URL="${MC_IAM_MANAGER_KEYCLOAK_HOST}/admin/realms/${MC_IAM_MANAGER_KEYCLOAK_REALM}"
+
+    # mciamClient, mciam-oidc-Client 두 클라이언트 설정
+    for CLIENT_NAME in "$MC_IAM_MANAGER_KEYCLOAK_CLIENT_NAME" "$MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_NAME"; do
+        [ -z "$CLIENT_NAME" ] && continue
+
+        # client ID (UUID) 조회
+        CLIENT_ID=$(curl -s \
+            "${KC_ADMIN_URL}/clients?clientId=${CLIENT_NAME}" \
+            -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+            | jq -r '.[0].id' 2>/dev/null)
+
+        if [ -z "$CLIENT_ID" ] || [ "$CLIENT_ID" = "null" ]; then
+            echo "  ⚠️  Client not found: $CLIENT_NAME — skipping"
+            continue
+        fi
+
+        # 현재 client 설정 조회 후 redirect URI 갱신
+        CURRENT=$(curl -s "${KC_ADMIN_URL}/clients/${CLIENT_ID}" \
+            -H "Authorization: Bearer ${KC_ADMIN_TOKEN}")
+
+        UPDATED=$(echo "$CURRENT" | jq \
+            --arg h "$PUBLIC_HOST" \
+            '.rootUrl = $h | .baseUrl = $h | .redirectUris = [$h + "/*"] | .webOrigins = [$h]')
+
+        HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
+            "${KC_ADMIN_URL}/clients/${CLIENT_ID}" \
+            -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$UPDATED")
+
+        if [ "$HTTP" = "204" ]; then
+            echo "  ✓ Updated: $CLIENT_NAME → redirectUris=[${PUBLIC_HOST}/*]"
+        else
+            echo "  ✗ Failed to update $CLIENT_NAME (HTTP $HTTP)"
+        fi
+    done
     return 0
 }
 

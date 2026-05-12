@@ -302,7 +302,7 @@ services:
       KC_DB_PASSWORD: ${MC_IAM_MANAGER_DATABASE_PASSWORD}
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
-      KC_HOSTNAME: ${MC_IAM_MANAGER_KEYCLOAK_EXTERNAL_DOMAIN:-localhost}
+      KC_HOSTNAME: ${MC_IAM_MANAGER_PUBLIC_DOMAIN}
       KC_HTTP_RELATIVE_PATH: /auth
       KEYCLOAK_ADMIN: ${MC_IAM_MANAGER_KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${MC_IAM_MANAGER_KEYCLOAK_ADMIN_PASSWORD:-admin_password}
@@ -330,7 +330,7 @@ services:
       - "443:443"
       - "3001:3001"
     environment:
-      - DOMAIN_NAME=${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}
+      - DOMAIN_NAME=${MC_IAM_MANAGER_PUBLIC_DOMAIN}
     volumes:
       - ./container-volume/mc-iam-manager/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./container-volume/mc-iam-manager/certs:/etc/nginx/certs:ro

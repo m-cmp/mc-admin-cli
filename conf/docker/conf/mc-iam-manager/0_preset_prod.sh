@@ -40,23 +40,31 @@ echo "환경변수를 로드합니다..."
 
 # .env 파일에서 필요한 변수들을 직접 읽어오기
 MC_IAM_MANAGER_PORT=$(grep -m1 "^MC_IAM_MANAGER_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+MC_IAM_MANAGER_PUBLIC_DOMAIN=$(grep -m1 "^MC_IAM_MANAGER_PUBLIC_DOMAIN=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
 MC_IAM_MANAGER_KEYCLOAK_DOMAIN=$(grep -m1 "^MC_IAM_MANAGER_KEYCLOAK_DOMAIN=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
 MC_IAM_MANAGER_KEYCLOAK_PORT=$(grep -m1 "^MC_IAM_MANAGER_KEYCLOAK_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
 
 echo "읽어온 환경변수:"
 echo "  MC_IAM_MANAGER_PORT: $MC_IAM_MANAGER_PORT"
+echo "  MC_IAM_MANAGER_PUBLIC_DOMAIN: $MC_IAM_MANAGER_PUBLIC_DOMAIN"
 echo "  MC_IAM_MANAGER_KEYCLOAK_DOMAIN: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
 echo "  MC_IAM_MANAGER_KEYCLOAK_PORT: $MC_IAM_MANAGER_KEYCLOAK_PORT"
 
 # 템플릿 파일을 복사하고 환경변수 대치
 cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
 
-# 환경변수 대치
 if [ -n "$MC_IAM_MANAGER_PORT" ]; then
     sed -i "s/\${MC_IAM_MANAGER_PORT}/$MC_IAM_MANAGER_PORT/g" "$OUTPUT_FILE"
     echo "✓ MC_IAM_MANAGER_PORT 대치 완료: $MC_IAM_MANAGER_PORT"
 else
     echo "경고: MC_IAM_MANAGER_PORT 환경변수가 설정되지 않았습니다."
+fi
+
+if [ -n "$MC_IAM_MANAGER_PUBLIC_DOMAIN" ]; then
+    sed -i "s/\${MC_IAM_MANAGER_PUBLIC_DOMAIN}/$MC_IAM_MANAGER_PUBLIC_DOMAIN/g" "$OUTPUT_FILE"
+    echo "✓ MC_IAM_MANAGER_PUBLIC_DOMAIN 대치 완료: $MC_IAM_MANAGER_PUBLIC_DOMAIN"
+else
+    echo "경고: MC_IAM_MANAGER_PUBLIC_DOMAIN 환경변수가 설정되지 않았습니다."
 fi
 
 if [ -n "$MC_IAM_MANAGER_KEYCLOAK_DOMAIN" ]; then
