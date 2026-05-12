@@ -295,11 +295,15 @@ init_menu() {
 
 init_api_resources() {
     echo "Initializing API resources..."
-    wget -q -O ./api.yaml "$MCADMINCLI_APIYAML"
-    
-    # wget 성공 여부 확인
-    if [ $? -ne 0 ]; then
-        echo "ERROR: Failed to download api.yaml"
+    if [ -n "$MCADMINCLI_APIYAML" ]; then
+        wget -q -O ./api.yaml "$MCADMINCLI_APIYAML" && echo "  Downloaded api.yaml from $MCADMINCLI_APIYAML" || {
+            echo "  WARNING: Failed to download api.yaml from $MCADMINCLI_APIYAML — using local copy"
+        }
+    else
+        echo "  MCADMINCLI_APIYAML not set — using local api.yaml"
+    fi
+    if [ ! -f ./api.yaml ]; then
+        echo "ERROR: api.yaml not found"
         return 1
     fi
     
@@ -362,7 +366,16 @@ register_framework_services() {
         if [ "$http_code" = "201" ]; then
             echo "  ✓ Registered: $name ($base_url)"
         elif [ "$http_code" = "409" ]; then
-            echo "  ✓ Already registered: $name (skipped)"
+            # 기존 레코드가 있으면 base_url을 최신 api.yaml 값으로 업데이트
+            PGPASSWORD="$MC_IAM_MANAGER_DATABASE_PASSWORD" psql \
+                -h "$MC_IAM_MANAGER_DATABASE_HOST" \
+                -p "${MC_IAM_MANAGER_DATABASE_PORT:-5432}" \
+                -U "$MC_IAM_MANAGER_DATABASE_USER" \
+                -d "$MC_IAM_MANAGER_DATABASE_NAME" \
+                -c "UPDATE mcmp_api_services SET base_url='$base_url', version='$version', updated_at=NOW() WHERE name='$name';" \
+                -q 2>/dev/null \
+            && echo "  ✓ Updated: $name ($base_url)" \
+            || echo "  ✓ Already registered: $name (psql unavailable, skipped)"
         else
             echo "  ✗ Failed to register $name (HTTP $http_code): $response_body"
             return 1
@@ -370,14 +383,60 @@ register_framework_services() {
         return 0
     }
 
-    # services 섹션 기반으로 서비스 URL 등록 (api.yaml 버전과 동기화 필요 시 업데이트)
-    INFRA_MANAGER_VERSION=$(grep -A1 "^  mc-infra-manager:" ./api.yaml 2>/dev/null | grep "version:" | awk '{print $2}' | tr -d '"')
-    INFRA_MANAGER_VERSION="${INFRA_MANAGER_VERSION:-0.12.6}"
+    # api.yaml의 services 섹션에 정의된 모든 framework 등록
+    # mc-iam-manager 자신은 service URL registry 등록 대상에서 제외
+    local failed=0
+    local current_svc=""
+    local current_version=""
+    local current_baseurl=""
+    local current_auth_type=""
 
-    register_service "mc-infra-manager" "$INFRA_MANAGER_VERSION" \
-        "http://mc-infra-manager:${MC_INFRA_MANAGER_PORT:-1323}/tumblebug" \
-        "basic" "$MC_INFRA_MANAGER_API_USERNAME" "$MC_INFRA_MANAGER_API_PASSWORD"
-    if [ $? -ne 0 ]; then
+    while IFS= read -r line; do
+        # 서비스 이름 감지 (2칸 들여쓰기 + 콜론으로 끝나는 라인)
+        if echo "$line" | grep -qE "^  [a-z].*:$"; then
+            # 직전 서비스 처리
+            if [ -n "$current_svc" ] && [ "$current_svc" != "mc-iam-manager" ]; then
+                auth_user=""
+                auth_pass=""
+                if [ "$current_svc" = "mc-infra-manager" ]; then
+                    auth_user="${MC_INFRA_MANAGER_API_USERNAME}"
+                    auth_pass="${MC_INFRA_MANAGER_API_PASSWORD}"
+                elif [ "$current_svc" = "mc-infra-connector" ]; then
+                    auth_user="${MC_INFRA_CONNECTOR_API_USERNAME}"
+                    auth_pass="${MC_INFRA_CONNECTOR_API_PASSWORD}"
+                fi
+                register_service "$current_svc" "$current_version" "$current_baseurl" \
+                    "${current_auth_type:-none}" "$auth_user" "$auth_pass" || failed=1
+            fi
+            current_svc=$(echo "$line" | sed 's/^  //; s/:$//')
+            current_version=""
+            current_baseurl=""
+            current_auth_type=""
+        elif echo "$line" | grep -q "^    version:"; then
+            current_version=$(echo "$line" | awk '{print $2}' | tr -d '"')
+        elif echo "$line" | grep -q "^    baseurl:"; then
+            current_baseurl=$(echo "$line" | awk '{print $2}')
+        elif echo "$line" | grep -q "^      type:"; then
+            current_auth_type=$(echo "$line" | awk '{print $2}' | tr -d '"')
+        fi
+    done < <(sed -n '/^services:/,/^serviceActions:/p' ./api.yaml | head -n -1)
+
+    # 마지막 서비스 처리
+    if [ -n "$current_svc" ] && [ "$current_svc" != "mc-iam-manager" ]; then
+        auth_user=""
+        auth_pass=""
+        if [ "$current_svc" = "mc-infra-manager" ]; then
+            auth_user="${MC_INFRA_MANAGER_API_USERNAME}"
+            auth_pass="${MC_INFRA_MANAGER_API_PASSWORD}"
+        elif [ "$current_svc" = "mc-infra-connector" ]; then
+            auth_user="${MC_INFRA_CONNECTOR_API_USERNAME}"
+            auth_pass="${MC_INFRA_CONNECTOR_API_PASSWORD}"
+        fi
+        register_service "$current_svc" "$current_version" "$current_baseurl" \
+            "${current_auth_type:-none}" "$auth_user" "$auth_pass" || failed=1
+    fi
+
+    if [ $failed -ne 0 ]; then
         return 1
     fi
 

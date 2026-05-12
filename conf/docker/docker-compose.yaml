@@ -346,6 +346,7 @@ services:
     # restart: unless-stopped
     networks:
       - mc-iam-manager-network
+      - mc-infra-manager-network
     depends_on:
       mc-iam-manager:
         condition: service_started
