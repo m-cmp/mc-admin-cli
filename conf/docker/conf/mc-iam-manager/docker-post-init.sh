@@ -3,7 +3,7 @@
 echo 'All required containers are healthy. Starting initialization...'
 
 # 필요한 도구 설치
-apt-get update && apt-get install -y curl jq wget
+apt-get update && apt-get install -y curl jq wget postgresql-client
 
 echo ''
 echo ''
