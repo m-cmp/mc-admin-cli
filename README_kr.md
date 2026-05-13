@@ -20,7 +20,7 @@ mcc 사용에 어려움이 있으시면 알려주시기 바랍니다.
 - CSP 인스턴스에서 전체 하위 시스템을 단일 인스턴스에서 실행하는 방법을 확인하려면 [이 문서](./docs/mc-admin-cli-infra.md)를 참조하세요.
 
 ## 개발 및 테스트 환경
-- Go 1.23
+- Go 1.25.0 (최소 요구 버전)
 - Docker version 27.3.1
 - Docker Compose version v2.29
 
@@ -44,61 +44,140 @@ sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 
 # 빠른 가이드
 이 섹션은 빠르게 설정하고 싶은 분들을 위한 최소한의 과정을 설명합니다.   
-더 자세한 설치 가이드를 원하시면 [단일 인스턴스에서 실행하기 가이드](https://github.com/m-cmp/mc-admin-cli/blob/main/docs/running-on-instance.md) 문서를 참조하세요.   
+더 자세한 설치 가이드를 원하시면 [단일 인스턴스에서 실행하기 가이드](https://github.com/m-cmp/mc-admin-cli/blob/main/docs/running-on-instance.md) 문서를 참조하세요.
 
-먼저 저장소를 클론합니다.
+## Step 1. 저장소 클론
+
 안정적인 인프라 구축을 위해 최신 개발 버전 대신 `-b` 플래그를 사용하여 특정 [릴리스 버전](https://github.com/m-cmp/mc-admin-cli/releases)을 명시적으로 클론하는 것을 권장합니다.
-(예시) v0.4.1
 ```shell
-git clone https://github.com/m-cmp/mc-admin-cli.git -b v0.4.1
+git clone https://github.com/m-cmp/mc-admin-cli.git -b v0.5.0
 cd mc-admin-cli/bin
 ```
 
-mc-admin-cli를 다운로드한 후, bin 폴더로 이동하여 installAll.sh 셸 스크립트를 실행합니다.
-```shell 
-./installAll.sh
+기여자의 경우 최신 개발 브랜치를 클론하세요.
+```shell
+git clone https://github.com/m-cmp/mc-admin-cli.git
+cd mc-admin-cli/bin
 ```
 
-    스크립트 실행 시 도메인과 인증서가 필요하므로 적절한 모드를 선택하여 인증서를 발급하고 nginx 설정 파일을 생성합니다.
-    **설치 모드 선택:**
-    - **개발자 모드 (로컬 인증)**: 개발 및 테스트 환경용.( 임시자격증명을 활용하는 기능 사용 불가)
-    - **프로덕션 모드 (CA 인증)**: 운영 환경용 (도메인 필수. 임시자격증명을 위한 대상 CSP의 작업 필요 )
+## Step 2. 배포 모드 선택
 
+`installAll.sh` 실행 전에 환경에 맞는 모드를 선택하고 `conf/docker/conf/mc-iam-manager/.env` (또는 설정 워크플로 사용 시 `conf/docker/.env.setup`)에서 `MC_IAM_MANAGER_PUBLIC_DOMAIN`을 설정하세요.
 
+| | **Mode A — 로컬 / 개발** | **Mode B — 운영** |
+|---|---|---|
+| 도메인 | 로컬 이름 (예: `mciam.local`) | 공개 FQDN (예: `mciam.example.com`) |
+| TLS 인증서 | 자가서명 (`0_preset_dev.sh`로 생성) | Let's Encrypt certbot (`0_preset_prod.sh`) |
+| DNS | `/etc/hosts`에 수동 추가 | 공개 DNS A-레코드 → 서버 IP |
+| installAll.sh 플래그 | `--mode dev` | `--mode prod` |
+| 브라우저 경고 | 인증서 경고 (개발 환경에서 허용) | 경고 없음 (공인 CA) |
+
+**Mode A — `MC_IAM_MANAGER_PUBLIC_DOMAIN`을 로컬 도메인으로 설정:**
+```shell
+# conf/docker/conf/mc-iam-manager/.env
+MC_IAM_MANAGER_PUBLIC_DOMAIN=mciam.local    # 원하는 호스트명 사용 가능
+
+# 클라이언트 머신의 /etc/hosts에 추가
+echo "127.0.0.1  mciam.local" | sudo tee -a /etc/hosts
+```
+
+**Mode B — 등록된 FQDN 설정 (DNS A-레코드가 이 서버의 공인 IP를 가리켜야 함):**
+```shell
+# conf/docker/conf/mc-iam-manager/.env
+MC_IAM_MANAGER_PUBLIC_DOMAIN=mciam.example.com
+
+# 시작 전 Let's Encrypt 인증서 발급 (80번 포트가 비어 있어야 함)
+docker compose -f conf/docker/docker-compose.cert.yaml --env-file conf/docker/.env up
+```
+
+## Step 3. installAll.sh 실행
+
+`installAll.sh`는 TLS 인증서를 생성(Mode A)하거나 검증(Mode B)하고, 템플릿으로부터 nginx 설정을 만들며, 선택적으로 컨테이너를 시작합니다.
+
+```shell
+# 대화형 모드
+./installAll.sh
+
+# 비대화형: Mode A — 자가서명 인증서 생성 후 백그라운드 시작
+./installAll.sh --mode dev --run background
+
+# 비대화형: Mode B — 인증서 검증 후 백그라운드 시작
+./installAll.sh --mode prod --run background
+
+# 비대화형: 설정 파일만 생성, 컨테이너 시작 건너뜀
+./installAll.sh --mode dev --run skip
+```
+
+## Step 4. 플랫폼 시작
+
+Step 3에서 `--run skip`을 사용한 경우 지금 모든 컨테이너를 시작하세요:
 ```shell
 ./mcc infra run
 ```
-위 명령어를 실행하여 플랫폼 설치를 시작합니다.
 
-잠시 후, 모든 필수 컨테이너가 unhealthy 상태 없이 healthy 상태인지 확인하세요.   
-특히 마지막에 실행되는 mc-web-console-api 컨테이너가 healthy 상태인지 확인하세요.
-```shell 
+## Step 5. 시작 상태 확인
+
+모든 컨테이너가 healthy 상태가 될 때까지 몇 분 기다린 후 아래 항목을 확인하세요.
+
+**(a) 컨테이너 상태 — 모든 컨테이너 healthy, mc-web-console-api 마지막 확인:**
+```shell
 ./mcc infra info
 ```
+`unhealthy` 항목이 없어야 합니다. `mc-iam-manager-post-initial`은 `Exited (0)`으로 표시되는 것이 정상입니다.
 
-보통 지금까지의 작업으로 충분하지만, 웹 콘솔이 제대로 작동하지 않는 경우,   
-아래의 mc-iam-manager-post-initial 컨테이너 로그를 확인하여 모든 설정 작업이 정상적으로 처리되었는지 확인하세요.   
-mc-iam-manager-post-initial 작업이 성공적으로 종료되지 않으면 mc-admin-cli/bin 폴더의 iam_manager_init.sh 셸 스크립트를 실행하세요.
-```shell 
-docker logs mc-iam-manager-post-initial
+**(b) mc-infra-manager readyz 확인:**
+```shell
+./mcc rest get -u default -p default http://localhost:1323/tumblebug/readyz
 ```
-    해당작업은 mc-iam-manager에서 필요한 작업영역(realm, client)생성 및 관리자, role, menu를 설정하는 작업입니다.
-    실패한 경우 1_setup_manual.sh 파일을 이용하여 특정 단계를 재실행할 수 있습니다.
+기대 응답: `{"message":"CB-Tumblebug is ready","ready":true}`
 
-mc-web-console-api 컨테이너가 healthy 상태가 되면 다음 지침을 사용하여 CB-Tumblebug를 초기화하세요:
+**(c) Keycloak OIDC discovery 확인 (`<DOMAIN>`을 `MC_IAM_MANAGER_PUBLIC_DOMAIN` 값으로 교체):**
+```shell
+curl -k https://<DOMAIN>/auth/realms/mciam/.well-known/openid-configuration | grep issuer
+```
+기대 응답: `"issuer": "https://<DOMAIN>/auth/realms/mciam"` — 반드시 `https://`로 시작하고 `/auth/`가 포함되어야 합니다.
+
+**(d) mc-iam-manager-post-initial 8단계 설정 완료 확인:**
+```shell
+docker logs mc-iam-manager-post-initial | tail -5
+```
+마지막 출력 기대값:
+```
+=== Automated setup completed successfully ===
+[Success] MC-IAM-Manager initialization completed successfully!
+```
+컨테이너가 비정상 종료되었거나 성공 메시지가 없으면 초기화 스크립트를 재실행하세요:
+```shell
+./iam_manager_init.sh
+```
+또는 `conf/docker/conf/mc-iam-manager/1_setup_manual.sh`를 사용하여 개별 단계를 수동으로 실행할 수 있습니다.
+
+**(e) iframe HTTPS 프록시 엔드포인트 확인 (웹 콘솔 임베드 뷰 사용):**
+```shell
+curl -kI https://<DOMAIN>:33002    # Grafana 대시보드 프록시
+curl -kI https://<DOMAIN>:7781     # Cost Optimizer FE 프록시
+```
+기대 응답: 두 엔드포인트 모두 `HTTP/2 200`
+
+## Step 6. CB-Tumblebug 초기화 및 웹 콘솔 접속
+
+`mc-web-console-api` 컨테이너가 healthy 상태가 되면 다음 지침을 사용하여 CB-Tumblebug를 초기화하세요:
 - [빠른 시작 가이드 – CB-Tumblebug](https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#quick-start-)
 - 가이드에서 `init.sh` 실행이 필수 단계입니다.
 
-기본적으로 웹 콘솔은 임시 자격 증명을 사용하여 http://{HostIP}:3001에서 접근할 수 있습니다:
+기본 자격 증명으로 웹 콘솔에 접속하세요:
+- **Mode A**: `https://mciam.local:3001` (자가서명 인증서 경고 수락)
+- **Mode B**: `https://<DOMAIN>:3001`
 - 사용자명: `mcmp`
 - 비밀번호: `mcmp_password`
 
+## Step 7. 환경 초기화
 
-다른 Docker 환경이나 기존 테스트로 인해 작업 환경을 완전히 초기화하고 싶다면 mc-admin-cli/bin 폴더의 cleanAll.sh 셸 스크립트를 사용하세요.   
+다른 Docker 환경이나 기존 테스트로 인해 작업 환경을 완전히 초기화하고 싶다면:   
 **[경고] 시스템의 모든 Docker 환경과 기존 작업 기록이 삭제됩니다.**
-```shell 
-$ cd mc-admin-cli/bin
-$ ./cleanAll.sh
+```shell
+cd mc-admin-cli/bin
+./cleanAll.sh
 ```
 
 
@@ -117,6 +196,7 @@ $ ./cleanAll.sh
 | mc-infra-manager | 1323 | TCP | CB-Tumblebug API |
 | mc-infra-manager-etcd | 2379, 2380 | TCP | etcd 클러스터 |
 | mc-infra-manager-postgres | 6432 | TCP | PostgreSQL DB |
+| mc-infra-manager-openbao | 8200 | TCP | OpenBao (Vault fork, 시크릿 저장소) |
 
 ### **MC-IAM-MANAGER**
 | 서비스 | 포트 | 프로토콜 | 설명 |
@@ -124,7 +204,10 @@ $ ./cleanAll.sh
 | mc-iam-manager | 5000 | TCP | IAM Manager API |
 | mc-iam-manager-db | 5432 | TCP | PostgreSQL DB |
 | mc-iam-manager-kc | 8080 | TCP | Keycloak |
-| mc-iam-manager-nginx | 80, 443 | TCP | Nginx (HTTP/HTTPS) |
+| mc-iam-manager-nginx | 80, 443 | TCP | Nginx (HTTP 리다이렉트 + HTTPS) |
+| mc-iam-manager-nginx | 3001 | TCP | 웹 콘솔 프론트엔드 (HTTPS 프록시) |
+| mc-iam-manager-nginx | 33002 | TCP | Grafana (iframe 전용 HTTPS 역방향 프록시) |
+| mc-iam-manager-nginx | 7781 | TCP | Cost Optimizer FE (iframe 전용 HTTPS 역방향 프록시) |
 
 ### **MC-COST-OPTIMIZER**
 | 서비스 | 포트 | 프로토콜 | 설명 |
@@ -166,26 +249,33 @@ $ ./cleanAll.sh
 ### **MC-OBSERVABILITY**
 | 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
-| mc-observability-manager | 18080, 18081 | TCP | Observability Manager |
+| mc-observability-manager | 18080 | TCP | Observability Manager |
+| mc-observability-infra | 33000 | TCP | Observability Infrastructure |
+| mc-observability-rabbitmq | 5672, 1883, 15672 | TCP | RabbitMQ (AMQP, MQTT, 관리 콘솔) |
 | mc-observability-maria | 3306 | TCP | MariaDB |
-| mc-observability-influx | 8086, 8082 | TCP | InfluxDB |
-| mc-observability-chronograf | 8888 | TCP | Chronograf |
-| mc-observability-kapacitor | 9092 | TCP | Kapacitor |
-| opensearch-node1 | 9200, 9600 | TCP | OpenSearch |
-| mc-observability-opensearch-dashboards | 5601 | TCP | OpenSearch Dashboards |
+| mc-observability-influx | 8086 | TCP | InfluxDB |
+| mc-observability-influx-2 | 8087 | TCP | InfluxDB 2 |
+| mc-observability-loki | 3100 | TCP | Loki 로그 수집기 |
+| mc-observability-tempo | 3200, 4317, 4318 | TCP | Tempo 분산 추적 |
+| mc-observability-grafana | 33001 | TCP | Grafana |
 | mc-observability-insight | 9001 | TCP | Observability Insight |
 | mc-observability-insight-scheduler | 9002 | TCP | Insight Scheduler |
-| mc-observability-mcp-grafana | 8000 | TCP | MCP Grafana |
+| mc-observability-mcp-grafana | 8000 | TCP | MCP Grafana 서버 (LLM 기반 분석) |
+| mc-observability-mcp-mariadb | 8001 | TCP | MCP MariaDB 서버 (LLM 기반 분석) |
+| mc-observability-mcp-influx | 8002 | TCP | MCP InfluxDB 서버 (LLM 기반 분석) |
 
-**총 39개 포트**가 외부 접근용으로 구성되어 있습니다.
+**총 49개 포트**가 외부 접근용으로 구성되어 있습니다.
 
 다음 포트들은 방화벽에 등록해야 합니다:
 ### **필수 방화벽 서비스**
 | 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
+| mc-iam-manager-nginx | 80, 443 | TCP | Nginx 진입점 (HTTP 리다이렉트 + HTTPS 웹 콘솔) |
+| mc-iam-manager-nginx | 3001 | TCP | 웹 콘솔 프론트엔드 (HTTPS) |
+| mc-iam-manager-nginx | 33002 | TCP | Grafana iframe 프록시 (HTTPS) — Mode B |
+| mc-iam-manager-nginx | 7781 | TCP | Cost Optimizer FE iframe 프록시 (HTTPS) — Mode B |
 | mc-web-console-api | 3000 | TCP | Web Console API |
-| mc-web-console-front | 3001 | TCP | Web Console Frontend |
-| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend |
+| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend (직접 HTTP) |
 
 
 ---
