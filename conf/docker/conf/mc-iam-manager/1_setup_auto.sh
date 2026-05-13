@@ -271,7 +271,7 @@ init_predefined_roles() {
 
 init_menu() {
     echo "Initializing menu data..."
-    wget -q -O ./menu.yaml "$MCWEBCONSOLE_MENUYAML"
+    wget -q -O ./menu.yaml "$MC_WEB_CONSOLE_MENUYAML"
     
     # wget 성공 여부 확인
     if [ $? -ne 0 ]; then
@@ -375,13 +375,13 @@ register_framework_services() {
         if [ "$http_code" = "201" ]; then
             echo "  ✓ Registered: $name ($base_url)"
         elif [ "$http_code" = "409" ]; then
-            # 기존 레코드가 있으면 base_url을 최신 api.yaml 값으로 업데이트
+            # 기존 레코드가 있으면 base_url, version, auth 자격증명 모두 업데이트
             PGPASSWORD="$MC_IAM_MANAGER_DATABASE_PASSWORD" psql \
                 -h "$MC_IAM_MANAGER_DATABASE_HOST" \
                 -p "${MC_IAM_MANAGER_DATABASE_PORT:-5432}" \
                 -U "$MC_IAM_MANAGER_DATABASE_USER" \
                 -d "$MC_IAM_MANAGER_DATABASE_NAME" \
-                -c "UPDATE mcmp_api_services SET base_url='$base_url', version='$version', updated_at=NOW() WHERE name='$name';" \
+                -c "UPDATE mcmp_api_services SET base_url='$base_url', version='$version', auth_type='$auth_type', auth_user='$auth_user', auth_pass='$auth_pass', updated_at=NOW() WHERE name='$name';" \
                 -q 2>/dev/null \
             && echo "  ✓ Updated: $name ($base_url)" \
             || echo "  ✓ Already registered: $name (psql unavailable, skipped)"
