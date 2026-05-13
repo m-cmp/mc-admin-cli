@@ -33,7 +33,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 1024
-        published: 1024
+        published: ${MC_INFRA_CONNECTOR_PORT}
         protocol: tcp
     volumes:
       - ./tool/mcc:/app/tool/mcc
@@ -68,7 +68,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 1323
-        published: 1323
+        published: ${MC_INFRA_MANAGER_PORT}
         protocol: tcp
     depends_on:
       mc-infra-manager-etcd:
@@ -77,7 +77,7 @@ services:
         condition: service_started
       mc-infra-manager-postgres:
         condition: service_healthy
-      openbao:
+      mc-infra-manager-openbao:
         condition: service_healthy
     volumes:
       - ./tool/mcc:/app/tool/mcc
@@ -101,8 +101,8 @@ services:
       - TB_POSTGRES_DATABASE=${MC_INFRA_MANAGER_POSTGRES_DB:-tumblebug}
       - TB_POSTGRES_USER=${MC_INFRA_MANAGER_POSTGRES_USER:-tumblebug}
       - TB_POSTGRES_PASSWORD=${MC_INFRA_MANAGER_POSTGRES_PASSWORD:-tumblebug}
-      - VAULT_ADDR=http://openbao:${MC_INFRA_MANAGER_OPENBAO_PORT:-8200}
-      - VAULT_TOKEN=${MC_INFRA_MANAGER_VAULT_TOKEN:-}
+      - VAULT_ADDR=http://mc-infra-manager-openbao:${MC_INFRA_MANAGER_OPENBAO_PORT}
+      - VAULT_TOKEN=${MC_INFRA_MANAGER_OPENBAO_VAULT_TOKEN:-}
       # - TB_ALLOW_ORIGINS=*
       - TB_AUTH_ENABLED=true
       - TB_AUTH_MODE=basic
@@ -132,10 +132,10 @@ services:
       - mc-infra-manager-network
     ports:
       - target: 2379
-        published: 2379
+        published: ${MC_INFRA_MANAGER_ETCD_PORT}
         protocol: tcp
       - target: 2380
-        published: 2380
+        published: ${MC_INFRA_MANAGER_ETCD_PEER_PORT}
         protocol: tcp
     volumes:
       - ./container-volume/mc-infra-manager/etcd/data:/etcd-data
@@ -172,31 +172,34 @@ services:
       <<: *default-health-check
 
 
-  openbao:
+  mc-infra-manager-openbao:
     image: openbao/openbao:2.5.1
-    container_name: openbao
+    container_name: mc-infra-manager-openbao
     restart: unless-stopped
     networks:
       - mc-infra-manager-network
     ports:
-      - target: ${MC_INFRA_MANAGER_OPENBAO_PORT:-8200}
-        published: ${MC_INFRA_MANAGER_OPENBAO_PORT:-8200}
+      - target: ${MC_INFRA_MANAGER_OPENBAO_PORT}
+        published: ${MC_INFRA_MANAGER_OPENBAO_PORT}
         protocol: tcp
     cap_add:
       - IPC_LOCK
     environment:
-      - BAO_ADDR=http://0.0.0.0:${MC_INFRA_MANAGER_OPENBAO_PORT:-8200}
-      - BAO_DEV_LISTEN_ADDRESS=0.0.0.0:${MC_INFRA_MANAGER_OPENBAO_PORT:-8200}
+      - BAO_ADDR=http://127.0.0.1:${MC_INFRA_MANAGER_OPENBAO_PORT}
+      - BAO_PORT=${MC_INFRA_MANAGER_OPENBAO_PORT}
       - SKIP_SETCAP=true
-      - BAO_DEV_ROOT_TOKEN_ID=${MC_INFRA_MANAGER_VAULT_TOKEN:-dev-only-token}
+      - MC_INFRA_MANAGER_OPENBAO_VAULT_TOKEN=${MC_INFRA_MANAGER_OPENBAO_VAULT_TOKEN:-dev-only-token}
     volumes:
-      - ./container-volume/openbao-data:/openbao/file
+      - ./conf/mc-infra-manager/openbao-config.hcl:/openbao/config/config.hcl:ro
+      - ./conf/mc-infra-manager/openbao-entrypoint.sh:/openbao/entrypoint.sh:ro
+      - ./container-volume/openbao-data:/openbao/data
+    entrypoint: ["/bin/sh", "/openbao/entrypoint.sh"]
     healthcheck:
       test: ["CMD", "bao", "status"]
       interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 10s
+      retries: 6
+      start_period: 30s
 
   # mc-infra-manager PostgreSQL
   # This is used for storing CB-Tumblebug Spec and Image.
@@ -209,7 +212,7 @@ services:
       # # Enable external network for outbound access (not ideal for security)
       # - external_network
     ports:
-      - 6432:5432
+      - ${MC_INFRA_MANAGER_POSTGRES_HOST_PORT}:5432
     volumes:
       - ./container-volume/mc-infra-manager/meta_db/postgres:/var/lib/postgresql/data
     environment:
@@ -265,7 +268,7 @@ services:
       - mc-iam-manager-network
     ports:
       - target: 5432
-        published: 5432
+        published: ${MC_IAM_MANAGER_DB_HOST_PORT}
         protocol: tcp
     volumes:
       - ./container-volume/mc-iam-manager/postgres/postgres_data:/var/lib/postgresql/data
@@ -291,7 +294,7 @@ services:
       - mc-iam-manager-network
     ports:
       - target: 8080
-        published: 8080
+        published: ${MC_IAM_MANAGER_KEYCLOAK_PORT}
         protocol: tcp
     command:
       - start-dev
@@ -302,11 +305,12 @@ services:
       KC_DB_PASSWORD: ${MC_IAM_MANAGER_DATABASE_PASSWORD}
       KC_HOSTNAME_STRICT: false
       KC_HOSTNAME_STRICT_HTTPS: false
-      KC_HOSTNAME: ${MC_IAM_MANAGER_KEYCLOAK_EXTERNAL_DOMAIN:-localhost}
+      KC_HOSTNAME_URL: ${MC_IAM_MANAGER_PUBLIC_HOST}/auth
       KC_HTTP_RELATIVE_PATH: /auth
       KEYCLOAK_ADMIN: ${MC_IAM_MANAGER_KEYCLOAK_ADMIN:-admin}
       KEYCLOAK_ADMIN_PASSWORD: ${MC_IAM_MANAGER_KEYCLOAK_ADMIN_PASSWORD:-admin_password}
       KC_HTTP_ENABLED: "true"
+      KC_PROXY_HEADERS: xforwarded
       KC_PROXY: edge
       KC_FEATURES: token-exchange,admin-fine-grained-authz
     volumes:
@@ -326,11 +330,13 @@ services:
     container_name: mc-iam-manager-nginx
     restart: unless-stopped
     ports:
-      - "80:80"
-      - "443:443"
-      - "3001:3001"
+      - "${MC_IAM_MANAGER_NGINX_HTTP_PORT}:80"
+      - "${MC_IAM_MANAGER_NGINX_HTTPS_PORT}:443"
+      - "${MC_WEB_CONSOLE_FRONT_PORT}:${MC_WEB_CONSOLE_FRONT_PORT}"
+      - "${MC_OBSERVABILITY_GRAFANA_PROXY_PORT}:${MC_OBSERVABILITY_GRAFANA_PROXY_PORT}"
+      - "${MC_COST_OPTIMIZER_FE_PROXY_PORT}:${MC_COST_OPTIMIZER_FE_PROXY_PORT}"
     environment:
-      - DOMAIN_NAME=${MC_IAM_MANAGER_KEYCLOAK_DOMAIN}
+      - DOMAIN_NAME=${MC_IAM_MANAGER_PUBLIC_DOMAIN}
     volumes:
       - ./container-volume/mc-iam-manager/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
       - ./container-volume/mc-iam-manager/certs:/etc/nginx/certs:ro
@@ -339,6 +345,8 @@ services:
       - mc-iam-manager-kc
     networks:
       - mc-iam-manager-network
+      - mc-observability-network
+      - mc-cost-optimizer-network
 
   mc-iam-manager-post-initial:
     image: ubuntu:22.04
@@ -376,7 +384,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 80
-        published: 7780
+        published: ${MC_COST_OPTIMIZER_FE_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-be
@@ -397,7 +405,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 9090
-        published: 9090
+        published: ${MC_COST_OPTIMIZER_BE_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -430,7 +438,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 8081
-        published: 8881
+        published: ${MC_COST_OPTIMIZER_COLLECTOR_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -458,7 +466,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 8082
-        published: 18082
+        published: ${MC_COST_OPTIMIZER_PROCESSOR_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -484,7 +492,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 8083
-        published: 8083
+        published: ${MC_COST_OPTIMIZER_SELECTOR_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -507,7 +515,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 9000
-        published: 9000
+        published: ${MC_COST_OPTIMIZER_ALARM_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -535,7 +543,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 8091
-        published: 8091
+        published: ${MC_COST_OPTIMIZER_ASSET_COLLECTOR_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -560,7 +568,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 8093
-        published: 18093
+        published: ${MC_COST_OPTIMIZER_AZURE_COLLECTOR_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -596,7 +604,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 8094
-        published: 18094
+        published: ${MC_COST_OPTIMIZER_NCP_COLLECTOR_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -633,7 +641,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 8092
-        published: 18092
+        published: ${MC_COST_OPTIMIZER_AZURE_RIGHTSIZER_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -669,7 +677,7 @@ services:
         - mc-web-console-network
       ports:
         - target: 8095
-          published: 18095
+          published: ${MC_COST_OPTIMIZER_NCP_RIGHTSIZER_PORT}
           protocol: tcp
       depends_on:
         - mc-cost-optimizer-db
@@ -718,7 +726,7 @@ services:
       - --skip-character-set-client-handshake
     ports:
       - target: 3306
-        published: 3307
+        published: ${MC_COST_OPTIMIZER_DB_HOST_PORT}
         protocol: tcp
     volumes:
       - ./conf/mc-cost-optimizer/init/:/docker-entrypoint-initdb.d
@@ -740,7 +748,7 @@ services:
       - mc-application-manager-network
     ports:
       - target: 5432
-        published: 18085
+        published: ${MC_APPLICATION_MANAGER_DB_HOST_PORT}
         protocol: tcp
     volumes:
       - ./container-volume/mc-application-manager/am_db/data:/var/lib/postgresql/data
@@ -764,10 +772,10 @@ services:
       - mc-web-console-network
     ports:
       - target: 8081
-        published: 8081
+        published: ${MC_APPLICATION_MANAGER_NEXUS_PORT}
         protocol: tcp
       - target: 5000
-        published: 5500
+        published: ${MC_APPLICATION_MANAGER_NEXUS_DOCKER_PORT}
         protocol: tcp
     volumes:
       - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
@@ -791,7 +799,7 @@ services:
       - mc-observability-network
     ports:
       - target: 18084
-        published: 18084
+        published: ${MC_APPLICATION_MANAGER_PORT}
         protocol: tcp
     volumes:
       - ./tool/mcc:/app/tool/mcc
@@ -827,7 +835,7 @@ services:
       - mc-infra-manager-network
     ports:
       - target: 8080
-        published: 9880
+        published: ${MC_WORKFLOW_MANAGER_JENKINS_PORT}
         protocol: tcp
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
@@ -854,7 +862,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 18083
-        published: 18083
+        published: ${MC_WORKFLOW_MANAGER_PORT}
         protocol: tcp
     volumes:
       - ./tool/mcc:/app/tool/mcc
@@ -894,7 +902,7 @@ services:
         condition: service_healthy
     tty: true
     ports:
-      - "3300:3300"
+      - "${MC_DATA_MANAGER_PORT}:3300"
     restart : always
     volumes:
       - ./data:/app/data/ # container-volume
@@ -926,7 +934,7 @@ services:
       - ./container-volume/mc-data-manager/mariadb:/var/lib/mysql
     ports:
       - target: 3306
-        published: 3301
+        published: ${MC_DATA_MANAGER_DB_HOST_PORT}
         protocol: tcp
     healthcheck:
       test: ["CMD", "healthcheck.sh", "--su-mysql", "--connect", "--innodb_initialized"]
@@ -963,7 +971,7 @@ services:
     platform: linux/amd64
     ports:
       - target: 5432
-        published: 15432
+        published: ${MC_WEB_CONSOLE_DB_HOST_PORT}
         protocol: tcp
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U ${MC_WEB_CONSOLE_POSTGRES_USER}" ]
@@ -990,7 +998,7 @@ services:
       - mc-cost-optimizer-be
     ports:
       - target: 3000
-        published: 3000
+        published: ${MC_WEB_CONSOLE_API_PORT}
         protocol: tcp
     networks:
       - mc-web-console-network
@@ -1010,6 +1018,8 @@ services:
       IFRAME_TARGET_IS_HOST: true
       MC_IAM_MANAGER_HOST: mc-iam-manager
       MC_IAM_MANAGER_PORT: ${MC_IAM_MANAGER_PORT}
+      MC_OBSERVABILITY_GRAFANA_PUBLIC_HOST: ${MC_OBSERVABILITY_GRAFANA_PUBLIC_HOST}
+      MC_COST_OPTIMIZER_FE_PUBLIC_HOST: ${MC_COST_OPTIMIZER_FE_PUBLIC_HOST}
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-web-console/api/conf/:/conf/
@@ -1051,7 +1061,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 18080
-        published: 18080
+        published: ${MC_OBSERVABILITY_MANAGER_PORT}
         protocol: tcp
     depends_on:
       mc-observability-grafana:
@@ -1088,7 +1098,7 @@ services:
       - mc-observability-network
     ports:
       - target: 3000
-        published: 33000
+        published: ${MC_OBSERVABILITY_INFRA_PORT}
         protocol: tcp
     depends_on:
       mc-observability-maria:
@@ -1136,13 +1146,13 @@ services:
       - mc-observability-network
     ports:
       - target: 5672
-        published: 5672
+        published: ${MC_OBSERVABILITY_RABBITMQ_AMQP_PORT}
         protocol: tcp
       - target: 1883
-        published: 1883
+        published: ${MC_OBSERVABILITY_RABBITMQ_MQTT_PORT}
         protocol: tcp
       - target: 15672
-        published: 15672
+        published: ${MC_OBSERVABILITY_RABBITMQ_MGMT_PORT}
         protocol: tcp
       # - target: 8883
       #   published: 8883
@@ -1174,7 +1184,7 @@ services:
       - mc-observability-network
     ports:
       - target: 3306
-        published: 3306
+        published: ${MC_OBSERVABILITY_MARIA_PORT}
         protocol: tcp
     environment:
       - TZ="Asia/Seoul"
@@ -1213,7 +1223,7 @@ services:
       - mc-observability-network
     ports:
       - target: 8086
-        published: 8086
+        published: ${MC_OBSERVABILITY_INFLUX_PORT}
         protocol: tcp
     depends_on:
       mc-observability-influx-init-volumes:
@@ -1250,7 +1260,7 @@ services:
       - mc-observability-network
     ports:
       - target: 8086
-        published: 8087
+        published: ${MC_OBSERVABILITY_INFLUX_2_PORT}
         protocol: tcp
     depends_on:
       mc-observability-influx-init-volumes:
@@ -1322,7 +1332,7 @@ services:
       - mc-observability-network
     ports:
       - target: 3100
-        published: 3100
+        published: ${MC_OBSERVABILITY_LOKI_PORT}
         protocol: tcp
     depends_on:
       mc-observability-loki-init-volumes:
@@ -1363,13 +1373,13 @@ services:
       - mc-observability-network
     ports:
       - target: 3200
-        published: 3200
+        published: ${MC_OBSERVABILITY_TEMPO_PORT}
         protocol: tcp
       - target: 4317
-        published: 4317
+        published: ${MC_OBSERVABILITY_TEMPO_GRPC_PORT}
         protocol: tcp
       - target: 4318
-        published: 4318
+        published: ${MC_OBSERVABILITY_TEMPO_GRPC_HTTP_PORT}
         protocol: tcp
     depends_on:
       mc-observability-tempo-init-volumes:
@@ -1410,7 +1420,7 @@ services:
       - mc-observability-network
     ports:
       - target: 3000
-        published: 33001
+        published: ${MC_OBSERVABILITY_GRAFANA_PORT}
         protocol: tcp
     depends_on:
       mc-observability-grafana-init-volumes:
@@ -1433,179 +1443,4 @@ services:
         fi
         curl -k -s https://127.0.0.1:8443
         STATUS=`echo $$?`
-        if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then
-          exit 1
-        fi
-      interval: 10s
-      timeout: 10s
-      retries: 30
-
-  mc-observability-insight:
-    image: cloudbaristaorg/mc-observability-insight:0.5.0
-    container_name: mc-observability-insight
-    networks:
-      - mc-observability-network
-    ports:
-      - target: 9001
-        published: 9001
-        protocol: tcp
-    depends_on:
-      mc-observability-maria:
-        condition: service_healthy
-    environment:
-      - TZ=Asia/Seoul
-      - OLLAMA_BASE_URL=${MC_INFRA_MANAGER_OLLAMA_BASE_URL:-}
-    volumes:
-      - ./tool/mcc:/app/tool/mcc
-      - shared_logs:/mc-insight/log:rw
-    healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9001/readyz" ]
-      <<: *default-health-check
-
-  mc-observability-insight-scheduler:
-    image: cloudbaristaorg/mc-observability-insight-scheduler:0.5.0
-    container_name: mc-observability-insight-scheduler
-    networks:
-      - mc-observability-network
-    ports:
-      - target: 9002
-        published: 9002
-        protocol: tcp
-    depends_on:
-      mc-observability-maria:
-        condition: service_started
-    environment:
-      - TZ=Asia/Seoul
-      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
-      - AIRFLOW__SCHEDULER__ENABLE_HEALTH_CHECK=true
-    volumes:
-      - ./tool/mcc:/app/tool/mcc
-      - /etc/localtime:/etc/localtime:ro
-      - ./container-volume/mc-observability/scheduler/logs:/usr/local/airflow/logs
-    command: >
-      /bin/bash -c "
-        # Wait for MySQL
-        sleep 10
-
-        # Clean up pid
-        rm -f airflow-webserver.pid
-
-        # Set up metadata database
-        airflow db init
-
-        # Create default user
-        airflow users create --username admin --password admin --email admin@test.com --firstname admin --lastname admin --role Admin
-
-        # Import variables & Make connections
-        # airflow variables import -a overwrite /usr/local/airflow/airflow_variables.json
-        airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-observability-manager:18080/api/o11y
-
-        airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
-        airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
-        airflow connections add --conn-type http --conn-host mc-observability-manager --conn-port 18080 o11y-manager
-        airflow connections add --conn-type influxdb --conn-host mc-observability-influx --conn-port 8086 --conn-schema downsampling --conn-login mc-agent --conn-password mc-agent influxdb
-
-        # Reload & Run dags
-        airflow dags reserialize
-        airflow dags unpause anomaly_detection
-        airflow dags unpause down_sampling
-
-        # Start airflow
-        airflow scheduler & airflow webserver -p 9002
-
-        # Keep the server on no matter what
-        sleep infinity
-            "
-    healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:9002/health" ]
-      <<: *default-health-check
-
-  mc-observability-log-collector:
-    image: fluent/fluent-bit:3.2.4
-    container_name: mc-observability-log-collector
-    restart: on-failure
-    networks:
-      - mc-observability-network
-    depends_on:
-      mc-observability-loki:
-        condition: service_healthy
-    environment:
-      - TZ=Asia/Seoul
-      - LOKI_HOST=mc-observability-loki
-      - LOKI_PORT=3100
-    volumes:
-      - ./tool/mcc:/app/tool/mcc
-      - ./conf/mc-observability/log-collector:/fluent-bit/etc:ro
-      - shared_logs:/logs:ro
-    command:
-      - /fluent-bit/bin/fluent-bit
-      - -c
-      - /fluent-bit/etc/fluent-bit.conf
-    healthcheck:
-      test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://127.0.0.1:2020/api/v1/health" ]
-      <<: *default-health-check
-
-##### Remove annotations when using LLM-based log and alarm analysis #####
-#  mc-observability-mcp-grafana:
-#    image: mcp/grafana:latest
-#    container_name: mc-observability-mcp-grafana
-#    restart: on-failure
-#    networks:
-#      - mc-observability-network
-#    ports:
-#      - target: 8000
-#        published: 8000
-#        protocol: tcp
-#    environment:
-#      - GRAFANA_URL=http://mc-observability-grafana:3000
-#    entrypoint: ["/bin/bash", "/app/docker-entrypoint.sh"]
-#    command: ["/bin/bash", "-c", "chmod +x /app/docker-entrypoint.sh"]
-#    volumes:
-#      - ./conf/mc-observability/mcp-grafana/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
-#      - grafana_shared_config:/grafana_config
-#    tty: true
-#    stdin_open: true
-#
-#  mc-observability-mcp-mariadb:
-#    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.5.0
-#    container_name: mc-observability-mcp-mariadb
-#    restart: on-failure
-#    networks:
-#      - mc-observability-network
-#    ports:
-#      - target: 8001
-#        published: 8001
-#        protocol: tcp
-#    depends_on:
-#      mc-observability-maria:
-#        condition: service_healthy
-#    environment:
-#      - TZ=Asia/Seoul
-#      - DB_HOST=mc-observability-maria
-#      - DB_PORT=3306
-#      - DB_USER=mc-agent
-#      - DB_PASSWORD=mc-agent
-#      - DB_NAME=mc_observability
-#      - MCP_READ_ONLY=true
-#      - MCP_MAX_POOL_SIZE=10
-#      - OPENAI_API_KEY=${MC_INFRA_MANAGER_OPENAI_API_KEY:-}
-#
-#  mc-observability-mcp-influx:
-#    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.5.0
-#    container_name: mc-observability-mcp-influx
-#    restart: always
-#    networks:
-#      - mc-observability-network
-#    ports:
-#      - target: 8002
-#        published: 8002
-#        protocol: tcp
-#    depends_on:
-#      mc-observability-influx:
-#        condition: service_healthy
-#    environment:
-#      - TZ=Asia/Seoul
-#      - INFLUXDB_URL=http://mc-observability-influx:8086
-#      - INFLUXDB_USER=mc-agent
-#      - INFLUXDB_PASSWORD=mc-agent
-#      - INFLUXDB_DATABASE=mc-observability
+        if [ $$STATUS != 0 
