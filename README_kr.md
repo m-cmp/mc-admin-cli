@@ -60,51 +60,55 @@ git clone https://github.com/m-cmp/mc-admin-cli.git
 cd mc-admin-cli/bin
 ```
 
+## Step 1-1. mcc 바이너리 동작 확인 (선택)
+
+진행 전 배포된 바이너리가 현재 시스템에서 실행되는지 확인하세요:
+```shell
+./mcc --version
+```
+
+아래와 같은 오류가 발생하면:
+```
+./mcc: /lib/x86_64-linux-gnu/libc.so.6: version `GLIBC_2.34' not found
+```
+배포된 바이너리가 현재 OS보다 높은 GLIBC 버전을 필요로 합니다 (예: Ubuntu 20.04는 GLIBC 2.31 제공). 아래 [정적 바이너리 빌드](#정적-바이너리-빌드)를 참고하여 소스에서 직접 빌드 후 이 단계로 돌아오세요.
+
 ## Step 2. 배포 모드 선택
 
-`installAll.sh` 실행 전에 환경에 맞는 모드를 선택하고 `conf/docker/conf/mc-iam-manager/.env` (또는 설정 워크플로 사용 시 `conf/docker/.env.setup`)에서 `MC_IAM_MANAGER_PUBLIC_DOMAIN`을 설정하세요.
+환경에 맞는 모드를 선택하세요. `installAll.sh`가 대화형으로 안내하며, `.env` 파일을 수동으로 편집할 필요가 없습니다.
 
 | | **Mode A — 로컬 / 개발** | **Mode B — 운영** |
 |---|---|---|
-| 도메인 | 로컬 이름 (예: `mciam.local`) | 공개 FQDN (예: `mciam.example.com`) |
-| TLS 인증서 | 자가서명 (`0_preset_dev.sh`로 생성) | Let's Encrypt certbot (`0_preset_prod.sh`) |
-| DNS | `/etc/hosts`에 수동 추가 | 공개 DNS A-레코드 → 서버 IP |
+| 도메인 | 로컬 이름 (기본값: `mciam.local`) | 공개 FQDN (예: `iam.example.com`) |
+| TLS 인증서 | 자가서명 (자동 생성) | Let's Encrypt certbot |
+| DNS | `/etc/hosts` 자동 추가 | 공개 DNS A-레코드 → 서버 IP |
 | installAll.sh 플래그 | `--mode dev` | `--mode prod` |
 | 브라우저 경고 | 인증서 경고 (개발 환경에서 허용) | 경고 없음 (공인 CA) |
 
-**Mode A — `MC_IAM_MANAGER_PUBLIC_DOMAIN`을 로컬 도메인으로 설정:**
-```shell
-# conf/docker/conf/mc-iam-manager/.env
-MC_IAM_MANAGER_PUBLIC_DOMAIN=mciam.local    # 원하는 호스트명 사용 가능
-
-# 클라이언트 머신의 /etc/hosts에 추가
-echo "127.0.0.1  mciam.local" | sudo tee -a /etc/hosts
-```
-
-**Mode B — 등록된 FQDN 설정 (DNS A-레코드가 이 서버의 공인 IP를 가리켜야 함):**
-```shell
-# conf/docker/conf/mc-iam-manager/.env
-MC_IAM_MANAGER_PUBLIC_DOMAIN=mciam.example.com
-
-# 시작 전 Let's Encrypt 인증서 발급 (80번 포트가 비어 있어야 함)
-docker compose -f conf/docker/docker-compose.cert.yaml --env-file conf/docker/.env up
-```
+**Mode B 사전 조건** — `installAll.sh` 실행 전에 도메인의 DNS A-레코드가 이 서버의 공인 IP를 가리키고 있어야 합니다.
 
 ## Step 3. installAll.sh 실행
 
-`installAll.sh`는 TLS 인증서를 생성(Mode A)하거나 검증(Mode B)하고, 템플릿으로부터 nginx 설정을 만들며, 선택적으로 컨테이너를 시작합니다.
+`installAll.sh`는 자동으로 다음 작업을 수행합니다:
+1. `.env` 파일이 없으면 `.env.setup` 템플릿에서 자동 생성
+2. Mode(A/B)와 도메인을 대화형으로 입력받거나 CLI 플래그로 처리
+3. 환경 파일에 도메인 값 자동 주입
+4. TLS 인증서 생성(Mode A: 자가서명, Mode B: Let's Encrypt) 및 nginx 설정 생성
 
 ```shell
-# 대화형 모드
+# 대화형 모드 — Mode, 도메인, 실행 모드를 순서대로 안내
 ./installAll.sh
 
-# 비대화형: Mode A — 자가서명 인증서 생성 후 백그라운드 시작
+# 비대화형: Mode A — 기본 도메인(mciam.local), 백그라운드 시작
 ./installAll.sh --mode dev --run background
 
-# 비대화형: Mode B — 인증서 검증 후 백그라운드 시작
-./installAll.sh --mode prod --run background
+# 비대화형: Mode A — 커스텀 로컬 도메인
+./installAll.sh --mode dev --domain myhost.local --run background
 
-# 비대화형: 설정 파일만 생성, 컨테이너 시작 건너뜀
+# 비대화형: Mode B — 실제 도메인, 백그라운드 시작
+./installAll.sh --mode prod --domain iam.example.com --run background
+
+# 설정 파일만 생성, 컨테이너 시작 건너뜀
 ./installAll.sh --mode dev --run skip
 ```
 
@@ -280,24 +284,38 @@ cd mc-admin-cli/bin
 
 ---
 
-# 소스 코드에서 운영자를 빌드하는 명령어
-```Shell
-$ git clone https://github.com/m-cmp/mc-admin-cli.git
-$ cd mc-admin-cli/src
+# 소스에서 빌드
 
-(의존성 설정)
-mc-admin-cli/src$ go get -u
+## 정적 바이너리 빌드
 
-(mcc용 바이너리 빌드)
-mc-admin-cli/src$ go build -o mcc
+배포된 `bin/mcc` 실행 시 GLIBC 버전 오류가 발생하는 경우 (예: Ubuntu 20.04 또는 GLIBC 2.34 미만 환경) 소스에서 정적으로 빌드하세요:
 
-**기계의 os 타입에 따라 Makerfile을 사용하여 mcc용 바이너리 빌드**
-mc-admin-cli/src$ make
-mc-admin-cli/src$ make win
-mc-admin-cli/src$ make mac
-mc-admin-cli/src$ make linux-arm
-mc-admin-cli/src$ make win86
-mc-admin-cli/src$ make mac-arm
+```shell
+cd mc-admin-cli/src
+CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o ../bin/mcc
+```
+
+`CGO_ENABLED=0`으로 빌드하면 GLIBC 의존성 없는 완전 정적 바이너리가 생성됩니다. GLIBC 버전과 무관하게 모든 Linux 배포판에서 실행됩니다.
+
+> **최소 Go 버전**: 1.21 이상. Go가 없는 경우 https://go.dev/dl/ 에서 설치하세요.
+
+## 플랫폼별 빌드 (Makefile)
+
+```shell
+cd mc-admin-cli/src
+
+# 의존성 설치 / 업데이트
+go get -u
+
+# 현재 플랫폼으로 빌드 (기본: linux amd64)
+make
+
+# 다른 타겟으로 크로스 컴파일
+make win        # Windows amd64
+make mac        # macOS amd64
+make linux-arm  # Linux arm64
+make win86      # Windows 386
+make mac-arm    # macOS arm64
 ```
 
 # mcc 사용 방법
