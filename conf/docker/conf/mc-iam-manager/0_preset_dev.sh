@@ -28,9 +28,27 @@ CURRENT_GROUP=$(id -gn)
 
 echo "Current user: ${CURRENT_USER}:${CURRENT_GROUP}"
 
-mkdir -p "${CERT_PARENT_DIR}" || { echo "Error: Failed to create ${CERT_PARENT_DIR}"; exit 1; }
-chown -R "${CURRENT_USER}:${CURRENT_GROUP}" "${CERT_PARENT_DIR}" || { echo "Error: Failed to change ownership of ${CERT_PARENT_DIR}"; exit 1; }
-echo "✓ Container volume directory created and permissions set"
+# Only the certs/ and nginx/ subdirs need to be writable by this script.
+# postgres/ and keycloak/ are Docker-managed and may be root-owned from a
+# previous run — do not touch them. Newly mkdir'd dirs are user-owned automatically,
+# so chown is unnecessary. If mkdir or the writable check fails, the root-owned
+# state must be cleared first via cleanAll.sh (which handles sudo interactively).
+for _dir in "${CERT_PARENT_DIR}/certs" "${CERT_PARENT_DIR}/nginx"; do
+    if ! mkdir -p "$_dir" 2>/dev/null; then
+        echo "❌ Error: Cannot create $_dir"
+        echo "   A previous Docker run likely left root-owned files in the parent directory."
+        echo "   Please run the cleanup script first, then re-run installAll.sh:"
+        echo "       cd ${SCRIPT_DIR}/../../bin && ./cleanAll.sh"
+        exit 1
+    fi
+    if [ ! -w "$_dir" ]; then
+        echo "❌ Error: $_dir exists but is not writable by ${CURRENT_USER}."
+        echo "   Please run the cleanup script first, then re-run installAll.sh:"
+        echo "       cd ${SCRIPT_DIR}/../../bin && ./cleanAll.sh"
+        exit 1
+    fi
+done
+echo "✓ Certificate and nginx directories ready"
 
 
 # 템플릿 파일 경로

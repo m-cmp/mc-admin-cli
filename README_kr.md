@@ -284,6 +284,33 @@ cd mc-admin-cli/bin
 
 ---
 
+# 트러블슈팅
+
+## 설치 후 `mc-iam-manager`가 계속 unhealthy 상태일 때
+
+`./mcc infra info`에서 `mc-iam-manager`가 **unhealthy**로 표시되고,
+`docker logs mc-iam-manager-post-initial`의 마지막 줄이 `ERROR: 1_setup_auto.sh Script execution failed`라면,
+`mc-iam-manager`가 완전히 기동되기 전에 post-init 컨테이너가 먼저 실행된 것입니다.
+
+**복구 절차:**
+
+```bash
+# 1. 모든 사전 조건 컨테이너가 healthy인지 확인
+cd bin && ./mcc infra info
+
+# 2. 종료된 post-init 컨테이너를 제거한 뒤 재실행 (멱등성 보장 — 반복 실행 안전)
+docker rm mc-iam-manager-post-initial 2>/dev/null
+./mcc infra run -s mc-iam-manager-post-initial
+docker logs -f mc-iam-manager-post-initial
+# 8단계 각각이 ✓ 로 완료되어야 합니다
+
+# 3. 헬스 상태 확인
+curl -s http://localhost:5000/readyz | jq .
+# 기대 결과: "status": "healthy"
+```
+
+---
+
 # 소스에서 빌드
 
 ## 정적 바이너리 빌드
