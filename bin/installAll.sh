@@ -10,8 +10,11 @@ usage() {
     echo ""
     echo "Options:"
     echo "  -m, --mode <MODE>           IAM mode selection (dev|prod)"
-    echo "                              dev:  Developer mode with local authentication"
-    echo "                              prod: Production mode with CA authentication"
+    echo "                              dev:  Developer mode with self-signed certificate (Mode A)"
+    echo "                              prod: Production mode with Let's Encrypt certificate (Mode B)"
+    echo "  -d, --domain <DOMAIN>       Public domain for HTTPS"
+    echo "                              dev default: mciam.local"
+    echo "                              prod:        required (e.g. iam.example.com)"
     echo "  -r, --run <RUN_MODE>        Service run mode (log|background|skip)"
     echo "                              log:        Run with log mode"
     echo "                              background: Run in background with monitoring"
@@ -19,9 +22,10 @@ usage() {
     echo "  -h, --help                  Display this help message"
     echo ""
     echo "Examples:"
-    echo "  $0 -m dev -r background     # Configure dev mode and run in background"
-    echo "  $0 --mode prod --run skip   # Configure production mode without running"
-    echo "  $0                          # Interactive mode (run without parameters)"
+    echo "  $0 -m dev -r background              # Mode A with default domain (mciam.local)"
+    echo "  $0 -m dev -d dev.local -r background # Mode A with custom domain"
+    echo "  $0 -m prod -d iam.example.com -r skip # Mode B with real domain"
+    echo "  $0                                   # Interactive mode"
     exit 1
 }
 
@@ -29,12 +33,17 @@ usage() {
 # Parameter Parsing
 # =============================================================================
 IAM_MODE=""
+IAM_DOMAIN=""
 RUN_MODE=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         -m|--mode)
             IAM_MODE="$2"
+            shift 2
+            ;;
+        -d|--domain)
+            IAM_DOMAIN="$2"
             shift 2
             ;;
         -r|--run)
@@ -170,6 +179,75 @@ if [ -z "$IAM_MODE" ]; then
     done
 fi
 
+# =============================================================================
+# .env Bootstrap
+# =============================================================================
+
+PROJECT_ROOT_ABS="$(cd "$ORIGINAL_DIR/../conf/docker" && pwd)"
+
+ensure_env_file() {
+    local setup_file="$1"
+    local env_file="$2"
+    if [ ! -f "$env_file" ]; then
+        if [ -f "$setup_file" ]; then
+            cp "$setup_file" "$env_file"
+            echo "✓ Created $(basename "$env_file") from $(basename "$setup_file")"
+        else
+            echo "Error: $setup_file not found."
+            exit 1
+        fi
+    fi
+}
+
+ensure_env_file "$PROJECT_ROOT_ABS/.env.setup"                            "$PROJECT_ROOT_ABS/.env"
+ensure_env_file "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env.setup"        "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env"
+
+# =============================================================================
+# Domain Configuration
+# =============================================================================
+
+if [ -z "$IAM_DOMAIN" ]; then
+    echo ""
+    echo "=========================================="
+    echo "Public Domain Configuration"
+    echo "=========================================="
+    if [ "$IAM_MODE" = "dev" ]; then
+        echo ""
+        echo "Mode A: self-signed certificate will be issued for this domain."
+        echo "Default is 'mciam.local' (added to /etc/hosts automatically)."
+        echo ""
+        echo -n "Enter public domain [mciam.local]: "
+        read -r IAM_DOMAIN
+        IAM_DOMAIN="${IAM_DOMAIN:-mciam.local}"
+    else
+        echo ""
+        echo "Mode B: Let's Encrypt certificate will be issued for this domain."
+        echo "The domain must be a real FQDN with valid DNS pointing to this server."
+        echo ""
+        while [ -z "$IAM_DOMAIN" ]; do
+            echo -n "Enter public FQDN (e.g. iam.example.com): "
+            read -r IAM_DOMAIN
+            if [ -z "$IAM_DOMAIN" ]; then
+                echo "Domain is required for Production Mode. Please enter a valid FQDN."
+            fi
+        done
+    fi
+fi
+
+echo ""
+echo "Using domain: $IAM_DOMAIN"
+
+apply_domain() {
+    local env_file="$1"
+    local domain="$2"
+    sed -i "s|^MC_IAM_MANAGER_PUBLIC_DOMAIN=.*|MC_IAM_MANAGER_PUBLIC_DOMAIN=${domain}|" "$env_file"
+    echo "✓ Set MC_IAM_MANAGER_PUBLIC_DOMAIN=${domain} in ${env_file##*/conf/docker/}"
+}
+
+apply_domain "$PROJECT_ROOT_ABS/.env"                            "$IAM_DOMAIN"
+apply_domain "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env"        "$IAM_DOMAIN"
+
+# =============================================================================
 # Process selected mode
 case $IAM_MODE in
     dev)
