@@ -303,6 +303,33 @@ The following ports must be registered in the firewall:
 
 ---
 
+# Troubleshooting
+
+## `mc-iam-manager` Stays Unhealthy After Install
+
+If `./mcc infra info` shows `mc-iam-manager` as **unhealthy** and
+`docker logs mc-iam-manager-post-initial` ends with `ERROR: 1_setup_auto.sh Script execution failed`,
+the post-init container started before `mc-iam-manager` finished its first boot.
+
+**Recovery steps:**
+
+```bash
+# 1. Confirm all prerequisites are healthy
+cd bin && ./mcc infra info
+
+# 2. Remove the exited post-init container, then re-run it (idempotent — safe to repeat)
+docker rm mc-iam-manager-post-initial 2>/dev/null
+./mcc infra run -s mc-iam-manager-post-initial
+docker logs -f mc-iam-manager-post-initial
+# Each of the 8 setup steps should finish with ✓
+
+# 3. Verify
+curl -s http://localhost:5000/readyz | jq .
+# Expected: "status": "healthy"
+```
+
+---
+
 # Build from Source
 
 ## Build a Static Binary
