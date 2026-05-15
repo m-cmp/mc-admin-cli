@@ -996,11 +996,6 @@ services:
       - mc-infra-connector
       - mc-infra-manager
       - mc-iam-manager
-      - mc-observability-manager
-      - mc-workflow-manager
-      - mc-data-manager
-      - mc-application-manager
-      - mc-cost-optimizer-be
     ports:
       - target: 3000
         published: ${MC_WEB_CONSOLE_API_PORT}
@@ -1023,8 +1018,6 @@ services:
       IFRAME_TARGET_IS_HOST: true
       MC_IAM_MANAGER_HOST: mc-iam-manager
       MC_IAM_MANAGER_PORT: ${MC_IAM_MANAGER_PORT}
-      MC_OBSERVABILITY_GRAFANA_PUBLIC_HOST: ${MC_OBSERVABILITY_GRAFANA_PUBLIC_HOST}
-      MC_COST_OPTIMIZER_FE_PUBLIC_HOST: ${MC_COST_OPTIMIZER_FE_PUBLIC_HOST}
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-web-console/api/conf/:/conf/
