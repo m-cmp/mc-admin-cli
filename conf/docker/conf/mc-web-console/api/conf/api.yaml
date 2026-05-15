@@ -52,7 +52,7 @@ services:
 
   mc-cost-optimizer-fe:
     version: 0.4.0
-    baseurl: http://mc-cost-optimizer-fe:80
+    baseurl: http://mc-cost-optimizer-fe:7780
     auth:
 
   mc-data-manager:
