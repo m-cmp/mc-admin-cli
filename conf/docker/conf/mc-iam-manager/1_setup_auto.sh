@@ -644,6 +644,18 @@ configure_keycloak_client_uris() {
 
     KC_ADMIN_URL="${MC_IAM_MANAGER_KEYCLOAK_HOST}/admin/realms/${MC_IAM_MANAGER_KEYCLOAK_REALM}"
 
+    # Keycloak realm Frontend URL 설정 (토큰 iss 클레임 base URL)
+    REALM_HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
+        "${MC_IAM_MANAGER_KEYCLOAK_HOST}/admin/realms/${MC_IAM_MANAGER_KEYCLOAK_REALM}" \
+        -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+        -H "Content-Type: application/json" \
+        -d "{\"attributes\": {\"frontendUrl\": \"${MC_IAM_MANAGER_PUBLIC_HOST}\"}}")
+    if [ "$REALM_HTTP" = "204" ]; then
+        echo "  ✓ Keycloak realm frontendUrl set to ${MC_IAM_MANAGER_PUBLIC_HOST}"
+    else
+        echo "  ⚠️  Failed to set realm frontendUrl (HTTP $REALM_HTTP) — tokens may use internal iss"
+    fi
+
     # mciamClient, mciam-oidc-Client 두 클라이언트 설정
     for CLIENT_NAME in "$MC_IAM_MANAGER_KEYCLOAK_CLIENT_NAME" "$MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_NAME"; do
         [ -z "$CLIENT_NAME" ] && continue
