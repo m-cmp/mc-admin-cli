@@ -179,8 +179,10 @@ Or run individual steps manually using `conf/docker/conf/mc-iam-manager/1_setup_
 ```shell
 curl -kI https://<DOMAIN>:33002    # Grafana dashboard proxy
 curl -kI https://<DOMAIN>:7781     # Cost Optimizer FE proxy
+curl -k  https://<DOMAIN>:9090/api/costopti/be/readyz    # Cost Optimizer BE proxy
+curl -k  https://<DOMAIN>:9000/actuator/health 2>/dev/null || true  # Cost Optimizer alarm proxy
 ```
-Expected: `HTTP/2 200` for both.
+Expected: `:33002` and `:7781` return `HTTP/2 200`; `:9090/readyz` returns `Application is ready`.
 
 ## Step 6. Initialize CB-Tumblebug & Access the Web Console
 
@@ -202,6 +204,48 @@ If you want to completely reset the environment (removes all Docker containers, 
 cd mc-admin-cli/bin
 ./cleanAll.sh
 ```
+
+> **When to run cleanAll.sh**: Always run a full clean before switching deployment modes (dev ↔ prod) or changing the domain. Re-running `installAll.sh` over an existing setup without cleaning first can leave stale certificates, nginx config, or DB state that conflicts with the new configuration.
+
+---
+
+## Known Issues
+
+### Cost Optimizer iframe — BE API (in-place workaround required)
+
+The Cost Optimizer frontend JavaScript bundle contains hardcoded URL logic that selects the backend API host at runtime:
+
+| Access method | BE/alarm URL selected | Result |
+|---|---|---|
+| `localhost` | `http://localhost:9090` | OK (same-origin, no TLS) |
+| IP address | `https://{ip}:9090` | OK — IAM nginx HTTPS proxy on :9090 |
+| Domain | `https://{domain}:9090` | OK — IAM nginx HTTPS proxy on :9090 |
+
+After every container recreation, apply the following in-place patch to the FE bundle:
+
+```bash
+# Find the actual bundle filename first
+JS=$(docker exec mc-cost-optimizer-fe ls /usr/share/nginx/html/assets/index-*.js 2>/dev/null | head -1)
+
+docker exec mc-cost-optimizer-fe sh -c "
+  # IP branch: http:// → https://
+  sed -i 's|t=\`http://\${r}:9090\`,i=\`http://\${r}:9000\`|t=\`https://\${r}:9090\`,i=\`https://\${r}:9000\`|g' $JS
+  # Domain branch: no-port https:// → explicit :9090/:9000
+  sed -i 's|t=\`https://\${r}\`,i=\`https://\${r}\`|t=\`https://\${r}:9090\`,i=\`https://\${r}:9000\`|g' $JS
+"
+```
+
+> **Root fix**: The mc-cost-optimizer-fe source code needs to be updated so it always uses `https://{host}:9090` for IP and domain cases. See `todo_mc-cost-optimizer.md` for the development team handoff.
+
+### HSTS Cache — switching between dev and prod on the same domain
+
+When you switch from Mode A (self-signed cert) to Mode B (Let's Encrypt) using the same domain, the browser's HSTS cache may block the connection during the transition.
+
+**Workaround**:
+1. Use an incognito/private window for the first access after switching, **or**
+2. Clear the HSTS cache manually:
+   - **Chrome/Edge**: navigate to `chrome://net-internals/#hsts` → "Delete domain security policies" → enter your domain → Delete
+   - **Firefox**: use a new browser profile or delete `SiteSecurityServiceState.txt` from your profile folder
 
 
 ## Firewall Port Information
@@ -235,12 +279,12 @@ The following ports should be registered in the firewall if needed:
 ### **MC-COST-OPTIMIZER**
 | Service | Port | Protocol | Description |
 |---------|------|----------|-------------|
-| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend |
-| mc-cost-optimizer-be | 9090 | TCP | Cost Optimizer Backend |
+| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend (internal, accessed via :7781 HTTPS proxy) |
+| mc-cost-optimizer-be | 9090 | TCP | Cost Optimizer Backend (internal, accessed via IAM nginx :9090 HTTPS proxy) |
 | mc-cost-optimizer-cost-collector | 8881 | TCP | Cost Collector |
 | mc-cost-optimizer-cost-processor | 18082 | TCP | Cost Processor |
 | mc-cost-optimizer-cost-selector | 8083 | TCP | Cost Selector |
-| mc-cost-optimizer-alarm-service | 9000 | TCP | Alarm Service |
+| mc-cost-optimizer-alarm-service | 9000 | TCP | Alarm Service (internal, accessed via IAM nginx :9000 HTTPS proxy) |
 | mc-cost-optimizer-asset-collector | 8091 | TCP | Asset Collector |
 | mc-cost-optimizer-db | 3307 | TCP | MariaDB |
 
@@ -295,10 +339,11 @@ The following ports must be registered in the firewall:
 |---------|------|----------|-------------|
 | mc-iam-manager-nginx | 80, 443 | TCP | Nginx entry point (HTTP redirect + HTTPS web console) |
 | mc-iam-manager-nginx | 3001 | TCP | Web Console Frontend (HTTPS) |
-| mc-iam-manager-nginx | 33002 | TCP | Grafana iframe proxy (HTTPS) — Mode B |
-| mc-iam-manager-nginx | 7781 | TCP | Cost Optimizer FE iframe proxy (HTTPS) — Mode B |
+| mc-iam-manager-nginx | 33002 | TCP | Grafana iframe proxy (HTTPS) |
+| mc-iam-manager-nginx | 7781 | TCP | Cost Optimizer FE iframe proxy (HTTPS) |
+| mc-iam-manager-nginx | 9090 | TCP | Cost Optimizer BE HTTPS proxy (required for iframe API calls) |
+| mc-iam-manager-nginx | 9000 | TCP | Cost Optimizer alarm HTTPS proxy (required for iframe API calls) |
 | mc-web-console-api | 3000 | TCP | Web Console API |
-| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend (direct HTTP) |
 
 
 ---

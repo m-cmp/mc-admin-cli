@@ -340,6 +340,8 @@ services:
       - "${MC_WEB_CONSOLE_FRONT_PORT}:${MC_WEB_CONSOLE_FRONT_PORT}"
       - "${MC_OBSERVABILITY_GRAFANA_PROXY_PORT}:${MC_OBSERVABILITY_GRAFANA_PROXY_PORT}"
       - "${MC_COST_OPTIMIZER_FE_PROXY_PORT}:${MC_COST_OPTIMIZER_FE_PROXY_PORT}"
+      - "${MC_COST_OPTIMIZER_BE_PORT}:${MC_COST_OPTIMIZER_BE_PORT}"
+      - "${MC_COST_OPTIMIZER_ALARM_PORT}:${MC_COST_OPTIMIZER_ALARM_PORT}"
     environment:
       - DOMAIN_NAME=${MC_IAM_MANAGER_PUBLIC_DOMAIN}
     volumes:
@@ -408,10 +410,6 @@ services:
       - mc-observability-network
       - mc-infra-manager-network
       - mc-web-console-network
-    ports:
-      - target: 9090
-        published: ${MC_COST_OPTIMIZER_BE_PORT}
-        protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
     volumes:
@@ -518,10 +516,6 @@ services:
       - mc-observability-network
       - mc-infra-manager-network
       - mc-web-console-network
-    ports:
-      - target: 9000
-        published: ${MC_COST_OPTIMIZER_ALARM_PORT}
-        protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
     volumes:

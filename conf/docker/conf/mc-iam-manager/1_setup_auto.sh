@@ -61,6 +61,15 @@ auto_setup() {
     fi
     echo "✓ Framework services registered successfully"
 
+    # 5-2. iframe 서비스 URL을 브라우저 접근 가능한 외부 주소로 갱신
+    echo "Step 5-2: Updating iframe service URLs to public addresses..."
+    update_public_service_urls
+    if [ $? -ne 0 ]; then
+        echo "WARNING: Public service URL update failed (non-fatal, iframe may not render remotely)"
+    else
+        echo "✓ Public service URLs updated successfully"
+    fi
+
     # 6. 프로젝트 동기화
     echo "Step 6: Syncing projects..."
     sync_projects
@@ -450,6 +459,58 @@ register_framework_services() {
     fi
 
     echo "Framework service registration completed"
+    return 0
+}
+
+update_public_service_urls() {
+    echo "Updating framework service URLs to public-accessible addresses..."
+
+    # mc-cost-optimizer-fe: 컨테이너 내부 URL(http://mc-cost-optimizer-fe:7780)을
+    # 브라우저가 직접 접근 가능한 nginx HTTPS 프록시 URL로 갱신.
+    # MCIAM_USE=true 환경에서 /api/getapihosts가 이 값을 iframe src로 반환하기 때문.
+    local cost_fe_public_url="https://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_COST_OPTIMIZER_FE_PROXY_PORT}"
+
+    # mc-cost-optimizer-fe는 upstream api.yaml에 없으므로 먼저 등록 시도(idempotent)
+    local reg_body
+    reg_body=$(printf '{"name":"mc-cost-optimizer-fe","version":"v1","baseUrl":"http://mc-cost-optimizer-fe:7780","authType":"none","authUser":"","authPass":"","isActive":true}')
+    local reg_resp
+    reg_resp=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "$reg_body" \
+        "$MC_IAM_MANAGER_HOST/api/mcmp-apis")
+    local reg_code
+    reg_code=$(echo $reg_resp | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    if [ "$reg_code" = "201" ]; then
+        echo "  ✓ mc-cost-optimizer-fe registered"
+    elif [ "$reg_code" = "409" ]; then
+        echo "  ✓ mc-cost-optimizer-fe already registered"
+    else
+        echo "  ✗ Failed to register mc-cost-optimizer-fe (HTTP $reg_code)"
+        return 1
+    fi
+
+    # baseurl을 외부 공개 URL로 갱신
+    local response
+    response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X PUT \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "{\"base_url\": \"${cost_fe_public_url}\"}" \
+        "$MC_IAM_MANAGER_HOST/api/mcmp-apis/name/mc-cost-optimizer-fe")
+
+    local http_code
+    http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    local response_body
+    response_body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
+
+    if [ "$http_code" = "200" ]; then
+        echo "  ✓ Updated mc-cost-optimizer-fe baseurl: ${cost_fe_public_url}"
+    else
+        echo "  ✗ Failed to update mc-cost-optimizer-fe (HTTP $http_code): $response_body"
+        return 1
+    fi
+
+    echo "Public service URL update completed"
     return 0
 }
 
