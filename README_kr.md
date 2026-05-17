@@ -229,6 +229,48 @@ Mode A(자체 서명 인증서) → Mode B(Let's Encrypt)로 같은 도메인을
    - **Firefox**: 새 브라우저 프로파일 사용 또는 프로파일 폴더의 `SiteSecurityServiceState.txt` 삭제
 
 
+## TLS 인증서 자동갱신 (Mode B)
+
+Mode B(Let's Encrypt) 실행 시 certbot이 `systemd certbot.timer`를 통해 하루 2회 자동갱신을 시도합니다. 만료 30일 전부터 갱신이 시작됩니다.
+
+### Webroot 방식 전환 (최초 1회 필요)
+
+Mode B는 갱신 중에도 nginx가 계속 실행될 수 있도록 **webroot** 인증 방식을 사용합니다. 기존 `standalone` 방식으로 설치된 경우 아래 명령으로 한 번 전환해야 합니다:
+
+```shell
+sudo certbot certonly \
+  --webroot \
+  -w <mc-admin-cli 경로>/conf/docker/container-volume/certbot/www \
+  -d <your-domain> \
+  --force-renewal
+```
+
+전환 확인:
+
+```shell
+sudo grep "authenticator" /etc/letsencrypt/renewal/<your-domain>.conf
+# 기대값: authenticator = webroot
+```
+
+### Deploy Hook — 갱신 후 nginx 자동 reload
+
+인증서 갱신 후 nginx 컨테이너에 새 인증서를 즉시 적용하기 위한 deploy hook을 한 번 설치합니다:
+
+```shell
+sudo cp conf/docker/scripts/certbot-deploy-hook.sh \
+     /etc/letsencrypt/renewal-hooks/deploy/reload-nginx-docker.sh
+sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx-docker.sh
+```
+
+### 자동갱신 검증
+
+```shell
+sudo certbot renew --dry-run
+# 기대값: "all simulated renewals succeeded"
+```
+
+---
+
 ## 방화벽 포트 정보
 
 필요한 경우 다음 포트들을 방화벽에 등록해야 합니다:

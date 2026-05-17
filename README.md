@@ -248,6 +248,48 @@ When you switch from Mode A (self-signed cert) to Mode B (Let's Encrypt) using t
    - **Firefox**: use a new browser profile or delete `SiteSecurityServiceState.txt` from your profile folder
 
 
+## TLS Certificate Auto-Renewal (Mode B)
+
+When running in Mode B (Let's Encrypt), certbot renews the certificate automatically via `systemd certbot.timer` (twice daily). The certificate is renewed 30 days before expiry.
+
+### Webroot setup (required once after installation)
+
+Mode B uses the **webroot** authenticator so nginx keeps running during renewal. If your installation used the `standalone` authenticator (older setup), switch it once:
+
+```shell
+sudo certbot certonly \
+  --webroot \
+  -w <mc-admin-cli-path>/conf/docker/container-volume/certbot/www \
+  -d <your-domain> \
+  --force-renewal
+```
+
+Verify the renewal config was updated:
+
+```shell
+sudo grep "authenticator" /etc/letsencrypt/renewal/<your-domain>.conf
+# Expected: authenticator = webroot
+```
+
+### Deploy hook — nginx reload after renewal
+
+After renewal, the new certificate must be loaded into the running nginx container. Install the deploy hook once:
+
+```shell
+sudo cp conf/docker/scripts/certbot-deploy-hook.sh \
+     /etc/letsencrypt/renewal-hooks/deploy/reload-nginx-docker.sh
+sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx-docker.sh
+```
+
+### Verify auto-renewal
+
+```shell
+sudo certbot renew --dry-run
+# Expected: "all simulated renewals succeeded"
+```
+
+---
+
 ## Firewall Port Information
 
 The following ports should be registered in the firewall if needed:
