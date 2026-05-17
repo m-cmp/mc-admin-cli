@@ -137,28 +137,40 @@ echo "✓ Certificate directory created successfully"
 
 
 ## 로컬환경(인증서) 설정
-# --- 3. hosts 파일에 도메인 추가 (관리자 권한 필요) ---
-HOSTS_FILE="/etc/hosts"
-echo "Checking ${MC_IAM_MANAGER_PUBLIC_DOMAIN} in ${HOSTS_FILE}..."
-
-if grep -E "^[[:space:]]*127\.0\.0\.1[[:space:]]+${MC_IAM_MANAGER_PUBLIC_DOMAIN}[[:space:]]*$" "${HOSTS_FILE}" > /dev/null; then
-    echo "✓ ${MC_IAM_MANAGER_PUBLIC_DOMAIN} already exists in ${HOSTS_FILE}. Skipping."
+# IP 주소인지 도메인인지 판별
+if [[ "${MC_IAM_MANAGER_PUBLIC_DOMAIN}" =~ ^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+    IS_IP=true
+    SAN_ENTRY="IP:${MC_IAM_MANAGER_PUBLIC_DOMAIN}"
+    echo "✓ PUBLIC_DOMAIN is an IP address — skipping /etc/hosts modification"
 else
-    echo "Removing any existing entries for ${MC_IAM_MANAGER_PUBLIC_DOMAIN}..."
-    sed -i "/[[:space:]]*127\.0\.0\.1[[:space:]]\+${MC_IAM_MANAGER_PUBLIC_DOMAIN}[[:space:]]*$/d" "${HOSTS_FILE}"
+    IS_IP=false
+    SAN_ENTRY="DNS:${MC_IAM_MANAGER_PUBLIC_DOMAIN}"
+fi
 
-    echo "Adding 127.0.0.1 ${MC_IAM_MANAGER_PUBLIC_DOMAIN} to ${HOSTS_FILE}..."
-    if echo "127.0.0.1 ${MC_IAM_MANAGER_PUBLIC_DOMAIN}" >> "${HOSTS_FILE}" 2>/dev/null; then
-        echo "✓ ${MC_IAM_MANAGER_PUBLIC_DOMAIN} added successfully to ${HOSTS_FILE}."
+# --- 3. hosts 파일에 도메인 추가 (도메인인 경우에만) ---
+if [ "$IS_IP" = false ]; then
+    HOSTS_FILE="/etc/hosts"
+    echo "Checking ${MC_IAM_MANAGER_PUBLIC_DOMAIN} in ${HOSTS_FILE}..."
+
+    if grep -E "^[[:space:]]*127\.0\.0\.1[[:space:]]+${MC_IAM_MANAGER_PUBLIC_DOMAIN}[[:space:]]*$" "${HOSTS_FILE}" > /dev/null; then
+        echo "✓ ${MC_IAM_MANAGER_PUBLIC_DOMAIN} already exists in ${HOSTS_FILE}. Skipping."
     else
-        echo "⚠️  Failed to add to ${HOSTS_FILE} — run with sudo or manually add:"
-        echo "    echo '127.0.0.1 ${MC_IAM_MANAGER_PUBLIC_DOMAIN}' | sudo tee -a ${HOSTS_FILE}"
+        echo "Removing any existing entries for ${MC_IAM_MANAGER_PUBLIC_DOMAIN}..."
+        sed -i "/[[:space:]]*127\.0\.0\.1[[:space:]]\+${MC_IAM_MANAGER_PUBLIC_DOMAIN}[[:space:]]*$/d" "${HOSTS_FILE}"
+
+        echo "Adding 127.0.0.1 ${MC_IAM_MANAGER_PUBLIC_DOMAIN} to ${HOSTS_FILE}..."
+        if echo "127.0.0.1 ${MC_IAM_MANAGER_PUBLIC_DOMAIN}" >> "${HOSTS_FILE}" 2>/dev/null; then
+            echo "✓ ${MC_IAM_MANAGER_PUBLIC_DOMAIN} added successfully to ${HOSTS_FILE}."
+        else
+            echo "⚠️  Failed to add to ${HOSTS_FILE} — run with sudo or manually add:"
+            echo "    echo '127.0.0.1 ${MC_IAM_MANAGER_PUBLIC_DOMAIN}' | sudo tee -a ${HOSTS_FILE}"
+        fi
     fi
 fi
 
 
-# --- 4. Self-Signed Certificate 생성 ---
-echo "Generating Self-Signed Certificate for ${MC_IAM_MANAGER_PUBLIC_DOMAIN}... ${CERT_DIR}"
+# --- 4. Self-Signed Certificate 생성 (SAN 포함) ---
+echo "Generating Self-Signed Certificate for ${MC_IAM_MANAGER_PUBLIC_DOMAIN} (SAN: ${SAN_ENTRY})... ${CERT_DIR}"
 
 # 기존 인증서 삭제 (새로 발급하기 위해)
 if [ -f "${CERT_DIR}/privkey.pem" ]; then
@@ -168,8 +180,12 @@ fi
 
 openssl genrsa -out "${CERT_DIR}/privkey.pem" 2048
 openssl req -new -key "${CERT_DIR}/privkey.pem" -out "${CERT_DIR}/csr.pem" -subj "/CN=${MC_IAM_MANAGER_PUBLIC_DOMAIN}"
-openssl x509 -req -days 365 -in "${CERT_DIR}/csr.pem" -signkey "${CERT_DIR}/privkey.pem" -out "${CERT_DIR}/fullchain.pem"
-rm "${CERT_DIR}/csr.pem" # CSR 파일 제거
+openssl x509 -req -days 365 \
+    -in "${CERT_DIR}/csr.pem" \
+    -signkey "${CERT_DIR}/privkey.pem" \
+    -out "${CERT_DIR}/fullchain.pem" \
+    -extfile <(printf "subjectAltName=${SAN_ENTRY}\nbasicConstraints=CA:FALSE\nkeyUsage=digitalSignature,keyEncipherment")
+rm "${CERT_DIR}/csr.pem"
 
 if [ -f "${CERT_DIR}/fullchain.pem" ]; then
     echo "Self-Signed Certificate generated successfully at ${CERT_DIR}."
@@ -206,6 +222,8 @@ if [ -n "$MC_IAM_MANAGER_PUBLIC_DOMAIN" ] && [ -n "$MC_IAM_MANAGER_KEYCLOAK_PORT
         -e "s/\${MC_IAM_MANAGER_KEYCLOAK_PORT}/$MC_IAM_MANAGER_KEYCLOAK_PORT/g" \
         -e "s/\${MC_OBSERVABILITY_GRAFANA_PROXY_PORT}/$MC_OBSERVABILITY_GRAFANA_PROXY_PORT/g" \
         -e "s/\${MC_COST_OPTIMIZER_FE_PROXY_PORT}/$MC_COST_OPTIMIZER_FE_PROXY_PORT/g" \
+        -e "s/\${MC_COST_OPTIMIZER_BE_PORT}/$MC_COST_OPTIMIZER_BE_PORT/g" \
+        -e "s/\${MC_COST_OPTIMIZER_ALARM_PORT}/$MC_COST_OPTIMIZER_ALARM_PORT/g" \
         -e "s/mciam-manager/mc-iam-manager/g" \
         -e "s/mciam-keycloak/mc-iam-manager-kc/g" \
         "$TEMPLATE_FILE" > "$OUTPUT_FILE"

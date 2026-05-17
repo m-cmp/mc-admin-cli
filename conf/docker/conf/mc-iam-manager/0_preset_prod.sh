@@ -101,6 +101,23 @@ else
     echo "경고: MC_COST_OPTIMIZER_FE_PROXY_PORT 환경변수가 설정되지 않았습니다."
 fi
 
+MC_COST_OPTIMIZER_BE_PORT=$(grep -m1 "^MC_COST_OPTIMIZER_BE_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+MC_COST_OPTIMIZER_ALARM_PORT=$(grep -m1 "^MC_COST_OPTIMIZER_ALARM_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+
+if [ -n "$MC_COST_OPTIMIZER_BE_PORT" ]; then
+    sed -i "s/\${MC_COST_OPTIMIZER_BE_PORT}/$MC_COST_OPTIMIZER_BE_PORT/g" "$OUTPUT_FILE"
+    echo "✓ MC_COST_OPTIMIZER_BE_PORT 대치 완료: $MC_COST_OPTIMIZER_BE_PORT"
+else
+    echo "경고: MC_COST_OPTIMIZER_BE_PORT 환경변수가 설정되지 않았습니다."
+fi
+
+if [ -n "$MC_COST_OPTIMIZER_ALARM_PORT" ]; then
+    sed -i "s/\${MC_COST_OPTIMIZER_ALARM_PORT}/$MC_COST_OPTIMIZER_ALARM_PORT/g" "$OUTPUT_FILE"
+    echo "✓ MC_COST_OPTIMIZER_ALARM_PORT 대치 완료: $MC_COST_OPTIMIZER_ALARM_PORT"
+else
+    echo "경고: MC_COST_OPTIMIZER_ALARM_PORT 환경변수가 설정되지 않았습니다."
+fi
+
 # 컨테이너 이름 치환 (템플릿 내 레거시 이름 정정)
 sed -i "s/mciam-manager/mc-iam-manager/g" "$OUTPUT_FILE"
 sed -i "s/mciam-keycloak/mc-iam-manager-kc/g" "$OUTPUT_FILE"
