@@ -160,8 +160,10 @@ docker logs mc-iam-manager-post-initial | tail -5
 ```shell
 curl -kI https://<DOMAIN>:33002    # Grafana 대시보드 프록시
 curl -kI https://<DOMAIN>:7781     # Cost Optimizer FE 프록시
+curl -k  https://<DOMAIN>:9090/api/costopti/be/readyz    # Cost Optimizer BE 프록시
+curl -k  https://<DOMAIN>:9000/actuator/health 2>/dev/null || true  # Cost Optimizer alarm 프록시
 ```
-기대 응답: 두 엔드포인트 모두 `HTTP/2 200`
+기대 응답: `:33002` 및 `:7781`은 `HTTP/2 200`; `:9090/readyz`는 `Application is ready`.
 
 ## Step 6. CB-Tumblebug 초기화 및 웹 콘솔 접속
 
@@ -184,6 +186,90 @@ cd mc-admin-cli/bin
 ./cleanAll.sh
 ```
 
+> **cleanAll.sh를 실행해야 하는 경우**: 배포 모드 전환(dev ↔ prod)이나 도메인 변경 전에는 반드시 완전 초기화를 실행하세요. 기존 설정 위에 `installAll.sh`를 재실행하면 이전 인증서, nginx 설정, DB 상태가 충돌할 수 있습니다.
+
+---
+
+## 알려진 이슈
+
+### Cost Optimizer iframe — BE API (컨테이너 재생성 후 패치 필요)
+
+Cost Optimizer 프론트엔드 JavaScript 번들에는 런타임에 백엔드 API 호스트를 결정하는 로직이 하드코딩되어 있습니다:
+
+| 접속 방식 | 선택되는 BE/alarm URL | 결과 |
+|---|---|---|
+| `localhost` | `http://localhost:9090` | 정상 (동일 출처, TLS 불필요) |
+| IP 주소 | `https://{ip}:9090` | 정상 — IAM nginx HTTPS 프록시(:9090) 경유 |
+| 도메인 | `https://{domain}:9090` | 정상 — IAM nginx HTTPS 프록시(:9090) 경유 |
+
+**컨테이너 재생성 후 매번** 아래 in-place 패치를 적용해야 합니다:
+
+```bash
+# 실제 번들 파일명 먼저 확인
+JS=$(docker exec mc-cost-optimizer-fe ls /usr/share/nginx/html/assets/index-*.js 2>/dev/null | head -1)
+
+docker exec mc-cost-optimizer-fe sh -c "
+  # IP 분기: http:// → https://
+  sed -i 's|t=\`http://\${r}:9090\`,i=\`http://\${r}:9000\`|t=\`https://\${r}:9090\`,i=\`https://\${r}:9000\`|g' $JS
+  # 도메인 분기: 포트 없는 https:// → 명시적 :9090/:9000
+  sed -i 's|t=\`https://\${r}\`,i=\`https://\${r}\`|t=\`https://\${r}:9090\`,i=\`https://\${r}:9000\`|g' $JS
+"
+```
+
+> **근본 해결**: mc-cost-optimizer-fe 소스 코드에서 IP/도메인 분기 모두 `https://{host}:9090`을 사용하도록 수정 후 재빌드가 필요합니다. 개발팀 전달 사항은 `todo_mc-cost-optimizer.md` 참조.
+
+### HSTS 캐시 — 동일 도메인에서 dev ↔ prod 전환 시
+
+Mode A(자체 서명 인증서) → Mode B(Let's Encrypt)로 같은 도메인을 사용해 전환할 경우, 브라우저의 HSTS 캐시로 인해 접속이 차단될 수 있습니다.
+
+**해결 방법**:
+1. 전환 후 첫 접속에 시크릿/프라이빗 창 사용, **또는**
+2. HSTS 캐시 수동 삭제:
+   - **Chrome/Edge**: `chrome://net-internals/#hsts` → "Delete domain security policies" → 도메인 입력 → Delete
+   - **Firefox**: 새 브라우저 프로파일 사용 또는 프로파일 폴더의 `SiteSecurityServiceState.txt` 삭제
+
+
+## TLS 인증서 자동갱신 (Mode B)
+
+Mode B(Let's Encrypt) 실행 시 certbot이 `systemd certbot.timer`를 통해 하루 2회 자동갱신을 시도합니다. 만료 30일 전부터 갱신이 시작됩니다.
+
+### Webroot 방식 전환 (최초 1회 필요)
+
+Mode B는 갱신 중에도 nginx가 계속 실행될 수 있도록 **webroot** 인증 방식을 사용합니다. 기존 `standalone` 방식으로 설치된 경우 아래 명령으로 한 번 전환해야 합니다:
+
+```shell
+sudo certbot certonly \
+  --webroot \
+  -w <mc-admin-cli 경로>/conf/docker/container-volume/certbot/www \
+  -d <your-domain> \
+  --force-renewal
+```
+
+전환 확인:
+
+```shell
+sudo grep "authenticator" /etc/letsencrypt/renewal/<your-domain>.conf
+# 기대값: authenticator = webroot
+```
+
+### Deploy Hook — 갱신 후 nginx 자동 reload
+
+인증서 갱신 후 nginx 컨테이너에 새 인증서를 즉시 적용하기 위한 deploy hook을 한 번 설치합니다:
+
+```shell
+sudo cp conf/docker/scripts/certbot-deploy-hook.sh \
+     /etc/letsencrypt/renewal-hooks/deploy/reload-nginx-docker.sh
+sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx-docker.sh
+```
+
+### 자동갱신 검증
+
+```shell
+sudo certbot renew --dry-run
+# 기대값: "all simulated renewals succeeded"
+```
+
+---
 
 ## 방화벽 포트 정보
 
@@ -216,12 +302,12 @@ cd mc-admin-cli/bin
 ### **MC-COST-OPTIMIZER**
 | 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
-| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend |
-| mc-cost-optimizer-be | 9090 | TCP | Cost Optimizer Backend |
+| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend (내부 전용, :7781 HTTPS 프록시로 접근) |
+| mc-cost-optimizer-be | 9090 | TCP | Cost Optimizer Backend (내부 전용, IAM nginx :9090 HTTPS 프록시로 접근) |
 | mc-cost-optimizer-cost-collector | 8881 | TCP | Cost Collector |
 | mc-cost-optimizer-cost-processor | 18082 | TCP | Cost Processor |
 | mc-cost-optimizer-cost-selector | 8083 | TCP | Cost Selector |
-| mc-cost-optimizer-alarm-service | 9000 | TCP | Alarm Service |
+| mc-cost-optimizer-alarm-service | 9000 | TCP | Alarm Service (내부 전용, IAM nginx :9000 HTTPS 프록시로 접근) |
 | mc-cost-optimizer-asset-collector | 8091 | TCP | Asset Collector |
 | mc-cost-optimizer-db | 3307 | TCP | MariaDB |
 
@@ -276,10 +362,11 @@ cd mc-admin-cli/bin
 |---------|------|----------|-------------|
 | mc-iam-manager-nginx | 80, 443 | TCP | Nginx 진입점 (HTTP 리다이렉트 + HTTPS 웹 콘솔) |
 | mc-iam-manager-nginx | 3001 | TCP | 웹 콘솔 프론트엔드 (HTTPS) |
-| mc-iam-manager-nginx | 33002 | TCP | Grafana iframe 프록시 (HTTPS) — Mode B |
-| mc-iam-manager-nginx | 7781 | TCP | Cost Optimizer FE iframe 프록시 (HTTPS) — Mode B |
+| mc-iam-manager-nginx | 33002 | TCP | Grafana iframe 프록시 (HTTPS) |
+| mc-iam-manager-nginx | 7781 | TCP | Cost Optimizer FE iframe 프록시 (HTTPS) |
+| mc-iam-manager-nginx | 9090 | TCP | Cost Optimizer BE HTTPS 프록시 (iframe API 호출에 필요) |
+| mc-iam-manager-nginx | 9000 | TCP | Cost Optimizer alarm HTTPS 프록시 (iframe API 호출에 필요) |
 | mc-web-console-api | 3000 | TCP | Web Console API |
-| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend (직접 HTTP) |
 
 
 ---
