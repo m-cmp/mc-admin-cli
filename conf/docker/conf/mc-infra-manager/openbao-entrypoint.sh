@@ -50,5 +50,15 @@ if ! bao token lookup "$DESIRED_TOKEN" >/dev/null 2>&1; then
   bao token create -id="$DESIRED_TOKEN" -policy=root -orphan -ttl=0 >/dev/null
 fi
 
+# 7) Enable KV v2 secrets engine at secret/ if not already mounted
+# In persistent mode, secret/ is NOT pre-mounted (unlike dev mode).
+if bao secrets list 2>/dev/null | grep -q "^secret/"; then
+  echo "[openbao-entrypoint] KV v2 already enabled at secret/"
+else
+  echo "[openbao-entrypoint] enabling KV v2 secrets engine at secret/..."
+  bao secrets enable -path=secret kv-v2 >/dev/null && \
+    echo "[openbao-entrypoint] KV v2 enabled at secret/"
+fi
+
 echo "[openbao-entrypoint] openbao ready."
 wait "$BAO_PID"
