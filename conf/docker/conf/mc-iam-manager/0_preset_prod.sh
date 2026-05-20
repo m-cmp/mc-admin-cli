@@ -1,4 +1,5 @@
 #!/bin/bash
+set -euo pipefail
 
 # 템플릿 파일에서 환경변수를 .env 파일의 값으로 대치하는 스크립트
 
@@ -29,7 +30,7 @@ fi
 
 # 출력 디렉토리 생성
 OUTPUT_DIR="$(dirname "$OUTPUT_FILE")"
-mkdir -p "$OUTPUT_DIR"
+mkdir -p "$OUTPUT_DIR" || { echo "오류: 디렉토리를 생성할 수 없습니다: $OUTPUT_DIR (권한 문제일 수 있습니다)"; exit 1; }
 
 echo "nginx 설정 파일을 생성합니다..."
 echo "템플릿: $TEMPLATE_FILE"
@@ -57,7 +58,7 @@ echo "  MC_OBSERVABILITY_GRAFANA_PROXY_PORT: $MC_OBSERVABILITY_GRAFANA_PROXY_POR
 echo "  MC_COST_OPTIMIZER_FE_PROXY_PORT: $MC_COST_OPTIMIZER_FE_PROXY_PORT"
 
 # 템플릿 파일을 복사하고 환경변수 대치
-cp "$TEMPLATE_FILE" "$OUTPUT_FILE"
+cp "$TEMPLATE_FILE" "$OUTPUT_FILE" || { echo "오류: 템플릿 파일 복사 실패: $TEMPLATE_FILE → $OUTPUT_FILE"; exit 1; }
 
 if [ -n "$MC_IAM_MANAGER_PORT" ]; then
     sed -i "s/\${MC_IAM_MANAGER_PORT}/$MC_IAM_MANAGER_PORT/g" "$OUTPUT_FILE"
@@ -116,6 +117,31 @@ if [ -n "$MC_COST_OPTIMIZER_ALARM_PORT" ]; then
     echo "✓ MC_COST_OPTIMIZER_ALARM_PORT 대치 완료: $MC_COST_OPTIMIZER_ALARM_PORT"
 else
     echo "경고: MC_COST_OPTIMIZER_ALARM_PORT 환경변수가 설정되지 않았습니다."
+fi
+
+MC_WORKFLOW_MANAGER_PROXY_PORT=$(grep -m1 "^MC_WORKFLOW_MANAGER_PROXY_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+MC_DATA_MANAGER_PROXY_PORT=$(grep -m1 "^MC_DATA_MANAGER_PROXY_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+MC_APPLICATION_MANAGER_PROXY_PORT=$(grep -m1 "^MC_APPLICATION_MANAGER_PROXY_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+
+if [ -n "$MC_WORKFLOW_MANAGER_PROXY_PORT" ]; then
+    sed -i "s/\${MC_WORKFLOW_MANAGER_PROXY_PORT}/$MC_WORKFLOW_MANAGER_PROXY_PORT/g" "$OUTPUT_FILE"
+    echo "✓ MC_WORKFLOW_MANAGER_PROXY_PORT 대치 완료: $MC_WORKFLOW_MANAGER_PROXY_PORT"
+else
+    echo "경고: MC_WORKFLOW_MANAGER_PROXY_PORT 환경변수가 설정되지 않았습니다."
+fi
+
+if [ -n "$MC_DATA_MANAGER_PROXY_PORT" ]; then
+    sed -i "s/\${MC_DATA_MANAGER_PROXY_PORT}/$MC_DATA_MANAGER_PROXY_PORT/g" "$OUTPUT_FILE"
+    echo "✓ MC_DATA_MANAGER_PROXY_PORT 대치 완료: $MC_DATA_MANAGER_PROXY_PORT"
+else
+    echo "경고: MC_DATA_MANAGER_PROXY_PORT 환경변수가 설정되지 않았습니다."
+fi
+
+if [ -n "$MC_APPLICATION_MANAGER_PROXY_PORT" ]; then
+    sed -i "s/\${MC_APPLICATION_MANAGER_PROXY_PORT}/$MC_APPLICATION_MANAGER_PROXY_PORT/g" "$OUTPUT_FILE"
+    echo "✓ MC_APPLICATION_MANAGER_PROXY_PORT 대치 완료: $MC_APPLICATION_MANAGER_PROXY_PORT"
+else
+    echo "경고: MC_APPLICATION_MANAGER_PROXY_PORT 환경변수가 설정되지 않았습니다."
 fi
 
 # 컨테이너 이름 치환 (템플릿 내 레거시 이름 정정)

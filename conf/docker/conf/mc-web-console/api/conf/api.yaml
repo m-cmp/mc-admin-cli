@@ -60,6 +60,21 @@ services:
     baseurl: http://mc-data-manager:3300
     auth:
 
+  mc-workflow-manager-fe:
+    version: v0.0.1
+    baseurl: http://mc-workflow-manager:18083
+    auth:
+
+  mc-data-manager-fe:
+    version: v0.0.1
+    baseurl: http://mc-data-manager:3300
+    auth:
+
+  mc-application-manager-fe:
+    version: v0.0.1
+    baseurl: http://mc-application-manager:18084
+    auth:
+
   # sample:
   #   baseurl: http://localhost:1323/test
   #   auth:

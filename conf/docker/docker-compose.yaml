@@ -353,6 +353,9 @@ services:
       - "${MC_COST_OPTIMIZER_FE_PROXY_PORT}:${MC_COST_OPTIMIZER_FE_PROXY_PORT}"
       - "${MC_COST_OPTIMIZER_BE_PORT}:${MC_COST_OPTIMIZER_BE_PORT}"
       - "${MC_COST_OPTIMIZER_ALARM_PORT}:${MC_COST_OPTIMIZER_ALARM_PORT}"
+      - "${MC_WORKFLOW_MANAGER_PROXY_PORT}:${MC_WORKFLOW_MANAGER_PROXY_PORT}"
+      - "${MC_DATA_MANAGER_PROXY_PORT}:${MC_DATA_MANAGER_PROXY_PORT}"
+      - "${MC_APPLICATION_MANAGER_PROXY_PORT}:${MC_APPLICATION_MANAGER_PROXY_PORT}"
     environment:
       - DOMAIN_NAME=${MC_IAM_MANAGER_PUBLIC_DOMAIN}
     volumes:
@@ -365,6 +368,8 @@ services:
       - mc-iam-manager-network
       - mc-observability-network
       - mc-cost-optimizer-network
+      - mc-workflow-manager-network
+      - mc-data-manager-network
 
   mc-iam-manager-post-initial:
     image: ubuntu:22.04
@@ -984,7 +989,7 @@ services:
         published: ${MC_WEB_CONSOLE_DB_HOST_PORT}
         protocol: tcp
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${MC_WEB_CONSOLE_POSTGRES_USER}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${MC_WEB_CONSOLE_POSTGRES_USER} -d ${MC_WEB_CONSOLE_POSTGRES_DB}" ]
       <<: *default-health-check
     command: >
       sh -c "chown -R 70:70 /var/lib/postgresql/data &&
