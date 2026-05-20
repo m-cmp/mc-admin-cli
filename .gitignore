@@ -91,3 +91,6 @@ conf/docker/conf/mc-iam-manager/.env
 
 # junk folder
 .idea
+
+# Runtime environment file (contains passwords - use .env.setup for real values)
+conf/docker/.env

@@ -510,6 +510,100 @@ update_public_service_urls() {
         return 1
     fi
 
+    # mc-workflow-manager-fe: iframe 전용 nginx HTTPS 프록시 URL 등록 및 갱신
+    # (원본 mc-workflow-manager는 내부 API 호출용으로 내부 URL 유지)
+    local wf_public_url="https://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_WORKFLOW_MANAGER_PROXY_PORT}"
+    reg_body=$(printf '{"name":"mc-workflow-manager-fe","version":"v0.0.1","baseUrl":"http://mc-workflow-manager:18083","authType":"none","authUser":"","authPass":"","isActive":true}')
+    reg_resp=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "$reg_body" \
+        "$MC_IAM_MANAGER_HOST/api/mcmp-apis")
+    reg_code=$(echo $reg_resp | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    if [ "$reg_code" = "201" ]; then
+        echo "  ✓ mc-workflow-manager-fe registered"
+    elif [ "$reg_code" = "409" ]; then
+        echo "  ✓ mc-workflow-manager-fe already registered"
+    else
+        echo "  ✗ Failed to register mc-workflow-manager-fe (HTTP $reg_code)"
+        return 1
+    fi
+    response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X PUT \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "{\"base_url\": \"${wf_public_url}\"}" \
+        "$MC_IAM_MANAGER_HOST/api/mcmp-apis/name/mc-workflow-manager-fe")
+    http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    response_body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
+    if [ "$http_code" = "200" ]; then
+        echo "  ✓ Updated mc-workflow-manager-fe baseurl: ${wf_public_url}"
+    else
+        echo "  ✗ Failed to update mc-workflow-manager-fe (HTTP $http_code): $response_body"
+        return 1
+    fi
+
+    # mc-data-manager-fe: iframe 전용 nginx HTTPS 프록시 URL 등록 및 갱신
+    local dm_public_url="https://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_DATA_MANAGER_PROXY_PORT}"
+    reg_body=$(printf '{"name":"mc-data-manager-fe","version":"v0.0.1","baseUrl":"http://mc-data-manager:3300","authType":"none","authUser":"","authPass":"","isActive":true}')
+    reg_resp=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "$reg_body" \
+        "$MC_IAM_MANAGER_HOST/api/mcmp-apis")
+    reg_code=$(echo $reg_resp | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    if [ "$reg_code" = "201" ]; then
+        echo "  ✓ mc-data-manager-fe registered"
+    elif [ "$reg_code" = "409" ]; then
+        echo "  ✓ mc-data-manager-fe already registered"
+    else
+        echo "  ✗ Failed to register mc-data-manager-fe (HTTP $reg_code)"
+        return 1
+    fi
+    response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X PUT \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "{\"base_url\": \"${dm_public_url}\"}" \
+        "$MC_IAM_MANAGER_HOST/api/mcmp-apis/name/mc-data-manager-fe")
+    http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    response_body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
+    if [ "$http_code" = "200" ]; then
+        echo "  ✓ Updated mc-data-manager-fe baseurl: ${dm_public_url}"
+    else
+        echo "  ✗ Failed to update mc-data-manager-fe (HTTP $http_code): $response_body"
+        return 1
+    fi
+
+    # mc-application-manager-fe: iframe 전용 nginx HTTPS 프록시 URL 등록 및 갱신
+    local am_public_url="https://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_APPLICATION_MANAGER_PROXY_PORT}"
+    reg_body=$(printf '{"name":"mc-application-manager-fe","version":"v0.0.1","baseUrl":"http://mc-application-manager:18084","authType":"none","authUser":"","authPass":"","isActive":true}')
+    reg_resp=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "$reg_body" \
+        "$MC_IAM_MANAGER_HOST/api/mcmp-apis")
+    reg_code=$(echo $reg_resp | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    if [ "$reg_code" = "201" ]; then
+        echo "  ✓ mc-application-manager-fe registered"
+    elif [ "$reg_code" = "409" ]; then
+        echo "  ✓ mc-application-manager-fe already registered"
+    else
+        echo "  ✗ Failed to register mc-application-manager-fe (HTTP $reg_code)"
+        return 1
+    fi
+    response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X PUT \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "{\"base_url\": \"${am_public_url}\"}" \
+        "$MC_IAM_MANAGER_HOST/api/mcmp-apis/name/mc-application-manager-fe")
+    http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    response_body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
+    if [ "$http_code" = "200" ]; then
+        echo "  ✓ Updated mc-application-manager-fe baseurl: ${am_public_url}"
+    else
+        echo "  ✗ Failed to update mc-application-manager-fe (HTTP $http_code): $response_body"
+        return 1
+    fi
+
     echo "Public service URL update completed"
     return 0
 }
@@ -643,18 +737,6 @@ configure_keycloak_client_uris() {
     echo "  ✓ Keycloak admin token obtained"
 
     KC_ADMIN_URL="${MC_IAM_MANAGER_KEYCLOAK_HOST}/admin/realms/${MC_IAM_MANAGER_KEYCLOAK_REALM}"
-
-    # Keycloak realm Frontend URL 설정 (토큰 iss 클레임 base URL)
-    REALM_HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X PUT \
-        "${MC_IAM_MANAGER_KEYCLOAK_HOST}/admin/realms/${MC_IAM_MANAGER_KEYCLOAK_REALM}" \
-        -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
-        -H "Content-Type: application/json" \
-        -d "{\"attributes\": {\"frontendUrl\": \"${MC_IAM_MANAGER_PUBLIC_HOST}\"}}")
-    if [ "$REALM_HTTP" = "204" ]; then
-        echo "  ✓ Keycloak realm frontendUrl set to ${MC_IAM_MANAGER_PUBLIC_HOST}"
-    else
-        echo "  ⚠️  Failed to set realm frontendUrl (HTTP $REALM_HTTP) — tokens may use internal iss"
-    fi
 
     # mciamClient, mciam-oidc-Client 두 클라이언트 설정
     for CLIENT_NAME in "$MC_IAM_MANAGER_KEYCLOAK_CLIENT_NAME" "$MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_NAME"; do

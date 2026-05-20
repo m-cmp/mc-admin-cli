@@ -23,7 +23,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.12.18
+    image: cloudbaristaorg/cb-spider:0.12.23
     pull_policy: missing
     container_name: mc-infra-connector
     restart: unless-stopped
@@ -37,19 +37,18 @@ services:
         protocol: tcp
     volumes:
       - ./tool/mcc:/app/tool/mcc
-      - ./conf/mc-infra-connector/:/root/go/src/github.com/cloud-barista/cb-spider/conf/:ro
       - ./container-volume/mc-infra-connector/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
       - ./container-volume/mc-infra-connector/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
     environment:
-      - PLUGIN_SW=OFF
       - SERVER_ADDRESS=0.0.0.0:1024
-      # if you leave these values empty, REST Auth will be disabled.
       - SPIDER_USERNAME=${MC_INFRA_CONNECTOR_API_USERNAME:-default}
       - SPIDER_PASSWORD=${MC_INFRA_CONNECTOR_API_PASSWORD:-default}
       - SPIDER_LOG_LEVEL=${MC_INFRA_CONNECTOR_LOG_LEVEL:-error}
       - SPIDER_HISCALL_LOG_LEVEL=${MC_INFRA_CONNECTOR_HISCALL_LOG_LEVEL:-error}
       - ID_TRANSFORM_MODE=OFF
-      - ADMINWEB=ON
+      - PLUGIN_SW=OFF
+      - ADMINWEB=OFF
+      - SPIDER_BACKUP_ENABLED=false
     healthcheck: # for CB-Spider
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:1024/spider/readyz" ]
       <<: *default-health-check
@@ -57,7 +56,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.12.9
+    image: cloudbaristaorg/cb-tumblebug:0.12.12
     container_name: mc-infra-manager
     restart: unless-stopped
     pull_policy: missing
@@ -125,7 +124,7 @@ services:
       <<: *default-health-check
 
   mc-infra-manager-etcd:
-    image: gcr.io/etcd-development/etcd:v3.5.21
+    image: gcr.io/etcd-development/etcd:v3.6.11
     container_name: mc-infra-manager-etcd
     restart: unless-stopped
     networks:
@@ -226,14 +225,24 @@ services:
       retries: 5
       start_period: 10s
 
+  # CB-MapUI is a Web-based test client (disable it for production use)
+  cb-mapui:
+    image: cloudbaristaorg/cb-mapui:0.12.34
+    container_name: cb-mapui
+    networks:
+      - mc-infra-manager-network
+    ports:
+      - target: 1324
+        published: 1324
+        protocol: tcp
+    restart: unless-stopped
+
 
 ##### MC-IAM-MANAGER #########################################################################################################################
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    # image: mc-iam-manager:latest
-    #image: cloudbaristaorg/mc-iam-manager:edge
-    image: csescsta/mc-iam-manager:edge
+    image: cloudbaristaorg/mc-iam-manager:0.5.2
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
@@ -342,6 +351,9 @@ services:
       - "${MC_COST_OPTIMIZER_FE_PROXY_PORT}:${MC_COST_OPTIMIZER_FE_PROXY_PORT}"
       - "${MC_COST_OPTIMIZER_BE_PORT}:${MC_COST_OPTIMIZER_BE_PORT}"
       - "${MC_COST_OPTIMIZER_ALARM_PORT}:${MC_COST_OPTIMIZER_ALARM_PORT}"
+      - "${MC_WORKFLOW_MANAGER_PROXY_PORT}:${MC_WORKFLOW_MANAGER_PROXY_PORT}"
+      - "${MC_DATA_MANAGER_PROXY_PORT}:${MC_DATA_MANAGER_PROXY_PORT}"
+      - "${MC_APPLICATION_MANAGER_PROXY_PORT}:${MC_APPLICATION_MANAGER_PROXY_PORT}"
     environment:
       - DOMAIN_NAME=${MC_IAM_MANAGER_PUBLIC_DOMAIN}
     volumes:
@@ -354,6 +366,8 @@ services:
       - mc-iam-manager-network
       - mc-observability-network
       - mc-cost-optimizer-network
+      - mc-workflow-manager-network
+      - mc-data-manager-network
 
   mc-iam-manager-post-initial:
     image: ubuntu:22.04
@@ -973,14 +987,14 @@ services:
         published: ${MC_WEB_CONSOLE_DB_HOST_PORT}
         protocol: tcp
     healthcheck:
-      test: [ "CMD-SHELL", "pg_isready -U ${MC_WEB_CONSOLE_POSTGRES_USER}" ]
+      test: [ "CMD-SHELL", "pg_isready -U ${MC_WEB_CONSOLE_POSTGRES_USER} -d ${MC_WEB_CONSOLE_POSTGRES_DB}" ]
       <<: *default-health-check
     command: >
       sh -c "chown -R 70:70 /var/lib/postgresql/data &&
             exec docker-entrypoint.sh postgres"
 
   mc-web-console-api:
-    image: csescsta/mc-web-console-api:edge
+    image: cloudbaristaorg/mc-web-console-api:0.5.4
     pull_policy: always
     container_name: mc-web-console-api
     platform: linux/amd64
@@ -1020,7 +1034,7 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    image: csescsta/mc-web-console-front:edge
+    image: cloudbaristaorg/mc-web-console-front:0.5.3
     pull_policy: always
     container_name: mc-web-console-front
     platform: linux/amd64
@@ -1435,4 +1449,6 @@ services:
         fi
         curl -k -s https://127.0.0.1:8443
         STATUS=`echo $$?`
-        if [ $$STATUS != 0 
+        if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then
+          exit 1
+        fi

@@ -55,6 +55,26 @@ services:
     baseurl: http://mc-data-manager:3300
     auth:
 
+  mc-cost-optimizer-fe:
+    version: 0.5.2
+    baseurl: http://mc-cost-optimizer-fe:7780
+    auth:
+
+  mc-workflow-manager-fe:
+    version: 0.5.1
+    baseurl: http://mc-workflow-manager:18083
+    auth:
+
+  mc-data-manager-fe:
+    version: 0.5.3
+    baseurl: http://mc-data-manager:3300
+    auth:
+
+  mc-application-manager-fe:
+    version: 0.5.2
+    baseurl: http://mc-application-manager:18084
+    auth:
+
   # sample:
   #   baseurl: http://localhost:1323/test
   #   auth:
