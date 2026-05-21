@@ -42,6 +42,42 @@ sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli docker-compose-plugin
 ```
 
+## 빠른 실행 요약 (TL;DR)
+
+> 단계별 상세 가이드는 아래 [빠른 가이드](#빠른-가이드) 섹션을 참고하세요.
+
+**1. 환경 파일 설정**
+```shell
+cd mc-admin-cli/conf/docker/conf/mc-iam-manager
+cp .env.setup .env
+# .env 파일 편집 — 플랫폼 관리자 ID / 비밀번호 등 필수 값 설정
+```
+
+**2. installAll.sh 실행**
+```shell
+cd mc-admin-cli/bin
+./installAll.sh
+```
+도메인 입력 안내:
+- **개발 / 로컬 PC** — `Enter` 입력 (기본값 `mciam.local` 사용)
+- **개발 / 원격 VM** — VM의 IP 주소 또는 도메인명 입력
+- **운영** — 공개 FQDN 입력 필수 (DNS A-레코드가 이 서버를 가리켜야 함)
+
+**3. 컨테이너 상태 확인**
+```shell
+./mcc infra info
+```
+모든 컨테이너가 `healthy` 상태가 될 때까지 대기. `mc-iam-manager-post-initial`이 `Exited (0)`으로 표시되는 것은 정상.
+
+**4. 웹 콘솔 접속**
+
+브라우저에서 **`https://<서버>:3001`** 로 접속합니다.
+> ⚠️ **http가 아닌 https**로 접속하세요. 보안 경고가 표시되면 **계속** (또는 **고급 → 계속 진행**) 을 선택합니다.
+
+기본 계정: `mcmp` / `mcmp_password`
+
+---
+
 # 빠른 가이드
 이 섹션은 빠르게 설정하고 싶은 분들을 위한 최소한의 과정을 설명합니다.   
 더 자세한 설치 가이드를 원하시면 [단일 인스턴스에서 실행하기 가이드](https://github.com/m-cmp/mc-admin-cli/blob/main/docs/running-on-instance.md) 문서를 참조하세요.
