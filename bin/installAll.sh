@@ -200,8 +200,42 @@ ensure_env_file() {
     fi
 }
 
+sync_missing_env_vars() {
+    local setup_file="$1"
+    local env_file="$2"
+
+    if [ ! -f "$setup_file" ] || [ ! -f "$env_file" ]; then
+        return 0
+    fi
+
+    local tmpfile
+    tmpfile=$(mktemp)
+
+    while IFS= read -r line; do
+        _key="${line%%=*}"
+        if ! grep -qE "^${_key}=" "$env_file"; then
+            printf '%s\n' "$line" >> "$tmpfile"
+        fi
+    done < <(grep -E '^[A-Z_][A-Z0-9_]*=' "$setup_file")
+
+    if [ -s "$tmpfile" ]; then
+        local rel="${env_file##*/conf/docker/}"
+        {
+            printf '\n'
+            printf '# === Synced from %s by installAll.sh on %s ===\n' \
+                "$(basename "$setup_file")" "$(date -Iseconds)"
+            cat "$tmpfile"
+        } >> "$env_file"
+        echo "✓ Synced $(wc -l < "$tmpfile") missing var(s) into ${rel}"
+    fi
+    rm -f "$tmpfile"
+}
+
 ensure_env_file "$PROJECT_ROOT_ABS/.env.setup"                            "$PROJECT_ROOT_ABS/.env"
 ensure_env_file "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env.setup"        "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env"
+
+sync_missing_env_vars "$PROJECT_ROOT_ABS/.env.setup"                      "$PROJECT_ROOT_ABS/.env"
+sync_missing_env_vars "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env.setup"  "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env"
 
 # =============================================================================
 # Domain Configuration
