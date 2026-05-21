@@ -31,7 +31,7 @@ func parseJson() {
 	// swagger.json 파일 읽기
 	data, err := os.ReadFile(swaggerFile)
 	if err != nil {
-		log.Fatalf("파일 읽기 오류: %s", err)
+		log.Fatalf("File read error: %s", err)
 	}
 
 	json := string(data)

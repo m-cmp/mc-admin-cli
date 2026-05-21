@@ -1,19 +1,19 @@
 services:
 
-  # Certbot (인증서 발급 및 갱신용)
-  # 이 컨테이너는 필요할 때만 1회성으로 실행됩니다.
+  # Certbot (for certificate issuance and renewal)
+  # This container is run once on demand.
   mcmp-certbot:
     image: certbot/certbot:latest
     container_name: mcmp-certbot
     ports:
-      - "80:80"  # Standalone 모드에서 80번 포트 사용
+      - "80:80"  # Port 80 is used in standalone mode
     volumes:
-      # Certbot 설정 및 발급된 인증서 저장 (읽기/쓰기 권한 필요)
+      # Stores Certbot config and issued certificates (read/write access required)
       - ./container-volume/mc-iam-manager/certs:/etc/letsencrypt
     environment:
       MC_IAM_MANAGER_PUBLIC_DOMAIN: ${MC_IAM_MANAGER_PUBLIC_DOMAIN}
       MC_IAM_MANAGER_CERT_EMAIL: ${MC_IAM_MANAGER_CERT_EMAIL}
     entrypoint: ["certbot"]
-    #command: ["certonly", "--standalone", "--email", "${MC_IAM_MANAGER_CERT_EMAIL}", "--agree-tos", "--no-eff-email", "-d", "${MC_IAM_MANAGER_PUBLIC_DOMAIN}", "--non-interactive", "--staging"] # <-- 테스트 발급
-    command: ["certonly", "--standalone", "--email", "${MC_IAM_MANAGER_CERT_EMAIL}", "--agree-tos", "--no-eff-email", "-d", "${MC_IAM_MANAGER_PUBLIC_DOMAIN}", "--non-interactive"] # <-- 실제 발급
-    #command: ["certonly", "--standalone", "--email", "${MC_IAM_MANAGER_CERT_EMAIL}", "--agree-tos", "--no-eff-email", "-d", "${MC_IAM_MANAGER_PUBLIC_DOMAIN}", "--non-interactive", "--force-renewal"] # <-- 강제 재발급
+    #command: ["certonly", "--standalone", "--email", "${MC_IAM_MANAGER_CERT_EMAIL}", "--agree-tos", "--no-eff-email", "-d", "${MC_IAM_MANAGER_PUBLIC_DOMAIN}", "--non-interactive", "--staging"] # <-- test issuance
+    command: ["certonly", "--standalone", "--email", "${MC_IAM_MANAGER_CERT_EMAIL}", "--agree-tos", "--no-eff-email", "-d", "${MC_IAM_MANAGER_PUBLIC_DOMAIN}", "--non-interactive"] # <-- actual issuance
+    #command: ["certonly", "--standalone", "--email", "${MC_IAM_MANAGER_CERT_EMAIL}", "--agree-tos", "--no-eff-email", "-d", "${MC_IAM_MANAGER_PUBLIC_DOMAIN}", "--non-interactive", "--force-renewal"] # <-- force renewal

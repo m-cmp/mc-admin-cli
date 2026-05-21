@@ -1,13 +1,13 @@
 #!/bin/bash
 
-# UID 변수 충돌 방지 - .env.setup 파일 사용
+# Prevent UID variable conflict — use .env.setup file
 source .env
 
-# 자동화된 설정 함수
+# Automated setup function
 auto_setup() {
     echo "=== Starting automated setup process ==="
     
-    # 1. 플랫폼 어드민 초기화
+    # 1. Platform admin initialization
     echo "Step 1: Initializing platform admin..."
     init_platform_admin
     if [ $? -ne 0 ]; then
@@ -16,7 +16,7 @@ auto_setup() {
     fi
     echo "✓ Platform admin initialized successfully"
     
-    # 2. 로그인
+    # 2. Login
     echo "Step 2: Logging in..."
     login
     if [ $? -ne 0 ]; then
@@ -25,7 +25,7 @@ auto_setup() {
     fi
     echo "✓ Login successful"
     
-    # 3. 역할 데이터 초기화
+    # 3. Role data initialization
     echo "Step 3: Initializing predefined roles..."
     init_predefined_roles
     if [ $? -ne 0 ]; then
@@ -34,7 +34,7 @@ auto_setup() {
     fi
     echo "✓ Predefined roles initialized successfully"
     
-    # 4. 메뉴 데이터 초기화
+    # 4. Menu data initialization
     echo "Step 4: Initializing menu data..."
     init_menu
     if [ $? -ne 0 ]; then
@@ -43,7 +43,7 @@ auto_setup() {
     fi
     echo "✓ Menu data initialized successfully"
     
-    # 5. API 리소스 데이터 초기화
+    # 5. API resource data initialization
     echo "Step 5: Initializing API resources..."
     init_api_resources
     if [ $? -ne 0 ]; then
@@ -52,7 +52,7 @@ auto_setup() {
     fi
     echo "✓ API resources initialized successfully"
 
-    # 5-1. 프레임워크 서비스 URL 등록 (sync-projects 전 서비스 레지스트리 선행 등록)
+    # 5-1. Register framework service URLs (must precede sync-projects in the service registry)
     echo "Step 5-1: Registering framework service URLs..."
     register_framework_services
     if [ $? -ne 0 ]; then
@@ -61,7 +61,7 @@ auto_setup() {
     fi
     echo "✓ Framework services registered successfully"
 
-    # 5-2. iframe 서비스 URL을 브라우저 접근 가능한 외부 주소로 갱신
+    # 5-2. Update iframe service URLs to public-accessible addresses
     echo "Step 5-2: Updating iframe service URLs to public addresses..."
     update_public_service_urls
     if [ $? -ne 0 ]; then
@@ -70,7 +70,7 @@ auto_setup() {
         echo "✓ Public service URLs updated successfully"
     fi
 
-    # 6. 프로젝트 동기화
+    # 6. Project sync
     echo "Step 6: Syncing projects..."
     sync_projects
     if [ $? -ne 0 ]; then
@@ -79,7 +79,7 @@ auto_setup() {
     fi
     echo "✓ Projects synced successfully"
     
-    # 7. Keycloak client redirect URI 설정
+    # 7. Keycloak client redirect URI configuration
     echo "Step 7: Configuring Keycloak client redirect URIs..."
     configure_keycloak_client_uris
     if [ $? -ne 0 ]; then
@@ -88,7 +88,7 @@ auto_setup() {
         echo "✓ Keycloak client redirect URIs configured successfully"
     fi
 
-    # 8. 워크스페이스-프로젝트 매핑
+    # 8. Workspace-project mapping
     echo "Step 8: Mapping workspace to all projects..."
     map_workspace_projects
     if [ $? -ne 0 ]; then
@@ -114,7 +114,7 @@ init_platform_admin() {
     echo "Admin Email: $MC_IAM_MANAGER_PLATFORMADMIN_EMAIL"
     echo "Admin Username: $MC_IAM_MANAGER_PLATFORMADMIN_ID"
     
-    # 환경 변수 사용
+    # Use environment variables
     json_data=$(jq -n \
         --arg email "$MC_IAM_MANAGER_PLATFORMADMIN_EMAIL" \
         --arg password "$MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD" \
@@ -128,34 +128,34 @@ init_platform_admin() {
         --data "$json_data" \
         "$MC_IAM_MANAGER_HOST/api/initial-admin")
     
-    # HTTP 상태 코드와 응답 본문 분리
+    # Split HTTP status code and response body
     http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
     response_body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
     
     echo "Platform admin init HTTP Status: $http_code"
     echo "Platform admin init Response Body: $response_body"
     
-    # 응답 검증
+    # Validate response
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to make request to platform admin API"
         echo "curl exit code: $?"
         return 1
     fi
     
-    # HTTP 상태 코드 확인
+    # Check HTTP status code
     if [ "$http_code" != "200" ] && [ "$http_code" != "201" ]; then
         echo "ERROR: Platform admin initialization failed with HTTP status $http_code"
         return 1
     fi
     
-    # JSON 응답 검증
+    # Validate JSON response
     if ! echo "$response_body" | jq . > /dev/null 2>&1; then
         echo "ERROR: Invalid JSON response from platform admin API"
         echo "Raw response: $response_body"
         return 1
     fi
     
-    # 성공 여부 확인 (응답에 에러가 없는지 확인)
+    # Check success (verify no error field in response)
     if echo "$response_body" | jq -e '.error' > /dev/null 2>&1; then
         echo "ERROR: Platform admin initialization failed with error in response"
         echo "Error details:"
@@ -171,7 +171,7 @@ login() {
     echo "=== Starting Login Process ==="
     echo "Target URL: $MC_IAM_MANAGER_HOST/api/auth/login"
     
-    # 환경 변수에서 플랫폼 어드민 정보 사용
+    # Use platform admin credentials from environment variables
     if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ID" ] || [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD" ]; then
         echo "ERROR: Platform admin credentials not found in .env file"
         echo "Please check MC_IAM_MANAGER_PLATFORMADMIN_ID and MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD in .env"
@@ -180,7 +180,7 @@ login() {
     
     echo "Using platform admin ID: $MC_IAM_MANAGER_PLATFORMADMIN_ID"
     
-    # 로그인 요청 JSON 생성
+    # Build login request JSON
     login_json=$(jq -n \
         --arg id "$MC_IAM_MANAGER_PLATFORMADMIN_ID" \
         --arg password "$MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD" \
@@ -192,40 +192,40 @@ login() {
         --data "$login_json" \
         "$MC_IAM_MANAGER_HOST/api/auth/login")
     
-    # HTTP 상태 코드와 응답 본문 분리
+    # Split HTTP status code and response body
     http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
     response_body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
     
     echo "Login HTTP Status: $http_code"
     echo "Login Response Body: $response_body"
     
-    # 응답 검증
+    # Validate response
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to make login request"
         echo "curl exit code: $?"
         return 1
     fi
     
-    # HTTP 상태 코드 확인
+    # Check HTTP status code
     if [ "$http_code" != "200" ]; then
         echo "ERROR: Login failed with HTTP status $http_code"
         return 1
     fi
     
-    # 디버깅: jq가 설치되어 있는지 확인
+    # Debug: check if jq is installed
     if ! command -v jq &> /dev/null; then
         echo "ERROR: jq is not installed. Please install jq first."
         return 1
     fi
     
-    # 디버깅: 응답이 유효한 JSON인지 확인
+    # Debug: verify response is valid JSON
     if ! echo "$response_body" | jq . > /dev/null 2>&1; then
         echo "ERROR: Invalid JSON response"
         echo "Raw response: $response_body"
         return 1
     fi
     
-    # 디버깅: access_token 필드가 있는지 확인
+    # Debug: check if access_token field exists in response
     if ! echo "$response_body" | jq -e '.access_token' > /dev/null 2>&1; then
         echo "ERROR: access_token field not found in response"
         echo "Available fields:"
@@ -235,7 +235,7 @@ login() {
     
     MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN="$(echo "$response_body" | jq -r '.access_token')"
     
-    # 디버깅: 토큰이 제대로 추출되었는지 확인
+    # Debug: verify token was extracted successfully
     if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ] || [ "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" = "null" ]; then
         echo "ERROR: Failed to extract access token"
         echo "Extracted token: '$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN'"
@@ -260,7 +260,7 @@ init_predefined_roles() {
             --data "$json_data" \
             "$MC_IAM_MANAGER_HOST/api/roles")
         
-        # 응답 검증
+        # Validate response
         if [ $? -ne 0 ]; then
             echo "ERROR: Failed to create role: $role"
             return 1
@@ -268,7 +268,7 @@ init_predefined_roles() {
         
         echo "Response for role $role: $response"
         
-        # 성공 여부 확인
+        # Check success
         if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
             echo "ERROR: Failed to create role: $role"
             return 1
@@ -282,7 +282,7 @@ init_menu() {
     echo "Initializing menu data..."
     wget -q -O ./menu.yaml "$MC_WEB_CONSOLE_MENUYAML"
     
-    # wget 성공 여부 확인
+    # Check if wget succeeded
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to download menu.yaml"
         return 1
@@ -293,7 +293,7 @@ init_menu() {
         --header 'Content-Type: application/json' \
         "$MC_IAM_MANAGER_HOST/api/setup/initial-menus")
     
-    # 응답 검증
+    # Validate response
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to initialize menu data"
         return 1
@@ -301,7 +301,7 @@ init_menu() {
     
     echo "Menu initialization response: $response"
     
-    # 성공 여부 확인
+    # Check success
     if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
         echo "ERROR: Menu initialization failed"
         return 1
@@ -330,7 +330,7 @@ init_api_resources() {
         --header 'Content-Type: application/json' \
         "$MC_IAM_MANAGER_HOST/api/setup/sync-mcmp-apis")
     
-    # 응답 검증
+    # Validate response
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to initialize API resources"
         return 1
@@ -338,7 +338,7 @@ init_api_resources() {
     
     echo "API resources initialization response: $response"
     
-    # 성공 여부 확인
+    # Check success
     if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
         echo "ERROR: API resources initialization failed"
         return 1
@@ -351,8 +351,8 @@ init_api_resources() {
 register_framework_services() {
     echo "Registering framework service URLs to mcmp_api_services..."
 
-    # api.yaml의 services 섹션에 정의된 서비스들을 POST /api/mcmp-apis 로 등록
-    # sync-mcmp-apis는 serviceActions(권한)만 등록하고 service URL 레지스트리는 미처리하므로 별도 등록 필요
+    # Register services defined in the services section of api.yaml via POST /api/mcmp-apis
+    # sync-mcmp-apis only registers serviceActions (permissions) and does not handle the service URL registry — register separately
 
     register_service() {
         local name="$1"
@@ -384,7 +384,7 @@ register_framework_services() {
         if [ "$http_code" = "201" ]; then
             echo "  ✓ Registered: $name ($base_url)"
         elif [ "$http_code" = "409" ]; then
-            # 기존 레코드가 있으면 base_url, version, auth 자격증명 모두 업데이트
+            # If a record already exists, update base_url, version, and auth credentials
             PGPASSWORD="$MC_IAM_MANAGER_DATABASE_PASSWORD" psql \
                 -h "$MC_IAM_MANAGER_DATABASE_HOST" \
                 -p "${MC_IAM_MANAGER_DATABASE_PORT:-5432}" \
@@ -401,8 +401,8 @@ register_framework_services() {
         return 0
     }
 
-    # api.yaml의 services 섹션에 정의된 모든 framework 등록
-    # mc-iam-manager 자신은 service URL registry 등록 대상에서 제외
+    # Register all frameworks defined in the services section of api.yaml
+    # mc-iam-manager itself is excluded from the service URL registry
     local failed=0
     local current_svc=""
     local current_version=""
@@ -410,9 +410,9 @@ register_framework_services() {
     local current_auth_type=""
 
     while IFS= read -r line; do
-        # 서비스 이름 감지 (2칸 들여쓰기 + 콜론으로 끝나는 라인)
+        # Detect service name (2-space indent + line ending with colon)
         if echo "$line" | grep -qE "^  [a-z].*:$"; then
-            # 직전 서비스 처리
+            # Process the previous service
             if [ -n "$current_svc" ] && [ "$current_svc" != "mc-iam-manager" ]; then
                 auth_user=""
                 auth_pass=""
@@ -439,7 +439,7 @@ register_framework_services() {
         fi
     done < <(sed -n '/^services:/,/^serviceActions:/p' ./api.yaml | head -n -1)
 
-    # 마지막 서비스 처리
+    # Process the last service
     if [ -n "$current_svc" ] && [ "$current_svc" != "mc-iam-manager" ]; then
         auth_user=""
         auth_pass=""
@@ -465,12 +465,12 @@ register_framework_services() {
 update_public_service_urls() {
     echo "Updating framework service URLs to public-accessible addresses..."
 
-    # mc-cost-optimizer-fe: 컨테이너 내부 URL(http://mc-cost-optimizer-fe:7780)을
-    # 브라우저가 직접 접근 가능한 nginx HTTPS 프록시 URL로 갱신.
-    # MCIAM_USE=true 환경에서 /api/getapihosts가 이 값을 iframe src로 반환하기 때문.
+    # mc-cost-optimizer-fe: replace the internal container URL (http://mc-cost-optimizer-fe:7780)
+    # with the nginx HTTPS proxy URL accessible directly from the browser.
+    # /api/getapihosts returns this value as the iframe src in MCIAM_USE=true environments.
     local cost_fe_public_url="https://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_COST_OPTIMIZER_FE_PROXY_PORT}"
 
-    # mc-cost-optimizer-fe는 upstream api.yaml에 없으므로 먼저 등록 시도(idempotent)
+    # mc-cost-optimizer-fe is not in the upstream api.yaml, so attempt registration first (idempotent)
     local reg_body
     reg_body=$(printf '{"name":"mc-cost-optimizer-fe","version":"v1","baseUrl":"http://mc-cost-optimizer-fe:7780","authType":"none","authUser":"","authPass":"","isActive":true}')
     local reg_resp
@@ -490,7 +490,7 @@ update_public_service_urls() {
         return 1
     fi
 
-    # baseurl을 외부 공개 URL로 갱신
+    # Update baseurl to the external public URL
     local response
     response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X PUT \
         --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
@@ -510,9 +510,9 @@ update_public_service_urls() {
         return 1
     fi
 
-    # mc-workflow-manager-fe: iframe 전용 nginx HTTPS 프록시 URL 등록 및 갱신
-    # (원본 mc-workflow-manager는 내부 API 호출용으로 내부 URL 유지)
-    local wf_public_url="https://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_WORKFLOW_MANAGER_PROXY_PORT}"
+    # mc-workflow-manager-fe: register and update dedicated iframe nginx HTTPS proxy URL
+    # (the original mc-workflow-manager retains its internal URL for internal API calls)
+    local wf_public_url="${MC_WORKFLOW_MANAGER_PUBLIC_HOST}"
     reg_body=$(printf '{"name":"mc-workflow-manager-fe","version":"v0.0.1","baseUrl":"http://mc-workflow-manager:18083","authType":"none","authUser":"","authPass":"","isActive":true}')
     reg_resp=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST \
         --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
@@ -542,8 +542,8 @@ update_public_service_urls() {
         return 1
     fi
 
-    # mc-data-manager-fe: iframe 전용 nginx HTTPS 프록시 URL 등록 및 갱신
-    local dm_public_url="https://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_DATA_MANAGER_PROXY_PORT}"
+    # mc-data-manager-fe: register and update dedicated iframe nginx HTTPS proxy URL
+    local dm_public_url="${MC_DATA_MANAGER_PUBLIC_HOST}"
     reg_body=$(printf '{"name":"mc-data-manager-fe","version":"v0.0.1","baseUrl":"http://mc-data-manager:3300","authType":"none","authUser":"","authPass":"","isActive":true}')
     reg_resp=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST \
         --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
@@ -573,8 +573,8 @@ update_public_service_urls() {
         return 1
     fi
 
-    # mc-application-manager-fe: iframe 전용 nginx HTTPS 프록시 URL 등록 및 갱신
-    local am_public_url="https://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_APPLICATION_MANAGER_PROXY_PORT}"
+    # mc-application-manager-fe: register and update dedicated iframe nginx HTTPS proxy URL
+    local am_public_url="${MC_APPLICATION_MANAGER_PUBLIC_HOST}"
     reg_body=$(printf '{"name":"mc-application-manager-fe","version":"v0.0.1","baseUrl":"http://mc-application-manager:18084","authType":"none","authUser":"","authPass":"","isActive":true}')
     reg_resp=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST \
         --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
@@ -646,7 +646,7 @@ sync_projects() {
     echo "Target URL: $MC_IAM_MANAGER_HOST/api/setup/sync-projects"
     echo "Access Token: ${MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN:0:20}..."
     
-    # mc-infra-manager 상태 확인
+    # Check mc-infra-manager availability
     echo "Checking mc-infra-manager availability..."
     infra_response=$(curl -s -w "HTTPSTATUS:%{http_code}" "http://mc-infra-manager:1323/tumblebug/readyz")
     infra_http_code=$(echo $infra_response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
@@ -660,41 +660,41 @@ sync_projects() {
         echo "This may cause project sync to fail"
     fi
     
-    # 프로젝트 동기화 요청
+    # Make project sync request
     echo "Making project sync request..."
     response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST \
         --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
         "$MC_IAM_MANAGER_HOST/api/setup/sync-projects")
     
-    # HTTP 상태 코드와 응답 본문 분리
+    # Split HTTP status code and response body
     http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
     response_body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
     
     echo "Project sync HTTP Status: $http_code"
     echo "Project sync Response Body: $response_body"
     
-    # 응답 검증
+    # Validate response
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to make request to project sync API"
         echo "curl exit code: $?"
         return 1
     fi
     
-    # HTTP 상태 코드 확인
+    # Check HTTP status code
     if [ "$http_code" != "200" ]; then
         echo "ERROR: Project sync failed with HTTP status $http_code"
         return 1
     fi
     
-    # JSON 응답 검증
+    # Validate JSON response
     if ! echo "$response_body" | jq . > /dev/null 2>&1; then
         echo "ERROR: Invalid JSON response from project sync API"
         echo "Raw response: $response_body"
         return 1
     fi
     
-    # 성공 여부 확인
+    # Check success
     if echo "$response_body" | jq -e '.error' > /dev/null 2>&1; then
         echo "ERROR: Project sync failed with error in response"
         echo "Error details:"
@@ -702,7 +702,7 @@ sync_projects() {
         return 1
     fi
     
-    # 성공 시 상세 정보 출력
+    # Print detailed info on success
     echo "✓ Project sync completed successfully"
     echo "Response details:"
     echo "$response_body" | jq .
@@ -720,7 +720,7 @@ configure_keycloak_client_uris() {
     PUBLIC_HOST="$MC_IAM_MANAGER_PUBLIC_HOST"
     echo "Public host: $PUBLIC_HOST"
 
-    # Keycloak admin token 발급
+    # Obtain Keycloak admin token
     KC_ADMIN_TOKEN=$(curl -s -X POST \
         "${MC_IAM_MANAGER_KEYCLOAK_HOST}/realms/master/protocol/openid-connect/token" \
         -H "Content-Type: application/x-www-form-urlencoded" \
@@ -738,11 +738,11 @@ configure_keycloak_client_uris() {
 
     KC_ADMIN_URL="${MC_IAM_MANAGER_KEYCLOAK_HOST}/admin/realms/${MC_IAM_MANAGER_KEYCLOAK_REALM}"
 
-    # mciamClient, mciam-oidc-Client 두 클라이언트 설정
+    # Configure both mciamClient and mciam-oidc-Client
     for CLIENT_NAME in "$MC_IAM_MANAGER_KEYCLOAK_CLIENT_NAME" "$MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_NAME"; do
         [ -z "$CLIENT_NAME" ] && continue
 
-        # client ID (UUID) 조회
+        # Look up client ID (UUID)
         CLIENT_ID=$(curl -s \
             "${KC_ADMIN_URL}/clients?clientId=${CLIENT_NAME}" \
             -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
@@ -753,7 +753,7 @@ configure_keycloak_client_uris() {
             continue
         fi
 
-        # 현재 client 설정 조회 후 redirect URI 갱신
+        # Fetch current client config, then update redirect URI
         CURRENT=$(curl -s "${KC_ADMIN_URL}/clients/${CLIENT_ID}" \
             -H "Authorization: Bearer ${KC_ADMIN_TOKEN}")
 
@@ -779,14 +779,14 @@ configure_keycloak_client_uris() {
 map_workspace_projects() {
     echo "Getting workspace list..."
     
-    # 워크스페이스 목록 가져오기
+    # Get workspace list
     workspace_response=$(curl -s -X POST \
         --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
         --data '{}' \
         "$MC_IAM_MANAGER_HOST/api/workspaces/list")
     
-    # 응답 검증
+    # Validate response
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to get workspace list"
         return 1
@@ -794,7 +794,7 @@ map_workspace_projects() {
     
     echo "Workspace list response: $workspace_response"
     
-    # 첫 번째 워크스페이스 ID 추출
+    # Extract first workspace ID
     workspace_id=$(echo "$workspace_response" | jq -r '.[0].id // empty')
     
     if [ -z "$workspace_id" ] || [ "$workspace_id" = "null" ]; then
@@ -804,7 +804,7 @@ map_workspace_projects() {
     
     echo "Using workspace ID: $workspace_id"
     
-    # 프로젝트 목록 가져오기
+    # Get project list
     echo "Getting project list..."
     project_response=$(curl -s -X POST \
         --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
@@ -812,7 +812,7 @@ map_workspace_projects() {
         --data '{}' \
         "$MC_IAM_MANAGER_HOST/api/projects/list")
     
-    # 응답 검증
+    # Validate response
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to get project list"
         return 1
@@ -820,7 +820,7 @@ map_workspace_projects() {
     
     echo "Project list response: $project_response"
     
-    # 모든 프로젝트 ID 추출 (문자열로 변환)
+    # Extract all project IDs (convert to strings)
     project_ids=$(echo "$project_response" | jq -r '[.[].id | tostring]')
     
     if [ -z "$project_ids" ] || [ "$project_ids" = "[]" ]; then
@@ -830,7 +830,7 @@ map_workspace_projects() {
     
     echo "Found project IDs: $project_ids"
     
-    # 워크스페이스에 모든 프로젝트 매핑
+    # Map all projects to workspace
     json_data=$(jq -n --arg workspace_id "$workspace_id" --argjson project_ids "$project_ids" \
         '{workspaceId: $workspace_id, projectIds: $project_ids}')
     
@@ -841,34 +841,34 @@ map_workspace_projects() {
         --data "$json_data" \
         "$MC_IAM_MANAGER_HOST/api/workspaces/assign/projects")
     
-    # HTTP 상태 코드와 응답 본문 분리
+    # Split HTTP status code and response body
     http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
     response_body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
     
     echo "Workspace-Project mapping HTTP Status: $http_code"
     echo "Workspace-Project mapping Response Body: $response_body"
     
-    # 응답 검증
+    # Validate response
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to make request to workspace-project mapping API"
         echo "curl exit code: $?"
         return 1
     fi
     
-    # HTTP 상태 코드 확인
+    # Check HTTP status code
     if [ "$http_code" != "200" ]; then
         echo "ERROR: Workspace-project mapping failed with HTTP status $http_code"
         return 1
     fi
     
-    # JSON 응답 검증
+    # Validate JSON response
     if ! echo "$response_body" | jq . > /dev/null 2>&1; then
         echo "ERROR: Invalid JSON response from workspace-project mapping API"
         echo "Raw response: $response_body"
         return 1
     fi
     
-    # 성공 여부 확인
+    # Check success
     if echo "$response_body" | jq -e '.error' > /dev/null 2>&1; then
         echo "ERROR: Workspace-project mapping failed with error in response"
         echo "Error details:"
@@ -899,7 +899,7 @@ map_workspace_projects() {
 #         --data "$json_data" \
 #         "$MC_IAM_MANAGER_HOST_FOR_INIT/api/roles/assign/platform-role")
 
-#     # 응답 검증
+#     # Validate response
 #     if [ $? -ne 0 ]; then
 #         echo "ERROR: Failed to sync projects"
 #         return 1
@@ -912,11 +912,11 @@ map_workspace_projects() {
 #     return 0
 # }
 
-# 자동 설정 실행
+# Run automated setup
 echo "Starting automated setup process..."
 auto_setup
 
-# 자동 설정 완료 후 종료
+# Exit after automated setup completes
 if [ $? -eq 0 ]; then
     echo "Setup completed successfully!"
     exit 0
