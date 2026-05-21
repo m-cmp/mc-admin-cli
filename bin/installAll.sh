@@ -309,7 +309,7 @@ case $IAM_MODE in
             ./mcc infra run -f ../conf/docker/docker-compose.cert.yaml
             if [ $? -eq 0 ]; then
                 echo "✓ Certificate generation completed."
-                # certbot 컨테이너가 root로 생성한 볼륨 디렉토리의 소유권을 현재 사용자로 회수
+                # Reclaim ownership of volume directories created by the certbot container (runs as root)
                 sudo chown -R "$USER:$USER" ../conf/docker/container-volume
             else
                 echo "❌ Error occurred during certificate generation."
