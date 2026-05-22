@@ -313,12 +313,12 @@ init_menu() {
 
 init_api_resources() {
     echo "Initializing API resources..."
-    if [ -n "$MCADMINCLI_APIYAML" ]; then
-        wget -q -O ./api.yaml "$MCADMINCLI_APIYAML" && echo "  Downloaded api.yaml from $MCADMINCLI_APIYAML" || {
-            echo "  WARNING: Failed to download api.yaml from $MCADMINCLI_APIYAML — using local copy"
+    if [ -n "$MC_ADMIN_CLI_APIYAML" ]; then
+        wget -q -O ./api.yaml "$MC_ADMIN_CLI_APIYAML" && echo "  Downloaded api.yaml from $MC_ADMIN_CLI_APIYAML" || {
+            echo "  WARNING: Failed to download api.yaml from $MC_ADMIN_CLI_APIYAML — using local copy"
         }
     else
-        echo "  MCADMINCLI_APIYAML not set — using local api.yaml"
+        echo "  MC_ADMIN_CLI_APIYAML not set — using local api.yaml"
     fi
     if [ ! -f ./api.yaml ]; then
         echo "ERROR: api.yaml not found"
