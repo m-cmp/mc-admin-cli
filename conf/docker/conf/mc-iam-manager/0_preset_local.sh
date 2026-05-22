@@ -37,8 +37,17 @@ fi
 # 2. Load environment variables
 # =============================================================================
 
+# Use line-by-line parsing instead of source to safely handle unquoted multi-word
+# values (e.g. cron schedules like "0 30 0,6 * * ?") that docker compose .env allows.
 echo "Loading environment variables..."
-source "$ENV_FILE"
+
+while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+    if [[ "$line" =~ ^([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]]; then
+        declare "${BASH_REMATCH[1]}=${BASH_REMATCH[2]}"
+    fi
+done < "$ENV_FILE"
 
 # =============================================================================
 # 3. Validate required variables
@@ -181,7 +190,13 @@ if [ -d "$OUTPUT_FILE" ]; then
 fi
 
 # Reload env after rewrite so substitutions use updated http:// values
-source "$ENV_FILE"
+while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+    if [[ "$line" =~ ^([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]]; then
+        declare "${BASH_REMATCH[1]}=${BASH_REMATCH[2]}"
+    fi
+done < "$ENV_FILE"
 
 if [ -n "$MC_IAM_MANAGER_PUBLIC_DOMAIN" ] && [ -n "$MC_IAM_MANAGER_KEYCLOAK_PORT" ]; then
     sed -e "s/\${MC_IAM_MANAGER_DOMAIN}/$MC_IAM_MANAGER_DOMAIN/g" \

@@ -70,10 +70,17 @@ if [ ! -f "$TEMPLATE_FILE" ]; then
 fi
 
 # Load .env file as environment variables
+# Use line-by-line parsing instead of source to safely handle unquoted multi-word
+# values (e.g. cron schedules like "0 30 0,6 * * ?") that docker compose .env allows.
 echo "Loading environment variables..."
 
-# Source .env file directly
-source "$ENV_FILE"
+while IFS= read -r line || [[ -n "$line" ]]; do
+    [[ "$line" =~ ^[[:space:]]*# ]] && continue
+    [[ "$line" =~ ^[[:space:]]*$ ]] && continue
+    if [[ "$line" =~ ^([A-Za-z_][A-Za-z0-9_]*)=(.*)$ ]]; then
+        declare "${BASH_REMATCH[1]}=${BASH_REMATCH[2]}"
+    fi
+done < "$ENV_FILE"
 
 # Validate required environment variables
 echo "Validating required environment variables..."
