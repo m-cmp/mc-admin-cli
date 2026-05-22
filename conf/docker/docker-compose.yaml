@@ -242,7 +242,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: cloudbaristaorg/mc-iam-manager:0.5.2
+    image: csescsta/mc-iam-manager:edge
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
@@ -388,6 +388,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-iam-manager/:/app/mc-iam-manager/
+      - ./api.yaml:/app/mc-iam-manager/api.yaml
     working_dir: /app/mc-iam-manager
     command: bash /app/mc-iam-manager/docker-post-init.sh
 
