@@ -2,7 +2,7 @@
 
 echo 'All required containers are healthy. Starting initialization...'
 
-# 필요한 도구 설치
+# Install required tools
 apt-get update && apt-get install -y curl jq wget postgresql-client
 
 echo ''
@@ -13,7 +13,7 @@ echo ' Health Check'
 echo '------------------------------------------------'
 
 
-# # mc-iam-manager API가 완전히 준비될 때까지 대기 (간단한 버전)
+# # Wait until mc-iam-manager API is fully ready (simple version)
 # echo 'Waiting for mc-iam-manager API to be ready...'
 # max_attempts=2
 # attempt=1
@@ -21,7 +21,7 @@ echo '------------------------------------------------'
 # while [ $attempt -le $max_attempts ]; do
 #   echo "Attempt $attempt/$max_attempts: Checking mc-iam-manager API..."
   
-#   # 간단한 API 헬스체크 (컨테이너 이름 사용)
+#   # Simple API health check (using container name)
 #   if curl -s -f "http://mc-iam-manager:5000/readyz" > /dev/null 2>&1; then
 #     echo '✓ mc-iam-manager API is ready!'
 #     break
@@ -43,7 +43,7 @@ echo ''
 echo '------------------------------------------------' 
 echo ' Debug Info'
 echo '------------------------------------------------'
-# 디버깅: 현재 디렉토리와 파일 목록 확인
+# Debug: check current directory and file list
 echo 'Current working directory:'
 pwd
 echo 'Files in current directory:'
@@ -71,7 +71,7 @@ echo '------------------------------------------------'
 echo '1_setup_auto.sh'
 echo '------------------------------------------------'
 
-# 초기화 스크립트 실행
+# Run initialization script
 if [ -f '1_setup_auto.sh' ]; then
   echo 'Found 1_setup_auto.sh, making it executable...'
   chmod +x 1_setup_auto.sh
@@ -81,7 +81,7 @@ if [ -f '1_setup_auto.sh' ]; then
   # head -5 1_setup_auto.sh
   echo 'Executing 1_setup_auto.sh...'
   
-  # bash로 실행 (Ubuntu에는 bash가 기본적으로 포함됨)
+  # Run with bash (included by default on Ubuntu)
   if bash 1_setup_auto.sh; then
     echo 'Script executed successfully with bash 1_setup_auto.sh'
   else

@@ -1,6 +1,6 @@
 #!/bin/bash
 
-# 경고 메시지 및 사용자 확인
+# Warning message and user confirmation
 cat <<EOF
 [WARNING]
 This shell script will delete ALL Docker images, containers, volumes, networks, and also remove all container-volume directories used for persistent data.
@@ -13,7 +13,7 @@ if [[ ! "$answer" =~ ^[Yy]$ ]]; then
   exit 1
 fi
 
-# 모든 Docker 이미지 삭제
+# Delete all Docker images
 echo "All Docker images deleting..."
 if [ -n "$(docker images -q)" ]; then
   echo "docker rmi \$(docker images -q) -f"
@@ -24,7 +24,7 @@ else
 fi
 
 echo
-# 모든 컨테이너 중지 및 삭제
+# Stop and delete all containers
 echo "Stopping and deleting all Docker containers..."
 if [ -n "$(docker ps -aq)" ]; then
   echo "docker stop \$(docker ps -aq)"
@@ -36,13 +36,13 @@ else
 fi
 
 echo
-# 모든 사용되지 않는 Docker 시스템 리소스 정리 (이미지, 컨테이너, 네트워크, 빌드 캐시)
+# Clean up all unused Docker system resources (images, containers, networks, build cache)
 echo "Cleaning up all unused Docker system resources (images, containers, networks, build cache)..."
 echo "docker system prune -a -f"
 docker system prune -a -f
 
 echo
-# 모든 볼륨 삭제
+# Delete all volumes
 echo "Deleting all Docker volumes..."
 if [ -n "$(docker volume ls -q)" ]; then
   echo "docker volume rm \$(docker volume ls -q)"
@@ -52,12 +52,12 @@ else
 fi
 
 echo
-# 모든 네트워크 삭제 (사용되지 않는 네트워크만)
+# Delete all networks (unused networks only)
 echo "docker network prune -f"
 docker network prune -f
 
 echo
-# 모든 사용자 정의 네트워크 강제 삭제
+# Force delete all custom networks
 echo "Deleting all custom Docker networks..."
 if [ -n "$(docker network ls --filter type=custom -q)" ]; then
   echo "docker network rm \$(docker network ls --filter type=custom -q)"
@@ -68,7 +68,7 @@ fi
 
 
 echo
-# Docker Compose 정리 (만약 docker-compose.yaml이 있는 경우)
+# Clean up Docker Compose resources (if docker-compose.yaml exists)
 echo "Cleaning up Docker Compose resources..."
 if [ -f "../conf/docker/docker-compose.yaml" ]; then
   echo "cd ../conf/docker && docker-compose down -v --remove-orphans"
@@ -77,7 +77,7 @@ if [ -f "../conf/docker/docker-compose.yaml" ]; then
 fi
 
 echo
-# container-volume 폴더 삭제 (호스트 마운트 포인트)
+# Delete container-volume directories (host mount points)
 echo "Deleting container-volume directories..."
 if [ -d "../conf/docker/container-volume" ]; then
   echo "sudo rm -rf ../conf/docker/container-volume"
@@ -88,7 +88,7 @@ else
 fi
 
 echo
-# mc-iam-manager 설정 파일들 삭제
+# Delete mc-iam-manager configuration files
 echo "Deleting mc-iam-manager configuration files..."
 files_to_delete=(
   "../conf/docker/conf/mc-iam-manager/api.yaml"
@@ -107,18 +107,18 @@ for file in "${files_to_delete[@]}"; do
 done
 
 echo
-# Docker 시스템 리소스 정보 표시
+# Display Docker system resource information
 echo "docker system df"
 docker system df
 
 echo
-# Docker 데몬 재시작 (선택사항 - 주석 처리)
+# Restart Docker daemon (optional - commented out)
 # echo "Restarting Docker daemon..."
 # sudo systemctl restart docker
 # sleep 5
 
 echo
-# 정리 완료 후 상태 확인
+# Check status after cleanup
 echo "=== Cleanup Status ==="
 echo "Remaining images: $(docker images -q | wc -l)"
 echo "Remaining containers: $(docker ps -aq | wc -l)"
