@@ -288,7 +288,11 @@ echo "Using domain: $IAM_DOMAIN"
 apply_domain() {
     local env_file="$1"
     local domain="$2"
-    sed -i "s|^MC_IAM_MANAGER_PUBLIC_DOMAIN=.*|MC_IAM_MANAGER_PUBLIC_DOMAIN=${domain}|" "$env_file"
+    if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' "s|^MC_IAM_MANAGER_PUBLIC_DOMAIN=.*|MC_IAM_MANAGER_PUBLIC_DOMAIN=${domain}|" "$env_file"
+    else
+        sed -i "s|^MC_IAM_MANAGER_PUBLIC_DOMAIN=.*|MC_IAM_MANAGER_PUBLIC_DOMAIN=${domain}|" "$env_file"
+    fi
     echo "✓ Set MC_IAM_MANAGER_PUBLIC_DOMAIN=${domain} in ${env_file##*/conf/docker/}"
 }
 
