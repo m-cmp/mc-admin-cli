@@ -93,6 +93,14 @@ echo "  MC_IAM_MANAGER_PORT: $MC_IAM_MANAGER_PORT"
 # 4. Rewrite PUBLIC_HOST variables from https:// to http:// in .env files
 # =============================================================================
 
+_sedi() {
+    if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+
 rewrite_https_to_http() {
     local env_file="$1"
     if [ ! -f "$env_file" ]; then
@@ -111,7 +119,7 @@ rewrite_https_to_http() {
 
     for var in "${vars[@]}"; do
         if grep -qE "^${var}=https://" "$env_file"; then
-            sed -i "s|^${var}=https://|${var}=http://|" "$env_file"
+            _sedi "s|^${var}=https://|${var}=http://|" "$env_file"
             echo "  ✓ ${var}: https:// → http://"
         fi
     done
@@ -136,7 +144,7 @@ else
         echo "✓ $DOMAIN already exists in $HOSTS_FILE. Skipping."
     else
         echo "Removing any existing entries for $DOMAIN..."
-        sed -i "/[[:space:]]*127\.0\.0\.1[[:space:]]\+${DOMAIN}[[:space:]]*$/d" "$HOSTS_FILE" 2>/dev/null || true
+        _sedi "/[[:space:]]*127\.0\.0\.1[[:space:]]\+${DOMAIN}[[:space:]]*$/d" "$HOSTS_FILE" 2>/dev/null || true
 
         echo "Adding 127.0.0.1 $DOMAIN to $HOSTS_FILE..."
         if sudo -n true 2>/dev/null; then
