@@ -5,7 +5,7 @@ source ../../.env
 init_platform_admin() {
     echo "Initializing platform admin..."
     
-    # 환경 변수 사용
+    # Use environment variables
     json_data=$(jq -n \
         --arg email "$MC_IAM_MANAGER_PLATFORMADMIN_EMAIL" \
         --arg password "$MC_IAM_MANAGER_PLATFORMADMIN_PASSWORD" \
@@ -30,20 +30,20 @@ login() {
     
     echo "Login response: $response"
     
-    # 디버깅: jq가 설치되어 있는지 확인
+    # Debug: check if jq is installed
     if ! command -v jq &> /dev/null; then
         echo "ERROR: jq is not installed. Please install jq first."
         return 1
     fi
     
-    # 디버깅: 응답이 유효한 JSON인지 확인
+    # Debug: check if response is valid JSON
     if ! echo "$response" | jq . > /dev/null 2>&1; then
         echo "ERROR: Invalid JSON response"
         echo "Raw response: $response"
         return 1
     fi
     
-    # 디버깅: access_token 필드가 있는지 확인
+    # Debug: check if access_token field exists
     if ! echo "$response" | jq -e '.access_token' > /dev/null 2>&1; then
         echo "ERROR: access_token field not found in response"
         echo "Available fields:"
@@ -53,7 +53,7 @@ login() {
     
     MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN="$(echo "$response" | jq -r '.access_token')"
     
-    # 디버깅: 토큰이 제대로 추출되었는지 확인
+    # Debug: verify token was extracted correctly
     if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ] || [ "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" = "null" ]; then
         echo "ERROR: Failed to extract access token"
         echo "Extracted token: '$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN'"
@@ -94,7 +94,7 @@ init_menu() {
 
 init_api_resources() {
     echo "Initializing API resources..."
-    wget -q -O ./api.yaml "$MCADMINCLI_APIYAML"
+    wget -q -O ./api.yaml "$MC_ADMIN_CLI_APIYAML"
     response=$(curl -s -X POST \
         --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
@@ -141,7 +141,7 @@ sync_projects() {
     echo "Target URL: $MC_IAM_MANAGER_HOST/api/setup/sync-projects"
     echo "Access Token: ${MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN:0:20}..."
     
-    # mc-infra-manager 상태 확인
+    # Check mc-infra-manager availability
     echo "Checking mc-infra-manager availability..."
     infra_response=$(curl -s -w "HTTPSTATUS:%{http_code}" "http://mc-infra-manager:1323/tumblebug/readyz")
     infra_http_code=$(echo $infra_response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
@@ -155,41 +155,41 @@ sync_projects() {
         echo "This may cause project sync to fail"
     fi
     
-    # 프로젝트 동기화 요청
+    # Make project sync request
     echo "Making project sync request..."
     response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST \
         --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
         "$MC_IAM_MANAGER_HOST/api/setup/sync-projects")
     
-    # HTTP 상태 코드와 응답 본문 분리
+    # Split HTTP status code and response body
     http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
     response_body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
     
     echo "Project sync HTTP Status: $http_code"
     echo "Project sync Response Body: $response_body"
     
-    # 응답 검증
+    # Validate response
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to make request to project sync API"
         echo "curl exit code: $?"
         return 1
     fi
     
-    # HTTP 상태 코드 확인
+    # Check HTTP status code
     if [ "$http_code" != "200" ]; then
         echo "ERROR: Project sync failed with HTTP status $http_code"
         return 1
     fi
     
-    # JSON 응답 검증
+    # Validate JSON response
     if ! echo "$response_body" | jq . > /dev/null 2>&1; then
         echo "ERROR: Invalid JSON response from project sync API"
         echo "Raw response: $response_body"
         return 1
     fi
     
-    # 성공 여부 확인
+    # Check success
     if echo "$response_body" | jq -e '.error' > /dev/null 2>&1; then
         echo "ERROR: Project sync failed with error in response"
         echo "Error details:"
@@ -197,7 +197,7 @@ sync_projects() {
         return 1
     fi
     
-    # 성공 시 상세 정보 출력
+    # Print details on success
     echo "✓ Project sync completed successfully"
     echo "Response details:"
     echo "$response_body" | jq .

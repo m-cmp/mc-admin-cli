@@ -1,9 +1,9 @@
 #!/bin/bash
 
-# PostgreSQL 초기화 스크립트
+# PostgreSQL initialization script
 echo "Creating databases for MC IAM Manager and Keycloak..."
 
-# 환경변수에서 값 가져오기 (기본값 설정)
+# Read values from environment variables (with defaults)
 DB_USER=${MC_IAM_MANAGER_DATABASE_USER:-mciamdbadmin}
 DB_PASSWORD=${MC_IAM_MANAGER_DATABASE_PASSWORD:-mciamdbpassword}
 IAM_DB_NAME=${MC_IAM_MANAGER_DATABASE_NAME:-mc_iam_manager_db}
@@ -16,7 +16,7 @@ echo "  IAM_DB_NAME: $IAM_DB_NAME"
 echo "  KEYCLOAK_DB_NAME: $KEYCLOAK_DB_NAME"
 echo "  RECREATE_DB: $RECREATE_DB"
 
-# 사용자 생성 (이미 존재하면 무시)
+# Create user (skip if already exists)
 echo "Creating database user..."
 psql -U $DB_USER -d $IAM_DB_NAME -c "DO \$\$
 BEGIN
@@ -26,7 +26,7 @@ BEGIN
 END
 \$\$;"
 
-# MC IAM Manager 데이터베이스 확인 및 생성
+# Check and create MC IAM Manager database
 echo "Checking MC IAM Manager database..."
 if [ "$RECREATE_DB" = "true" ] || ! psql -U $DB_USER -d $IAM_DB_NAME -lqt | cut -d \| -f 1 | grep -qw "$IAM_DB_NAME"; then
     echo "Creating MC IAM Manager database..."
@@ -37,7 +37,7 @@ else
     echo "MC IAM Manager database already exists."
 fi
 
-# Keycloak 데이터베이스 확인 및 생성
+# Check and create Keycloak database
 echo "Checking Keycloak database..."
 if [ "$RECREATE_DB" = "true" ] || ! psql -U $DB_USER -d $IAM_DB_NAME -lqt | cut -d \| -f 1 | grep -qw "$KEYCLOAK_DB_NAME"; then
     echo "Creating Keycloak database..."

@@ -12,9 +12,10 @@ usage() {
     echo "  -m, --mode <MODE>           IAM mode selection (dev|prod)"
     echo "                              dev:  Developer mode with self-signed certificate (Mode A)"
     echo "                              prod: Production mode with Let's Encrypt certificate (Mode B)"
-    echo "  -d, --domain <DOMAIN>       Public domain for HTTPS"
-    echo "                              dev default: mciam.local"
-    echo "                              prod:        required (e.g. iam.example.com)"
+    echo "  -d, --domain <DOMAIN>       Public domain or IP for HTTPS"
+    echo "                              dev (local PC):   mciam.local (default, added to /etc/hosts)"
+    echo "                              dev (remote VM):  VM public IP (e.g. 1.2.3.4)"
+    echo "                              prod:             real FQDN required (e.g. iam.example.com)"
     echo "  -r, --run <RUN_MODE>        Service run mode (log|background|skip)"
     echo "                              log:        Run with log mode"
     echo "                              background: Run in background with monitoring"
@@ -22,10 +23,10 @@ usage() {
     echo "  -h, --help                  Display this help message"
     echo ""
     echo "Examples:"
-    echo "  $0 -m dev -r background              # Mode A with default domain (mciam.local)"
-    echo "  $0 -m dev -d dev.local -r background # Mode A with custom domain"
-    echo "  $0 -m prod -d iam.example.com -r skip # Mode B with real domain"
-    echo "  $0                                   # Interactive mode"
+    echo "  $0 -m dev -r background                    # Local PC: default domain (mciam.local)"
+    echo "  $0 -m dev -d 1.2.3.4 -r background         # Remote VM: use public IP"
+    echo "  $0 -m prod -d iam.example.com -r background # Remote VM: use real domain + Let's Encrypt"
+    echo "  $0                                         # Interactive mode"
     exit 1
 }
 
@@ -199,8 +200,42 @@ ensure_env_file() {
     fi
 }
 
+sync_missing_env_vars() {
+    local setup_file="$1"
+    local env_file="$2"
+
+    if [ ! -f "$setup_file" ] || [ ! -f "$env_file" ]; then
+        return 0
+    fi
+
+    local tmpfile
+    tmpfile=$(mktemp)
+
+    while IFS= read -r line; do
+        _key="${line%%=*}"
+        if ! grep -qE "^${_key}=" "$env_file"; then
+            printf '%s\n' "$line" >> "$tmpfile"
+        fi
+    done < <(grep -E '^[A-Z_][A-Z0-9_]*=' "$setup_file")
+
+    if [ -s "$tmpfile" ]; then
+        local rel="${env_file##*/conf/docker/}"
+        {
+            printf '\n'
+            printf '# === Synced from %s by installAll.sh on %s ===\n' \
+                "$(basename "$setup_file")" "$(date -Iseconds)"
+            cat "$tmpfile"
+        } >> "$env_file"
+        echo "✓ Synced $(wc -l < "$tmpfile") missing var(s) into ${rel}"
+    fi
+    rm -f "$tmpfile"
+}
+
 ensure_env_file "$PROJECT_ROOT_ABS/.env.setup"                            "$PROJECT_ROOT_ABS/.env"
 ensure_env_file "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env.setup"        "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env"
+
+sync_missing_env_vars "$PROJECT_ROOT_ABS/.env.setup"                      "$PROJECT_ROOT_ABS/.env"
+sync_missing_env_vars "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env.setup"  "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env"
 
 # =============================================================================
 # Domain Configuration
@@ -213,10 +248,17 @@ if [ -z "$IAM_DOMAIN" ]; then
     echo "=========================================="
     if [ "$IAM_MODE" = "dev" ]; then
         echo ""
-        echo "Mode A: self-signed certificate will be issued for this domain."
-        echo "Default is 'mciam.local' (added to /etc/hosts automatically)."
+        echo "Mode A: self-signed certificate will be issued for this domain/IP."
         echo ""
-        echo -n "Enter public domain [mciam.local]: "
+        echo "  [Local PC]      Just press Enter to use default 'mciam.local'."
+        echo "                  (127.0.0.1 mciam.local added to /etc/hosts automatically)"
+        echo ""
+        echo "  [Remote VM]     Enter the VM's public IP (e.g. 43.202.200.215)."
+        echo "                  Self-signed cert will include IP SAN."
+        echo ""
+        echo "  [With Domain]   Use Production Mode (-m prod) for Let's Encrypt cert."
+        echo ""
+        echo -n "Enter domain or IP [mciam.local]: "
         read -r IAM_DOMAIN
         IAM_DOMAIN="${IAM_DOMAIN:-mciam.local}"
     else
@@ -301,6 +343,8 @@ case $IAM_MODE in
             ./mcc infra run -f ../conf/docker/docker-compose.cert.yaml
             if [ $? -eq 0 ]; then
                 echo "✓ Certificate generation completed."
+                # Reclaim ownership of volume directories created by the certbot container (runs as root)
+                sudo chown -R "$USER:$USER" ../conf/docker/container-volume
             else
                 echo "❌ Error occurred during certificate generation."
                 exit 1
