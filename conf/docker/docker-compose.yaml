@@ -92,7 +92,7 @@ services:
       - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
       - TB_TERRARIUM_API_USERNAME=${MC_INFRA_MANAGER_TERRARIUM_API_USERNAME:-}
       - TB_TERRARIUM_API_PASSWORD=${MC_INFRA_MANAGER_TERRARIUM_API_PASSWORD:-}
-      - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:5000
+      - TB_IAM_MANAGER_REST_URL=http://mc-iam-manager:${MC_IAM_MANAGER_PORT}
       # - TB_ETCD_AUTH_ENABLED=true
       # - TB_ETCD_USERNAME=default
       # - TB_ETCD_PASSWORD=default
@@ -995,7 +995,7 @@ services:
             exec docker-entrypoint.sh postgres"
 
   mc-web-console-api:
-    image: cloudbaristaorg/mc-web-console-api:0.5.4
+    image: cloudbaristaorg/mc-web-console-api:edge
     pull_policy: always
     container_name: mc-web-console-api
     platform: linux/amd64
@@ -1039,7 +1039,7 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    image: cloudbaristaorg/mc-web-console-front:0.5.3
+    image: cloudbaristaorg/mc-web-console-front:edge
     pull_policy: always
     container_name: mc-web-console-front
     platform: linux/amd64
