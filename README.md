@@ -61,6 +61,42 @@ docker ps
 ```
 
 
+## Quick Start (TL;DR)
+
+> For the full step-by-step guide, see the [Quick Guide](#quick-guide) section below.
+
+**1. Configure environment**
+```shell
+cd mc-admin-cli/conf/docker/conf/mc-iam-manager
+cp .env.setup .env
+# Edit .env — set required values such as platform admin ID and password
+```
+
+**2. Run installAll.sh**
+```shell
+cd mc-admin-cli/bin
+./installAll.sh
+```
+When prompted for a domain:
+- **Dev / Local PC** — press `Enter` (uses default `mciam.local`)
+- **Dev / Remote VM** — enter the VM's IP address or domain name
+- **Production** — enter your public FQDN (required; DNS A-record must point to this server)
+
+**3. Verify all containers are healthy**
+```shell
+./mcc infra info
+```
+Wait until all containers show `healthy`. `mc-iam-manager-post-initial` showing `Exited (0)` is normal.
+
+**4. Open the web console**
+
+Navigate to **`https://<server>:3001`** in your browser.
+> ⚠️ Use **https**, not http. When the browser shows a security warning, click **Continue** (or **Advanced → Proceed**).
+
+Default credentials: `mcmp` / `mcmp_password`
+
+---
+
 # Quick Guide
 This section describes the minimal process for those who want to set up quickly.   
 For more detailed installation guide, please refer to the [Running on Single Instance Guide](https://github.com/m-cmp/mc-admin-cli/blob/main/docs/running-on-instance.md) document.

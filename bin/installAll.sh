@@ -10,22 +10,27 @@ usage() {
     echo ""
     echo "Options:"
     echo "  -m, --mode <MODE>           IAM mode selection (dev|prod)"
-    echo "                              dev:  Developer mode with self-signed certificate (Mode A)"
-    echo "                              prod: Production mode with Let's Encrypt certificate (Mode B)"
-    echo "  -d, --domain <DOMAIN>       Public domain or IP for HTTPS"
-    echo "                              dev (local PC):   mciam.local (default, added to /etc/hosts)"
-    echo "                              dev (remote VM):  VM public IP (e.g. 1.2.3.4)"
-    echo "                              prod:             real FQDN required (e.g. iam.example.com)"
+    echo "                              dev:  Developer mode (Local PC HTTP  or  Remote VM self-signed HTTPS)"
+    echo "                              prod: Production mode with Let's Encrypt certificate"
+    echo "  -d, --domain <DOMAIN>       Public domain or IP (determines sub-mode for dev)"
+    echo "                              [Scenario 1] dev - Local PC (HTTP, no certs):"
+    echo "                                localhost        — default, plain HTTP, no /etc/hosts change"
+    echo "                                mciam.local      — plain HTTP, adds 127.0.0.1 entry to /etc/hosts"
+    echo "                              [Scenario 2] dev - Remote VM (HTTPS, self-signed cert):"
+    echo "                                <IP>             — e.g. 1.2.3.4, self-signed cert for the IP"
+    echo "                              [Scenario 3] prod - Domain + Let's Encrypt:"
+    echo "                                <FQDN>           — e.g. iam.example.com, real DNS required"
     echo "  -r, --run <RUN_MODE>        Service run mode (log|background|skip)"
-    echo "                              log:        Run with log mode"
-    echo "                              background: Run in background with monitoring"
-    echo "                              skip:       Skip execution"
+    echo "                              log:        Run with real-time logs"
+    echo "                              background: Run in background with status monitoring"
+    echo "                              skip:       Configure only, do not start services"
     echo "  -h, --help                  Display this help message"
     echo ""
     echo "Examples:"
-    echo "  $0 -m dev -r background                    # Local PC: default domain (mciam.local)"
-    echo "  $0 -m dev -d 1.2.3.4 -r background         # Remote VM: use public IP"
-    echo "  $0 -m prod -d iam.example.com -r background # Remote VM: use real domain + Let's Encrypt"
+    echo "  $0 -m dev -r background                    # Scenario 1: Local PC, localhost, plain HTTP"
+    echo "  $0 -m dev -d mciam.local -r background     # Scenario 1: Local PC, named domain, plain HTTP"
+    echo "  $0 -m dev -d 1.2.3.4 -r background         # Scenario 2: Remote VM, public IP, self-signed HTTPS"
+    echo "  $0 -m prod -d iam.example.com -r background # Scenario 3: Remote VM, domain, Let's Encrypt HTTPS"
     echo "  $0                                         # Interactive mode"
     exit 1
 }
@@ -147,9 +152,9 @@ if [ -z "$IAM_MODE" ]; then
     echo "MC-IAM-Manager can be configured in two modes:"
     echo ""
     echo "[Developer Mode - Local Authentication]"
-    echo "  - Uses self-signed certificates"
+    echo "  - localhost (default): plain HTTP, no certificates, no /etc/hosts change required"
+    echo "  - IP/domain input: HTTPS with self-signed certificate"
     echo "  - Optimized for local development environment"
-    echo "  - Adds domain to hosts file"
     echo "  - Quick setup and testing"
     echo ""
     echo "[Production Mode - CA Authentication]"
@@ -248,19 +253,20 @@ if [ -z "$IAM_DOMAIN" ]; then
     echo "=========================================="
     if [ "$IAM_MODE" = "dev" ]; then
         echo ""
-        echo "Mode A: self-signed certificate will be issued for this domain/IP."
+        echo "  [Scenario 1 - Local PC, HTTP]"
+        echo "    Just press Enter  →  localhost  (plain HTTP, no certs, no /etc/hosts change)"
+        echo "    Enter mciam.local →  plain HTTP  (127.0.0.1 mciam.local added to /etc/hosts)"
         echo ""
-        echo "  [Local PC]      Just press Enter to use default 'mciam.local'."
-        echo "                  (127.0.0.1 mciam.local added to /etc/hosts automatically)"
+        echo "  [Scenario 2 - Remote VM, HTTPS self-signed]"
+        echo "    Enter VM public IP  (e.g. 43.202.200.215)"
+        echo "    → Self-signed certificate issued for the IP"
         echo ""
-        echo "  [Remote VM]     Enter the VM's public IP (e.g. 43.202.200.215)."
-        echo "                  Self-signed cert will include IP SAN."
+        echo "  [Scenario 3 - Domain + Let's Encrypt]"
+        echo "    Run with -m prod and a real FQDN instead."
         echo ""
-        echo "  [With Domain]   Use Production Mode (-m prod) for Let's Encrypt cert."
-        echo ""
-        echo -n "Enter domain or IP [mciam.local]: "
+        echo -n "Enter domain or IP [localhost]: "
         read -r IAM_DOMAIN
-        IAM_DOMAIN="${IAM_DOMAIN:-mciam.local}"
+        IAM_DOMAIN="${IAM_DOMAIN:-localhost}"
     else
         echo ""
         echo "Mode B: Let's Encrypt certificate will be issued for this domain."
@@ -282,7 +288,11 @@ echo "Using domain: $IAM_DOMAIN"
 apply_domain() {
     local env_file="$1"
     local domain="$2"
-    sed -i "s|^MC_IAM_MANAGER_PUBLIC_DOMAIN=.*|MC_IAM_MANAGER_PUBLIC_DOMAIN=${domain}|" "$env_file"
+    if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' "s|^MC_IAM_MANAGER_PUBLIC_DOMAIN=.*|MC_IAM_MANAGER_PUBLIC_DOMAIN=${domain}|" "$env_file"
+    else
+        sed -i "s|^MC_IAM_MANAGER_PUBLIC_DOMAIN=.*|MC_IAM_MANAGER_PUBLIC_DOMAIN=${domain}|" "$env_file"
+    fi
     echo "✓ Set MC_IAM_MANAGER_PUBLIC_DOMAIN=${domain} in ${env_file##*/conf/docker/}"
 }
 
@@ -294,34 +304,57 @@ apply_domain "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env"        "$IAM_DOMAIN"
 case $IAM_MODE in
     dev)
         echo ""
-        echo "You have selected Developer Mode - Local Authentication."
-        echo "Generating self-signed certificate and configuring local environment..."
-        echo ""
-        
-        # Execute developer mode script
         cd ../conf/docker/conf/mc-iam-manager/ || {
             echo "Error: Cannot find mc-iam-manager directory."
             cd "$ORIGINAL_DIR"
             exit 1
         }
-        
-        if [ -f "0_preset_dev.sh" ]; then
-            chmod +x 0_preset_dev.sh
-            ./0_preset_dev.sh
-            if [ $? -eq 0 ]; then
-                echo ""
-                echo "✓ Developer mode configuration completed."
-                echo "Now you can run ./mcc infra run."
+
+        if [ "$IAM_DOMAIN" = "localhost" ] || [ "$IAM_DOMAIN" = "127.0.0.1" ] || [ "$IAM_DOMAIN" = "mciam.local" ]; then
+            echo "Local PC mode ($IAM_DOMAIN) — configuring plain HTTP, no certificates."
+            echo ""
+
+            if [ -f "0_preset_local.sh" ]; then
+                chmod +x 0_preset_local.sh
+                ./0_preset_local.sh
+                if [ $? -eq 0 ]; then
+                    echo ""
+                    echo "✓ Local HTTP mode configuration completed."
+                    echo "Now you can run ./mcc infra run."
+                else
+                    echo ""
+                    echo "❌ Error occurred during local HTTP mode configuration."
+                    cd "$ORIGINAL_DIR"
+                    exit 1
+                fi
             else
-                echo ""
-                echo "❌ Error occurred during developer mode configuration."
+                echo "Error: Cannot find 0_preset_local.sh file."
                 cd "$ORIGINAL_DIR"
                 exit 1
             fi
         else
-            echo "Error: Cannot find 0_preset_dev.sh file."
-            cd "$ORIGINAL_DIR"
-            exit 1
+            echo "You have selected Developer Mode - Local Authentication."
+            echo "Generating self-signed certificate and configuring local environment..."
+            echo ""
+
+            if [ -f "0_preset_dev.sh" ]; then
+                chmod +x 0_preset_dev.sh
+                ./0_preset_dev.sh
+                if [ $? -eq 0 ]; then
+                    echo ""
+                    echo "✓ Developer mode configuration completed."
+                    echo "Now you can run ./mcc infra run."
+                else
+                    echo ""
+                    echo "❌ Error occurred during developer mode configuration."
+                    cd "$ORIGINAL_DIR"
+                    exit 1
+                fi
+            else
+                echo "Error: Cannot find 0_preset_dev.sh file."
+                cd "$ORIGINAL_DIR"
+                exit 1
+            fi
         fi
         ;;
     prod)

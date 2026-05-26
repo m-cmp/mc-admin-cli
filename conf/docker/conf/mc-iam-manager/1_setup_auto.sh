@@ -468,7 +468,7 @@ update_public_service_urls() {
     # mc-cost-optimizer-fe: replace the internal container URL (http://mc-cost-optimizer-fe:7780)
     # with the nginx HTTPS proxy URL accessible directly from the browser.
     # /api/getapihosts returns this value as the iframe src in MCIAM_USE=true environments.
-    local cost_fe_public_url="https://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_COST_OPTIMIZER_FE_PROXY_PORT}"
+    local cost_fe_public_url="${MC_COST_OPTIMIZER_FE_PUBLIC_HOST:-http://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_COST_OPTIMIZER_FE_PROXY_PORT}}"
 
     # mc-cost-optimizer-fe is not in the upstream api.yaml, so attempt registration first (idempotent)
     local reg_body
