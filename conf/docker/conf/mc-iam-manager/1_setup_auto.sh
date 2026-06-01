@@ -652,47 +652,58 @@ init_aws_csp_config() {
     echo "  IAM Role      : $ROLE_ARN"
 
     # --- Step 1: mcmp_csp_accounts 생성 --- POST /api/csp-accounts
-    local account_resp http_code
-    account_resp=$(curl -s -w "\n%{http_code}" -X POST \
+    # list-first 패턴: 기존 항목이 있으면 ID를 가져오고, 없으면 생성
+    local ACCOUNT_DB_ID http_code
+    ACCOUNT_DB_ID=$(curl -s -X POST \
         -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         -H "Content-Type: application/json" \
-        "$MC_IAM_MANAGER_HOST/api/csp-accounts" \
-        -d "{\"name\":\"aws-default\",\"csp_type\":\"aws\",\"account_info\":{\"account_id\":\"${ACCOUNT_ID}\",\"region\":\"ap-northeast-2\"}}")
-    http_code=$(echo "$account_resp" | tail -1)
-    local account_body
-    account_body=$(echo "$account_resp" | sed '$d')
+        "$MC_IAM_MANAGER_HOST/api/csp-accounts/list" \
+        -d "{\"name\":\"aws-default\"}" | jq -r '.[0].id // empty' 2>/dev/null)
 
-    local ACCOUNT_DB_ID
-    if [ "$http_code" = "201" ] || [ "$http_code" = "200" ]; then
-        echo "  ✓ CspAccount created"
-        ACCOUNT_DB_ID=$(echo "$account_body" | jq -r '.id // empty' 2>/dev/null)
-    elif [ "$http_code" = "409" ]; then
-        echo "  ✓ CspAccount already exists"
-        # 기존 계정 ID 조회
-        ACCOUNT_DB_ID=$(curl -s -X POST \
+    if [ -z "$ACCOUNT_DB_ID" ]; then
+        local account_resp account_body
+        account_resp=$(curl -s -w "\n%{http_code}" -X POST \
             -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
             -H "Content-Type: application/json" \
-            "$MC_IAM_MANAGER_HOST/api/csp-accounts/list" \
-            -d "{\"name\":\"aws-default\"}" | jq -r '.[0].id // empty' 2>/dev/null)
+            "$MC_IAM_MANAGER_HOST/api/csp-accounts" \
+            -d "{\"name\":\"aws-default\",\"csp_type\":\"aws\",\"account_info\":{\"account_id\":\"${ACCOUNT_ID}\",\"region\":\"ap-northeast-2\"}}")
+        http_code=$(echo "$account_resp" | tail -1)
+        account_body=$(echo "$account_resp" | sed '$d')
+        if [ "$http_code" = "201" ] || [ "$http_code" = "200" ]; then
+            echo "  ✓ CspAccount created"
+            ACCOUNT_DB_ID=$(echo "$account_body" | jq -r '.id // empty' 2>/dev/null)
+        else
+            echo "  ✗ CspAccount failed (HTTP $http_code): $account_body"
+            return 1
+        fi
     else
-        echo "  ✗ CspAccount failed (HTTP $http_code): $account_body"
-        return 1
+        echo "  ✓ CspAccount already exists (id=${ACCOUNT_DB_ID})"
     fi
     [ -z "$ACCOUNT_DB_ID" ] && { echo "  ✗ CspAccount ID not found"; return 1; }
 
     # --- Step 2: mcmp_csp_idp_configs 생성 (OIDC) --- POST /api/csp-idp-configs
-    http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+    # list-first 패턴
+    local IDP_EXISTS
+    IDP_EXISTS=$(curl -s -X POST \
         -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         -H "Content-Type: application/json" \
-        "$MC_IAM_MANAGER_HOST/api/csp-idp-configs" \
-        -d "{\"name\":\"aws-oidc\",\"csp_account_id\":${ACCOUNT_DB_ID},\"auth_method\":\"OIDC\",\"config\":{\"role_arn\":\"${ROLE_ARN}\",\"oidc_provider_arn\":\"${OIDC_PROVIDER_ARN}\"}}")
-    if [ "$http_code" = "201" ] || [ "$http_code" = "200" ]; then
-        echo "  ✓ CspIdpConfig (OIDC) created"
-    elif [ "$http_code" = "409" ]; then
-        echo "  ✓ CspIdpConfig already exists"
+        "$MC_IAM_MANAGER_HOST/api/csp-idp-configs/list" \
+        -d "{\"name\":\"aws-oidc\",\"csp_account_id\":${ACCOUNT_DB_ID}}" | jq -r '.[0].id // empty' 2>/dev/null)
+
+    if [ -z "$IDP_EXISTS" ]; then
+        http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+            -H "Content-Type: application/json" \
+            "$MC_IAM_MANAGER_HOST/api/csp-idp-configs" \
+            -d "{\"name\":\"aws-oidc\",\"csp_account_id\":${ACCOUNT_DB_ID},\"auth_method\":\"OIDC\",\"config\":{\"role_arn\":\"${ROLE_ARN}\",\"oidc_provider_arn\":\"${OIDC_PROVIDER_ARN}\"}}")
+        if [ "$http_code" = "201" ] || [ "$http_code" = "200" ]; then
+            echo "  ✓ CspIdpConfig (OIDC) created"
+        else
+            echo "  ✗ CspIdpConfig failed (HTTP $http_code)"
+            return 1
+        fi
     else
-        echo "  ✗ CspIdpConfig failed (HTTP $http_code)"
-        return 1
+        echo "  ✓ CspIdpConfig already exists"
     fi
 
     # --- Step 3: mcmp_role_csp_roles 등록 — POST /api/roles/csp ---
@@ -730,17 +741,20 @@ init_aws_csp_config() {
             echo "  ⓘ Role '${role_name}' not found, skipping"
             continue
         fi
-        http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+        local mapping_resp mapping_body mapping_code
+        mapping_resp=$(curl -s -w "\n%{http_code}" -X POST \
             -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
             -H "Content-Type: application/json" \
             "$MC_IAM_MANAGER_HOST/api/roles/csp-roles" \
             -d "{\"roleId\":\"${role_id}\",\"cspRoleId\":\"${CSP_ROLE_ID}\",\"authMethod\":\"OIDC\",\"cspType\":\"aws\"}")
-        if [ "$http_code" = "201" ] || [ "$http_code" = "200" ]; then
+        mapping_code=$(echo "$mapping_resp" | tail -1)
+        mapping_body=$(echo "$mapping_resp" | sed '$d')
+        if [ "$mapping_code" = "201" ] || [ "$mapping_code" = "200" ]; then
             echo "  ✓ Mapped: ${role_name} → ${CSP_ROLE_NAME}"
-        elif [ "$http_code" = "409" ]; then
+        elif echo "$mapping_body" | grep -q "already exists"; then
             echo "  ⓘ Mapping exists: ${role_name}"
         else
-            echo "  ✗ Mapping failed: ${role_name} (HTTP $http_code)"
+            echo "  ✗ Mapping failed: ${role_name} (HTTP $mapping_code)"
         fi
     done
     return 0
