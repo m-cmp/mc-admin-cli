@@ -646,34 +646,41 @@ init_aws_csp_config() {
     local OIDC_PROVIDER_ARN="arn:aws:iam::${ACCOUNT_ID}:oidc-provider/${DOMAIN}/auth/realms/${REALM}"
     local ROLE_ARN="arn:aws:iam::${ACCOUNT_ID}:role/${PREFIX}-platformadmin"
     local CSP_ROLE_NAME="${PREFIX}-platformadmin"
-    local DB_OPTS="-h ${MC_IAM_MANAGER_DATABASE_HOST} -p ${MC_IAM_MANAGER_DATABASE_PORT:-5432} -U ${MC_IAM_MANAGER_DATABASE_USER} -d ${MC_IAM_MANAGER_DATABASE_NAME}"
 
     echo "  Account ID    : $ACCOUNT_ID"
     echo "  OIDC Provider : $OIDC_PROVIDER_ARN"
     echo "  IAM Role      : $ROLE_ARN"
 
-    # --- Step 1: mcmp_csp_accounts 생성 ---
-    local http_code
-    http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+    # --- Step 1: mcmp_csp_accounts 생성 --- POST /api/csp-accounts
+    local account_resp http_code
+    account_resp=$(curl -s -w "\n%{http_code}" -X POST \
         -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         -H "Content-Type: application/json" \
         "$MC_IAM_MANAGER_HOST/api/csp-accounts" \
         -d "{\"name\":\"aws-default\",\"csp_type\":\"aws\",\"account_info\":{\"account_id\":\"${ACCOUNT_ID}\",\"region\":\"ap-northeast-2\"}}")
-    if [ "$http_code" = "201" ] || [ "$http_code" = "200" ]; then
-        echo "  ✓ CspAccount created"
-    elif [ "$http_code" = "409" ]; then
-        echo "  ✓ CspAccount already exists"
-    else
-        echo "  ✗ CspAccount failed (HTTP $http_code)"
-        return 1
-    fi
+    http_code=$(echo "$account_resp" | tail -1)
+    local account_body
+    account_body=$(echo "$account_resp" | sed '$d')
 
     local ACCOUNT_DB_ID
-    ACCOUNT_DB_ID=$(PGPASSWORD="$MC_IAM_MANAGER_DATABASE_PASSWORD" psql $DB_OPTS \
-        -tAc "SELECT id FROM mcmp_csp_accounts WHERE name='aws-default' LIMIT 1;" 2>/dev/null | tr -d ' ')
+    if [ "$http_code" = "201" ] || [ "$http_code" = "200" ]; then
+        echo "  ✓ CspAccount created"
+        ACCOUNT_DB_ID=$(echo "$account_body" | jq -r '.id // empty' 2>/dev/null)
+    elif [ "$http_code" = "409" ]; then
+        echo "  ✓ CspAccount already exists"
+        # 기존 계정 ID 조회
+        ACCOUNT_DB_ID=$(curl -s -X POST \
+            -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+            -H "Content-Type: application/json" \
+            "$MC_IAM_MANAGER_HOST/api/csp-accounts/list" \
+            -d "{\"name\":\"aws-default\"}" | jq -r '.[0].id // empty' 2>/dev/null)
+    else
+        echo "  ✗ CspAccount failed (HTTP $http_code): $account_body"
+        return 1
+    fi
     [ -z "$ACCOUNT_DB_ID" ] && { echo "  ✗ CspAccount ID not found"; return 1; }
 
-    # --- Step 2: mcmp_csp_idp_configs 생성 (OIDC) ---
+    # --- Step 2: mcmp_csp_idp_configs 생성 (OIDC) --- POST /api/csp-idp-configs
     http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
         -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         -H "Content-Type: application/json" \
@@ -688,40 +695,53 @@ init_aws_csp_config() {
         return 1
     fi
 
-    local IDP_CONFIG_ID
-    IDP_CONFIG_ID=$(PGPASSWORD="$MC_IAM_MANAGER_DATABASE_PASSWORD" psql $DB_OPTS \
-        -tAc "SELECT id FROM mcmp_csp_idp_configs WHERE name='aws-oidc' AND csp_account_id=${ACCOUNT_DB_ID} LIMIT 1;" 2>/dev/null | tr -d ' ')
-
-    # --- Step 3: mcmp_role_csp_roles 등록 (psql 직접 삽입 — STS 없이 기존 IAM 역할 등록) ---
-    PGPASSWORD="$MC_IAM_MANAGER_DATABASE_PASSWORD" psql $DB_OPTS -q \
-        -c "INSERT INTO mcmp_role_csp_roles
-              (name, csp_type, idp_identifier, iam_identifier, status,
-               csp_account_id, csp_idp_config_id, created_at, updated_at)
-            VALUES ('${CSP_ROLE_NAME}','aws','${OIDC_PROVIDER_ARN}','${ROLE_ARN}','created',
-                    ${ACCOUNT_DB_ID}, ${IDP_CONFIG_ID:-NULL}, NOW(), NOW())
-            ON CONFLICT DO NOTHING;" 2>/dev/null \
-    && echo "  ✓ CspRole registered" || echo "  ✗ CspRole insert failed"
+    # --- Step 3: mcmp_role_csp_roles 등록 — POST /api/roles/csp ---
+    local csp_role_resp
+    csp_role_resp=$(curl -s -w "\n%{http_code}" -X POST \
+        -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        -H "Content-Type: application/json" \
+        "$MC_IAM_MANAGER_HOST/api/roles/csp" \
+        -d "{\"cspRoleName\":\"${CSP_ROLE_NAME}\",\"cspType\":\"aws\",\"authMethod\":\"OIDC\"}")
+    http_code=$(echo "$csp_role_resp" | tail -1)
+    local csp_role_body
+    csp_role_body=$(echo "$csp_role_resp" | sed '$d')
+    if [ "$http_code" = "201" ] || [ "$http_code" = "200" ]; then
+        echo "  ✓ CspRole registered"
+    else
+        echo "  ✗ CspRole registration failed (HTTP $http_code): $csp_role_body"
+        return 1
+    fi
 
     local CSP_ROLE_ID
-    CSP_ROLE_ID=$(PGPASSWORD="$MC_IAM_MANAGER_DATABASE_PASSWORD" psql $DB_OPTS \
-        -tAc "SELECT id FROM mcmp_role_csp_roles WHERE name='${CSP_ROLE_NAME}' AND csp_type='aws' AND deleted_at IS NULL LIMIT 1;" 2>/dev/null | tr -d ' ')
-    [ -z "$CSP_ROLE_ID" ] && { echo "  ✗ CspRole ID not found"; return 1; }
+    CSP_ROLE_ID=$(echo "$csp_role_body" | jq -r '.id // empty' 2>/dev/null)
+    [ -z "$CSP_ROLE_ID" ] && { echo "  ✗ CspRole ID not found in response"; return 1; }
 
-    # --- Step 4: mcmp_role_csp_role_mappings — 모든 predefined 역할 → CspRole (OIDC) ---
+    # --- Step 4: mcmp_role_csp_role_mappings — POST /api/roles/csp-roles ---
     for role_name in admin operator viewer billadmin billviewer; do
-        local role_id
-        role_id=$(PGPASSWORD="$MC_IAM_MANAGER_DATABASE_PASSWORD" psql $DB_OPTS \
-            -tAc "SELECT id FROM mcmp_role_masters WHERE name='${role_name}' LIMIT 1;" 2>/dev/null | tr -d ' ')
+        # 역할 ID 조회
+        local role_resp role_id
+        role_resp=$(curl -s -X POST \
+            -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+            -H "Content-Type: application/json" \
+            "$MC_IAM_MANAGER_HOST/api/roles/list" \
+            -d "{\"roleName\":\"${role_name}\"}")
+        role_id=$(echo "$role_resp" | jq -r '.[0].id // empty' 2>/dev/null)
         if [ -z "$role_id" ]; then
             echo "  ⓘ Role '${role_name}' not found, skipping"
             continue
         fi
-        PGPASSWORD="$MC_IAM_MANAGER_DATABASE_PASSWORD" psql $DB_OPTS -q \
-            -c "INSERT INTO mcmp_role_csp_role_mappings (role_id, auth_method, csp_role_id, created_at)
-                VALUES (${role_id}, 'OIDC', ${CSP_ROLE_ID}, NOW())
-                ON CONFLICT DO NOTHING;" 2>/dev/null \
-        && echo "  ✓ Mapped: ${role_name} → ${CSP_ROLE_NAME}" \
-        || echo "  ⓘ Mapping exists: ${role_name}"
+        http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+            -H "Content-Type: application/json" \
+            "$MC_IAM_MANAGER_HOST/api/roles/csp-roles" \
+            -d "{\"roleId\":\"${role_id}\",\"cspRoleId\":\"${CSP_ROLE_ID}\",\"authMethod\":\"OIDC\",\"cspType\":\"aws\"}")
+        if [ "$http_code" = "201" ] || [ "$http_code" = "200" ]; then
+            echo "  ✓ Mapped: ${role_name} → ${CSP_ROLE_NAME}"
+        elif [ "$http_code" = "409" ]; then
+            echo "  ⓘ Mapping exists: ${role_name}"
+        else
+            echo "  ✗ Mapping failed: ${role_name} (HTTP $http_code)"
+        fi
     done
     return 0
 }
