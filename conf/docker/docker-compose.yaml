@@ -1062,7 +1062,7 @@ services:
       <<: *default-health-check
 ##### MC-OBSERVABILITY #########################################################################################################################
   mc-observability-manager:
-    image: cloudbaristaorg/mc-observability:0.5.0
+    image: cloudbaristaorg/mc-observability:edge
     container_name: mc-observability-manager
     restart: on-failure
     networks:
@@ -1103,7 +1103,7 @@ services:
       <<: *default-health-check
 
   mc-observability-infra:
-    image: cloudbaristaorg/mc-observability-infra:0.5.0
+    image: cloudbaristaorg/mc-observability-infra:edge
     container_name: mc-observability-infra
     restart: on-failure
     networks:
@@ -1228,7 +1228,7 @@ services:
     init: true
 
   mc-observability-influx:
-    image: cloudbaristaorg/mc-observability-influx:0.5.0
+    image: cloudbaristaorg/mc-observability-influx:edge
     container_name: mc-observability-influx
     restart: on-failure
     networks:
@@ -1265,7 +1265,7 @@ services:
       - mc-observability-network
 
   mc-observability-influx-2:
-    image: cloudbaristaorg/mc-observability-influx:0.5.0
+    image: cloudbaristaorg/mc-observability-influx:edge
     container_name: mc-observability-influx-2
     restart: on-failure
     networks:
@@ -1275,7 +1275,7 @@ services:
         published: ${MC_OBSERVABILITY_INFLUX_2_PORT}
         protocol: tcp
     depends_on:
-      mc-observability-influx-init-volumes:
+      mc-observability-influx-2-init-volumes:
         condition: service_completed_successfully
     environment:
       - INFLUXDB_HTTP_AUTH_ENABLED=${MC_OBSERVABILITY_INFLUXDB_HTTP_AUTH_ENABLED:-true}
@@ -1306,24 +1306,6 @@ services:
 #      test: ["CMD", "curl", "-f", "http://localhost:8888/chronograf/v1/health"]
 #      <<: *default-health-check
 
-  mc-observability-minio:
-    image: cloudbaristaorg/mc-observability-minio:0.5.0
-    container_name: mc-observability-minio
-    restart: on-failure
-    networks:
-      - mc-observability-network
-    environment:
-      - MINIO_ROOT_USER=${MC_OBSERVABILITY_MINIO_ROOT_USER:-admin}
-      - MINIO_ROOT_PASSWORD=${MC_OBSERVABILITY_MINIO_ROOT_PASSWORD:-mc-agent}
-    volumes:
-      - ./container-volume/mc-observability/minio/minio_data:/minio/data
-    healthcheck:
-      start_period: 120s
-      test: 'curl -s http://127.0.0.1:9001/api/docs ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
-      interval: 10s
-      timeout: 10s
-      retries: 30
-
   mc-observability-loki-init-volumes:
     image: busybox:stable
     container_name: mc-observability-loki-init-volumes
@@ -1349,8 +1331,6 @@ services:
     depends_on:
       mc-observability-loki-init-volumes:
         condition: service_completed_successfully
-      mc-observability-minio:
-        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
     volumes:
@@ -1396,8 +1376,6 @@ services:
     depends_on:
       mc-observability-tempo-init-volumes:
         condition: service_completed_successfully
-      mc-observability-minio:
-        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
     command: [ "-config.file=/etc/tempo-config.yaml" ]
@@ -1425,7 +1403,7 @@ services:
     init: true
 
   mc-observability-grafana:
-    image: cloudbaristaorg/mc-observability-grafana:0.5.0
+    image: cloudbaristaorg/mc-observability-grafana:edge
     container_name: mc-observability-grafana
     restart: on-failure
     networks:
@@ -1458,3 +1436,180 @@ services:
         if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then
           exit 1
         fi
+
+  mc-observability-insight:
+    image: cloudbaristaorg/mc-observability-insight:edge
+    container_name: mc-observability-insight
+    restart: always
+    networks:
+      - mc-observability-network
+    ports:
+      - target: 9001
+        published: ${MC_OBSERVABILITY_INSIGHT_PORT}
+        protocol: tcp
+    environment:
+      - TZ=Asia/Seoul
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+    volumes:
+      - shared_logs:/mc-insight/log:rw
+    depends_on:
+      mc-observability-maria:
+        condition: service_healthy
+      mc-observability-influx:
+        condition: service_healthy
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:9001/readyz" ]
+      interval: 1m
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+  mc-observability-insight-scheduler:
+    image: cloudbaristaorg/mc-observability-insight-scheduler:edge
+    container_name: mc-observability-insight-scheduler
+    restart: always
+    ports:
+      - target: 9002
+        published: ${MC_OBSERVABILITY_INSIGHT_SCHEDULER_PORT}
+        protocol: tcp
+    depends_on:
+      mc-observability-maria:
+        condition: service_started
+    environment:
+      - TZ=Asia/Seoul
+      - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
+    networks:
+      - mc-observability-network
+    volumes:
+      - /etc/localtime:/etc/localtime:ro
+    command: >
+      /bin/bash -c "
+        # Wait for MySQL
+        sleep 10
+
+        # Clean up pid
+        rm -f airflow-webserver.pid
+
+        # Set up metadata database
+        airflow db init
+
+        # Create default user
+        airflow users create --username admin --password admin --email admin@innogrid.com --firstname admin --lastname admin --role Admin
+
+        # Import variables & Make connections
+        airflow variables set --description 'O11Y Manger API BASE URL' API_BASE_URL http://mc-observability-manager:18080/api/o11y
+
+        airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
+        airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
+        # Reload & Run dags
+        airflow dags reserialize
+        airflow dags unpause anomaly_detection
+        airflow dags unpause down_sampling
+
+        # Start airflow
+        airflow scheduler & airflow webserver -p 9002
+
+        # Keep the server on no matter what
+        sleep infinity
+            "
+    healthcheck:
+      start_period: 120s
+      test: 'curl -s http://127.0.0.1:9002 ; STATUS=`echo $$?` ; if [ $$STATUS != 0 ] && [ $$STATUS != 52 ]; then exit 1 ; fi'
+      interval: 10s
+      timeout: 10s
+      retries: 30
+
+  mc-observability-mcp-grafana:
+    image: mcp/grafana:latest
+    container_name: mc-observability-mcp-grafana
+    restart: always
+    tty: true
+    stdin_open: true
+    ports:
+      - target: 8000
+        published: ${MC_OBSERVABILITY_MCP_GRAFANA_PORT}
+        protocol: tcp
+    depends_on:
+      mc-observability-grafana:
+        condition: service_healthy
+    environment:
+      - GRAFANA_URL=http://mc-observability-grafana:3000
+      - GRAFANA_API_KEY=${GRAFANA_API_KEY:-}
+    entrypoint: ["/bin/bash", "/app/docker-entrypoint.sh"]
+    command: ["/bin/bash", "-c", "chmod +x /app/docker-entrypoint.sh"]
+    volumes:
+      - ./conf/mc-observability/mcp-grafana/docker-entrypoint.sh:/app/docker-entrypoint.sh:ro
+      - grafana_shared_config:/grafana_config
+    networks:
+      - mc-observability-network
+
+  mc-observability-mcp-maria:
+    image: cloudbaristaorg/mc-observability-mcp-mariadb:edge
+    container_name: mc-observability-mcp-maria
+    restart: always
+    networks:
+      - mc-observability-network
+    ports:
+      - target: 8001
+        published: ${MC_OBSERVABILITY_MCP_MARIA_PORT}
+        protocol: tcp
+    depends_on:
+      mc-observability-maria:
+        condition: service_healthy
+    environment:
+      - TZ=Asia/Seoul
+      - DB_HOST=mc-observability-maria
+      - DB_PORT=3306
+      - DB_USER=mc-agent
+      - DB_PASSWORD=mc-agent
+      - DB_NAME=mc_observability
+      - MCP_READ_ONLY=true
+      - MCP_MAX_POOL_SIZE=10
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+
+  mc-observability-mcp-influx:
+    image: cloudbaristaorg/mc-observability-mcp-influxdb:edge
+    container_name: mc-observability-mcp-influx
+    restart: always
+    ports:
+      - target: 8002
+        published: ${MC_OBSERVABILITY_MCP_INFLUX_PORT}
+        protocol: tcp
+    depends_on:
+      mc-observability-influx:
+        condition: service_healthy
+    environment:
+      - TZ=Asia/Seoul
+      - INFLUXDB_URL=http://mc-observability-influx:8086
+      - INFLUXDB_USER=mc-agent
+      - INFLUXDB_PASSWORD=mc-agent
+      - INFLUXDB_DATABASE=mc-observability
+    networks:
+      - mc-observability-network
+
+  mc-observability-log-collector:
+    image: fluent/fluent-bit:3.2.4
+    container_name: mc-observability-log-collector
+    restart: always
+    networks:
+      - mc-observability-network
+    depends_on:
+      mc-observability-loki:
+        condition: service_healthy
+    environment:
+      - TZ=Asia/Seoul
+      - LOKI_HOST=mc-observability-loki
+      - LOKI_PORT=3100
+    volumes:
+      - ./conf/mc-observability/log-collector:/fluent-bit/etc:ro
+      - shared_logs:/logs:ro
+    command:
+      - /fluent-bit/bin/fluent-bit
+      - -c
+      - /fluent-bit/etc/fluent-bit.conf
+    healthcheck:
+      test: ["CMD-SHELL", "wget --quiet --spider http://127.0.0.1:2020/api/v1/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
