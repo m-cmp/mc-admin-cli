@@ -1011,6 +1011,14 @@ serviceActions:
       method: post
       resourcePath: /api/roles/assign/platform-role
       description: "Platform Role 할당"
+    removePlatformRole:
+      method: delete
+      resourcePath: /api/roles/unassign/platform-role
+      description: "사용자에게서 Platform Role 제거"
+    listPlatformRoles:
+      method: post
+      resourcePath: /api/roles/platform-roles/list
+      description: "Platform Role 목록 조회"
     AssignRoleToUser:
       method: post
       resourcePath: /api/roles/assign/platform-role
