@@ -850,11 +850,11 @@ serviceActions:
       description: "해당 프레임워크 역할에 할당된 메뉴 리스트를 반환합니다."
     Deleteuser:
       method: delete
-      resourcePath: /api/user/id/{userid}
+      resourcePath: /api/users/id/{userId}
       description: "사용자를 삭제합니다."
     Updateuser:
       method: put
-      resourcePath: /api/user/id/{userid}
+      resourcePath: /api/users/id/{userId}
       description: "사용자 정보를 업데이트 합니다."
     Createworkspace:
       method: post
@@ -1011,6 +1011,10 @@ serviceActions:
       method: post
       resourcePath: /api/roles/assign/platform-role
       description: "Platform Role 할당"
+    AssignRoleToUser:
+      method: post
+      resourcePath: /api/roles/assign/platform-role
+      description: "사용자에게 플랫폼 역할을 할당합니다."
     Signup:
       method: post
       resourcePath: /api/auth/signup
@@ -1127,6 +1131,10 @@ serviceActions:
       method: post
       resourcePath: /api/users/id/{userId}/organizations
       description: "사용자 그룹 할당 (다중)"
+    assignGroupUsers:
+      method: post
+      resourcePath: /api/groups/id/{groupId}/users
+      description: "그룹에 사용자 일괄 할당 (group 입장)"
     Getuserorganizations:
       method: get
       resourcePath: /api/users/id/{userId}/organizations
