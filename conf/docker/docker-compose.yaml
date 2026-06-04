@@ -1102,6 +1102,20 @@ services:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:18080/api/docs" ]
       <<: *default-health-check
 
+  mc-observability-front:
+    image: cloudbaristaorg/mc-observability-front:edge
+    container_name: mc-observability-front
+    restart: on-failure
+    networks:
+      - mc-observability-network
+    ports:
+      - target: 18081
+        published: ${MC_OBSERVABILITY_FRONT_PORT}
+        protocol: tcp
+    depends_on:
+      mc-observability-manager:
+        condition: service_healthy
+
   mc-observability-infra:
     image: cloudbaristaorg/mc-observability-infra:edge
     container_name: mc-observability-infra
@@ -1474,7 +1488,7 @@ services:
         protocol: tcp
     depends_on:
       mc-observability-maria:
-        condition: service_started
+        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
@@ -1608,8 +1622,8 @@ services:
       - -c
       - /fluent-bit/etc/fluent-bit.conf
     healthcheck:
-      test: ["CMD-SHELL", "wget --quiet --spider http://127.0.0.1:2020/api/v1/health || exit 1"]
+      test: ["CMD", "/fluent-bit/bin/fluent-bit", "--version"]
       interval: 10s
       timeout: 5s
-      retries: 3
-      start_period: 10s
+      retries: 5
+      start_period: 30s
