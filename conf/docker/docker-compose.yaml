@@ -242,7 +242,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: csescsta/mc-iam-manager:edge
+    image: cloudbaristaorg/mc-iam-manager:0.5.3
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
