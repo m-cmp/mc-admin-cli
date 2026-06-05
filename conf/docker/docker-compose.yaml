@@ -907,7 +907,7 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: cloudbaristaorg/mc-data-manager:0.5.3
+    image: cloudbaristaorg/mc-data-manager:0.5.5
     container_name: mc-data-manager
     depends_on:
       mc-data-manager-init-volumes:
@@ -924,6 +924,8 @@ services:
       - /etc/localtime:/etc/localtime:ro # timezone
     environment:
       - TUMBLEBUG_URL=http://mc-infra-manager:1323
+      - VAULT_ADDR=http://mc-infra-manager-openbao:${MC_INFRA_MANAGER_OPENBAO_PORT}
+      - VAULT_TOKEN=${MC_INFRA_MANAGER_OPENBAO_VAULT_TOKEN:-}
     env_file:
       - ./conf/mc-data-manager/.env
     # Health check configuration
