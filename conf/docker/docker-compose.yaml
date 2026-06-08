@@ -1109,6 +1109,7 @@ services:
     networks:
       - mc-observability-network
       - mc-infra-manager-network
+      - mc-infra-connector-network
     ports:
       - target: 18081
         published: ${MC_OBSERVABILITY_FRONT_PORT}
