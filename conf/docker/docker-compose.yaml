@@ -840,7 +840,7 @@ services:
 ##### MC-WORKFLOW-MANAGER #########################################################################################################################
 
   mc-workflow-manager-jenkins:
-    image: jenkins/jenkins:2.462.3-lts
+    image: jenkins/jenkins:2.504.1-lts-jdk17
     container_name: mc-workflow-manager-jenkins
     platform: linux/amd64
     networks:
