@@ -1108,6 +1108,7 @@ services:
     restart: on-failure
     networks:
       - mc-observability-network
+      - mc-infra-manager-network
     ports:
       - target: 18081
         published: ${MC_OBSERVABILITY_FRONT_PORT}
