@@ -117,10 +117,14 @@ EXPECTED_CONTAINERS=(
     "mc-observability-influx-2"
     "mc-observability-loki"
     "mc-observability-tempo"
-    "mc-observability-minio"
     "mc-observability-grafana"
     "mc-observability-insight"
     "mc-observability-insight-scheduler"
+    "mc-observability-front"
+    "mc-observability-mcp-grafana"
+    "mc-observability-mcp-maria"
+    "mc-observability-mcp-influx"
+    "mc-observability-log-collector"
 )
 
 # Containers without Health Check (treated as successful when in Up state)
@@ -132,6 +136,10 @@ NO_HEALTH_CHECK_CONTAINERS=(
     "mc-cost-optimizer-cost-processor"
     "mc-cost-optimizer-cost-selector"
     "mc-observability-tempo"
+    "mc-observability-front"
+    "mc-observability-mcp-grafana"
+    "mc-observability-mcp-maria"
+    "mc-observability-mcp-influx"
 )
 
 # =============================================================================
