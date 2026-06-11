@@ -998,7 +998,7 @@ services:
 
   mc-web-console-api:
     image: cloudbaristaorg/mc-web-console-api:edge
-    pull_policy: never
+    pull_policy: always
     container_name: mc-web-console-api
     platform: linux/amd64
     restart: unless-stopped
