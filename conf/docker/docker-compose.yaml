@@ -398,7 +398,7 @@ services:
   mc-cost-optimizer-fe:
     restart: unless-stopped
     container_name: mc-cost-optimizer-fe
-    image: cloudbaristaorg/mc-costopti-ui:0.5.2
+    image: cloudbaristaorg/mc-costopti-ui:0.5.4
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -415,7 +415,7 @@ services:
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: cloudbaristaorg/mc-costopti-api:0.5.2
+    image: cloudbaristaorg/mc-costopti-api:0.5.4
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -426,17 +426,17 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.cost.optimize.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL_NEW}
-      spring.datasource.hikari.cost.optimize.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
-      spring.datasource.hikari.cost.optimize.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
-      tumblebug.url: http://mc-infra-manager:1323/tumblebug
-      tumblebug.username: ${MC_COST_OPTIMIZER_TUMBLEBUG_USERNAME:-spider}
-      tumblebug.password: ${MC_COST_OPTIMIZER_TUMBLEBUG_PASSWORD:-spider}
-      costopti.alarmservice.url: ${MC_COST_OPTIMIZER_ALARM_URL}
-      costopti.assetcollector.url: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
-      costopti.costcollector.url: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
-      costopti.costprocessor.url: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
-      costopti.costselector.url: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
+      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL_NEW}
+      spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
+      tumblebug.url: ${CO_TBB_URL}
+      tumblebug.username: ${CO_TBB_USERNAME:-default}
+      tumblebug.password: ${CO_TBB_PW:-default}
+      costopti.alarmservice.url: ${CO_ALARM_URL}
+      costopti.assetcollector.url: ${CO_COST_ASSET_COLLECTOR_URL}
+      costopti.costcollector.url: ${CO_COST_COLLECTOR_URL}
+      costopti.costprocessor.url: ${CO_COST_PROCESSOR_URL}
+      costopti.costselector.url: ${CO_COST_SELECTOR_URL}
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get",  "http://localhost:9090/api/costopti/be/readyz" ]
       <<: *default-health-check
@@ -444,7 +444,7 @@ services:
   mc-cost-optimizer-cost-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
-    image: cloudbaristaorg/mc-costopti-costcollector:0.5.2
+    image: cloudbaristaorg/mc-costopti-costcollector:0.5.4
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -459,20 +459,20 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.batch.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
-      spring.datasource.hikari.batch.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
-      spring.datasource.hikari.batch.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
-      unusedBatchCronSchedule: ${MC_COST_OPTIMIZER_COST_COLLECT_UNUSED_CRON_SCHEDULE}
-      curBatchCronSchedule: ${MC_COST_OPTIMIZER_COST_COLLECT_CUR_CRON_SCHEDULE}
-      aws.data.export.name: ${MC_COST_OPTIMIZER_AWS_CUR_EXPORT_NAME}
-      aws.data.export.path.prefix: ${MC_COST_OPTIMIZER_AWS_CUR_EXPORT_PATH_PREFIX}
-      AWS_ACCESS_KEY_ID: ${MC_COST_OPTIMIZER_AWS_ACCESS_KEY_ID}
-      AWS_SECRET_ACCESS_KEY: ${MC_COST_OPTIMIZER_AWS_SECRET_ACCESS_KEY}
+      spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
+      unusedBatchCronSchedule: ${CO_COST_COLLECT_UNUSED_CRON_SCHEDULE}
+      curBatchCronSchedule: ${CO_COST_COLLECT_CUR_CRON_SCHEDULE}
+      aws.data.export.name: ${CO_AWS_CUR_EXPORT_NAME}
+      aws.data.export.path.prefix: ${CO_AWS_CUR_EXPORT_PATH_PREFIX}
+      AWS_ACCESS_KEY_ID: ${CO_AWS_ACCESS_KEY_ID}
+      AWS_SECRET_ACCESS_KEY: ${CO_AWS_SECRET_ACCESS_KEY}
 
   mc-cost-optimizer-cost-processor:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
-    image: cloudbaristaorg/mc-costopti-costprocessor:0.5.2
+    image: cloudbaristaorg/mc-costopti-costprocessor:0.5.4
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -487,18 +487,18 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.batch.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
-      spring.datasource.hikari.batch.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
-      spring.datasource.hikari.batch.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
-      unusedProcessCronSchedule: ${MC_COST_OPTIMIZER_COST_PROCESS_UNUSED_CRON_SCHEDULE}
-      abnormalProcessCronSchedule: ${MC_COST_OPTIMIZER_COST_PROCESS_ABNORMAL_CRON_SCHEDULE}
-      cost.selector.url: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
-      opti.alarm.url: ${MC_COST_OPTIMIZER_ALARM_URL}
+      spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
+      unusedProcessCronSchedule: ${CO_COST_PROCESS_UNUSED_CRON_SCHEDULE}
+      abnormalProcessCronSchedule: ${CO_COST_PROCESS_ABNORMAL_CRON_SCHEDULE}
+      cost.selector.url: ${CO_COST_SELECTOR_URL}
+      opti.alarm.url: ${CO_ALARM_URL}
 
   mc-cost-optimizer-cost-selector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
-    image: cloudbaristaorg/mc-costopti-costselector:0.5.2
+    image: cloudbaristaorg/mc-costopti-costselector:0.5.4
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -513,15 +513,18 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.cost.optimize.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
-      spring.datasource.hikari.cost.optimize.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
-      spring.datasource.hikari.cost.optimize.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
-      opti.alarm.url: ${MC_COST_OPTIMIZER_ALARM_URL}
+      spring.datasource.hikari.cost.optimize.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.cost.optimize.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.cost.optimize.password: ${CO_MYSQL_PASSWORD}
+      opti.alarm.url: ${CO_ALARM_URL}
+      tumblebug.url: ${CO_TBB_URL}
+      tumblebug.username: ${CO_TBB_USERNAME}
+      tumblebug.password: ${CO_TBB_PW}
 
   mc-cost-optimizer-alarm-service:
     restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
-    image: cloudbaristaorg/mc-costopti-alarm:0.5.2
+    image: cloudbaristaorg/mc-costopti-alarm:0.5.4
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -532,20 +535,20 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.slack.jdbc-url: ${MC_COST_OPTIMIZER_SLACK_DB_URL}
-      spring.datasource.hikari.slack.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
-      spring.datasource.hikari.slack.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
-      spring.datasource.hikari.mailing.jdbc-url: ${MC_COST_OPTIMIZER_MAIL_DB_URL}
-      spring.datasource.hikari.mailing.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
-      spring.datasource.hikari.mailing.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
-      spring.datasource.hikari.history.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
-      spring.datasource.hikari.history.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
-      spring.datasource.hikari.history.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      spring.datasource.hikari.slack.jdbc-url: ${CO_SLACK_DB_URL}
+      spring.datasource.hikari.slack.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.slack.password: ${CO_MYSQL_PASSWORD}
+      spring.datasource.hikari.mailing.jdbc-url: ${CO_MAIL_DB_URL}
+      spring.datasource.hikari.mailing.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.mailing.password: ${CO_MYSQL_PASSWORD}
+      spring.datasource.hikari.history.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.history.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.history.password: ${CO_MYSQL_PASSWORD}
 
   mc-cost-optimizer-asset-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-asset-collector
-    image: cloudbaristaorg/mc-costopti-assetcollector:0.5.2
+    image: cloudbaristaorg/mc-costopti-assetcollector:0.5.4
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -560,17 +563,17 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      spring.datasource.hikari.batch.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
-      spring.datasource.hikari.batch.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
-      spring.datasource.hikari.batch.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
-      costopti.be.url: ${MC_COST_OPTIMIZER_API_URL}
-      asset.collect.url: ${MC_COST_OPTIMIZER_ASSET_MONITORING_SERVER}
-      assetCollectBatchCronSchedule: ${MC_COST_OPTIMIZER_ASSET_COLLECT_BATCH_CRON_SCHEDULE}
+      spring.datasource.hikari.batch.jdbc-url: ${CO_COST_DB_URL}
+      spring.datasource.hikari.batch.username: ${CO_MYSQL_USER}
+      spring.datasource.hikari.batch.password: ${CO_MYSQL_PASSWORD}
+      costopti.be.url: ${CO_API_URL}
+      asset.collect.url: ${CO_ASSET_MONITORING_SERVER}
+      assetCollectBatchCronSchedule: ${CO_ASSET_COLLECT_BATCH_CRON_SCHEDULE}
 
   mc-cost-optimizer-cost-azure-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-azure-collector
-    image: cloudbaristaorg/mc-costopti-azure-collector:0.5.2
+    image: cloudbaristaorg/mc-costopti-azure-collector:0.5.4
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -585,28 +588,65 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
-      SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
-      SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
 
-      AZURE_CREDENTIAL_TENANT_ID: ${MC_COST_OPTIMIZER_AZURE_TENANT_ID}
-      AZURE_CREDENTIAL_CLIENT_ID: ${MC_COST_OPTIMIZER_AZURE_CLIENT_ID}
-      AZURE_CREDENTIAL_CLIENT_SECRET: ${MC_COST_OPTIMIZER_AZURE_CLIENT_SECRET}
-      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${MC_COST_OPTIMIZER_AZURE_SUBSCRIPTION_ID}
+      AZURE_CREDENTIAL_TENANT_ID: ${CO_AZURE_TENANT_ID}
+      AZURE_CREDENTIAL_CLIENT_ID: ${CO_AZURE_CLIENT_ID}
+      AZURE_CREDENTIAL_CLIENT_SECRET: ${CO_AZURE_CLIENT_SECRET}
+      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${CO_AZURE_SUBSCRIPTION_ID}
 
-      AZURE_SERVICE_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_AZURE_SERVICE_BATCH_CRON_SCHEDULE}
-      AZURE_VM_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_AZURE_VM_BATCH_CRON_SCHEDULE}
+      AZURE_SERVICE_BATCH_CRON_SCHEDULE: ${CO_AZURE_SERVICE_BATCH_CRON_SCHEDULE}
+      AZURE_VM_BATCH_CRON_SCHEDULE: ${CO_AZURE_VM_BATCH_CRON_SCHEDULE}
 
-      COSTOPTI_ALARMSERVICE_URL: ${MC_COST_OPTIMIZER_ALARM_URL}
-      COSTOPTI_ASSETCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
-      COSTOPTI_COSTCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
-      COSTOPTI_COSTPROCESSOR_URL: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
-      COSTOPTI_COSTSELECTOR_URL: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
+      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+
+  mc-cost-optimizer-gcp-collector:
+    restart: on-failure
+    container_name: mc-cost-optimizer-gcp-collector
+    image: cloudbaristaorg/mc-costopti-gcpcollector:0.5.4
+    networks:
+      - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
+      - mc-web-console-network
+    ports:
+      - target: 8095
+        published: ${MC_COST_OPTIMIZER_GCP_COLLECTOR_PORT}
+        protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    environment:
+
+      spring.datasource.url: ${CO_COST_DB_URL}
+      spring.datasource.username: ${CO_MYSQL_USER}
+      spring.datasource.password: ${CO_MYSQL_PASSWORD}
+
+      gcp.project-id: ${CO_GCP_PROJECT_ID}
+      gcp.client-email: ${CO_GCP_CLIENT_EMAIL}
+      gcp.private-key: ${CO_GCP_PRIVATE_KEY}
+      gcp.private-key-id: ${CO_GCP_PRIVATE_KEY_ID}
+      gcp.dataset: ${CO_GCP_BQ_DATASET}
+      gcp.table: ${CO_GCP_BQ_TABLE}
+      gcpBillingCronSchedule: ${CO_GCP_BATCH_CRON_SCHEDULE}
+      costopti.alarmservice.url: ${CO_ALARM_URL}
+
+      tumblebug.url: ${CO_TBB_URL}
+      tumblebug.username: ${CO_TBB_USERNAME}
+      tumblebug.password: ${CO_TBB_PW}
+
 
   mc-cost-optimizer-cost-ncp-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-ncp-collector
-    image: cloudbaristaorg/mc-costopti-ncp-collector:0.5.2
+    image: cloudbaristaorg/mc-costopti-ncp-collector:0.5.4
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -621,21 +661,21 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
-      SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
-      SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
 
-      NCP_CREDENTIAL_IAM_ACCESS_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_ACCESS_KEY}
-      NCP_CREDENTIAL_IAM_SECRET_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_SECRET_KEY}
+      NCP_CREDENTIAL_IAM_ACCESS_KEY: ${CO_NCP_IAM_ACCESS_KEY}
+      NCP_CREDENTIAL_IAM_SECRET_KEY: ${CO_NCP_IAM_SECRET_KEY}
 
-      NCP_SERVICE_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_NCP_SERVICE_BATCH_CRON_SCHEDULE}
-      NCP_VM_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_NCP_VM_BATCH_CRON_SCHEDULE}
+      NCP_SERVICE_BATCH_CRON_SCHEDULE: ${CO_NCP_SERVICE_BATCH_CRON_SCHEDULE}
+      NCP_VM_BATCH_CRON_SCHEDULE: ${CO_NCP_VM_BATCH_CRON_SCHEDULE}
 
-      COSTOPTI_ALARMSERVICE_URL: ${MC_COST_OPTIMIZER_ALARM_URL}
-      COSTOPTI_ASSETCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
-      COSTOPTI_COSTCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
-      COSTOPTI_COSTPROCESSOR_URL: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
-      COSTOPTI_COSTSELECTOR_URL: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
+      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
 
       ##timezone setting
       TZ: Asia/Seoul
@@ -643,7 +683,7 @@ services:
   mc-cost-optimizer-azure-vm-rightsizer:
     restart: on-failure
     container_name: mc-cost-optimizer-azure-vm-rightsizer
-    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:0.5.2
+    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:0.5.4
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -658,56 +698,59 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-      SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
-      SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
-      SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
 
-      AZURE_CREDENTIAL_TENANT_ID: ${MC_COST_OPTIMIZER_AZURE_TENANT_ID}
-      AZURE_CREDENTIAL_CLIENT_ID: ${MC_COST_OPTIMIZER_AZURE_CLIENT_ID}
-      AZURE_CREDENTIAL_CLIENT_SECRET: ${MC_COST_OPTIMIZER_AZURE_CLIENT_SECRET}
-      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${MC_COST_OPTIMIZER_AZURE_SUBSCRIPTION_ID}
+      AZURE_CREDENTIAL_TENANT_ID: ${CO_AZURE_TENANT_ID}
+      AZURE_CREDENTIAL_CLIENT_ID: ${CO_AZURE_CLIENT_ID}
+      AZURE_CREDENTIAL_CLIENT_SECRET: ${CO_AZURE_CLIENT_SECRET}
+      AZURE_CREDENTIAL_SUBSCRIPTION_ID: ${CO_AZURE_SUBSCRIPTION_ID}
 
-      AZURE_RIGHTSIZER_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_AZURE_VM_RIGHTSIZER_SCHEDULE}
+      AZURE_RIGHTSIZER_BATCH_CRON_SCHEDULE: ${CO_AZURE_VM_RIGHTSIZER_SCHEDULE}
 
-      COSTOPTI_ALARMSERVICE_URL: ${MC_COST_OPTIMIZER_ALARM_URL}
-      COSTOPTI_ASSETCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
-      COSTOPTI_COSTCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
-      COSTOPTI_COSTPROCESSOR_URL: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
-      COSTOPTI_COSTSELECTOR_URL: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
+      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
 
 
   mc-cost-optimizer-ncp-vm-rightsizer:
-      restart: on-failure
-      container_name: mc-cost-optimizer-ncp-vm-rightsizer
-      image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:0.5.2
-      networks:
-        - mc-cost-optimizer-network
-        - mc-observability-network
-        - mc-infra-manager-network
-        - mc-web-console-network
-      ports:
-        - target: 8095
-          published: ${MC_COST_OPTIMIZER_NCP_RIGHTSIZER_PORT}
-          protocol: tcp
-      depends_on:
-        - mc-cost-optimizer-db
-      volumes:
-        - ./tool/mcc:/app/tool/mcc
-      environment:
-        SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
-        SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
-        SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+    restart: on-failure
+    container_name: mc-cost-optimizer-ncp-vm-rightsizer
+    image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:0.5.4
+    networks:
+      - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
+      - mc-web-console-network
+    ports:
+      - target: 8095
+        published: ${MC_COST_OPTIMIZER_NCP_RIGHTSIZER_PORT}
+        protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    environment:
+      SPRING_DATASOURCE_URL: ${CO_COST_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${CO_MYSQL_USER}
+      SPRING_DATASOURCE_PASSWORD: ${CO_MYSQL_PASSWORD}
 
-        NCP_CREDENTIAL_IAM_ACCESS_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_ACCESS_KEY}
-        NCP_CREDENTIAL_IAM_SECRET_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_SECRET_KEY}
+      NCP_CREDENTIAL_IAM_ACCESS_KEY: ${CO_NCP_IAM_ACCESS_KEY}
+      NCP_CREDENTIAL_IAM_SECRET_KEY: ${CO_NCP_IAM_SECRET_KEY}
 
-        AZURE_RIGHTSIZER_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_NCP_VM_RIGHTSIZER_SCHEDULE}
+      AZURE_RIGHTSIZER_BATCH_CRON_SCHEDULE: ${CO_AZURE_VM_RIGHTSIZER_SCHEDULE}
 
-        COSTOPTI_ALARMSERVICE_URL: ${MC_COST_OPTIMIZER_ALARM_URL}
-        COSTOPTI_ASSETCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
-        COSTOPTI_COSTCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
-        COSTOPTI_COSTPROCESSOR_URL: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
-        COSTOPTI_COSTSELECTOR_URL: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
+      COSTOPTI_ALARMSERVICE_URL: ${CO_ALARM_URL}
+      COSTOPTI_ASSETCOLLECTOR_URL: ${CO_COST_ASSET_COLLECTOR_URL}
+      COSTOPTI_COSTCOLLECTOR_URL: ${CO_COST_COLLECTOR_URL}
+      COSTOPTI_COSTPROCESSOR_URL: ${CO_COST_PROCESSOR_URL}
+      COSTOPTI_COSTSELECTOR_URL: ${CO_COST_SELECTOR_URL}
+      tumblebug.url: ${CO_TBB_URL}
+      tumblebug.username: ${CO_TBB_USERNAME}
+      tumblebug.password: ${CO_TBB_PW}
 
   mc-cost-optimizer-init-volume:
     image: busybox:stable
@@ -729,9 +772,9 @@ services:
         condition: service_completed_successfully
     environment:
       - ALLOW_EMPTY_PASSWORD=no
-      - MYSQL_ROOT_PASSWORD=${MC_COST_OPTIMIZER_MYSQL_ROOT_PASSWORD}
-      - MYSQL_USER=${MC_COST_OPTIMIZER_MYSQL_USER}
-      - MYSQL_PASSWORD=${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      - MYSQL_ROOT_PASSWORD=${CO_MYSQL_ROOT_PASSWORD}
+      - MYSQL_USER=${CO_MYSQL_USER}
+      - MYSQL_PASSWORD=${CO_MYSQL_PASSWORD}
     command:
       - --skip-character-set-client-handshake
     ports:
