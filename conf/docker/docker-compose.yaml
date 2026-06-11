@@ -997,7 +997,7 @@ services:
             exec docker-entrypoint.sh postgres"
 
   mc-web-console-api:
-    image: csescsta/mc-web-console-api:edge
+    image: cloudbaristaorg/mc-web-console-api:edge
     pull_policy: never
     container_name: mc-web-console-api
     platform: linux/amd64
@@ -1041,7 +1041,7 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    image: csescsta/mc-web-console-front:edge
+    image: cloudbaristaorg/mc-web-console-front:edge
     pull_policy: always
     container_name: mc-web-console-front
     platform: linux/amd64
