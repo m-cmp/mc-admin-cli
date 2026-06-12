@@ -404,10 +404,6 @@ services:
       - mc-observability-network
       - mc-infra-manager-network
       - mc-web-console-network
-    ports:
-      - target: 80
-        published: ${MC_COST_OPTIMIZER_FE_PORT}
-        protocol: tcp
     depends_on:
       - mc-cost-optimizer-be
     volumes:
@@ -811,10 +807,6 @@ services:
       - mc-application-manager-network
       - mc-web-console-network
       - mc-observability-network
-    ports:
-      - target: 18084
-        published: ${MC_APPLICATION_MANAGER_PORT}
-        protocol: tcp
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
@@ -874,10 +866,6 @@ services:
     networks:
       - mc-workflow-manager-network
       - mc-web-console-network
-    ports:
-      - target: 18083
-        published: ${MC_WORKFLOW_MANAGER_PORT}
-        protocol: tcp
     volumes:
       - ./tool/mcc:/app/tool/mcc
       - ./conf/mc-workflow-manager/document/:/document/
@@ -915,8 +903,6 @@ services:
       mc-data-manager-db:
         condition: service_healthy
     tty: true
-    ports:
-      - "${MC_DATA_MANAGER_PORT}:3300"
     restart : always
     volumes:
       - ./data:/app/data/ # container-volume
