@@ -404,10 +404,6 @@ services:
       - mc-observability-network
       - mc-infra-manager-network
       - mc-web-console-network
-    ports:
-      - target: 80
-        published: ${MC_COST_OPTIMIZER_FE_PORT}
-        protocol: tcp
     depends_on:
       - mc-cost-optimizer-be
     volumes:
