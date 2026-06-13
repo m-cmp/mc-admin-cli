@@ -809,6 +809,7 @@ services:
       - mc-observability-network
     volumes:
       - ./tool/mcc:/app/tool/mcc
+      - ./conf/mc-application-manager/.cb-spider/:/root/.cb-spider/:ro
       - ./container-volume/mc-application-manager/nexus/:/nexus-data:rw
     user: root
     environment:
@@ -822,6 +823,8 @@ services:
       - TUMBLEBUG_ID=${MC_INFRA_MANAGER_API_USERNAME:-default}
       - TUMBLEBUG_PASSWORD=${MC_INFRA_MANAGER_API_PASSWORD:-default}
       - SPIDER_URL=${MC_INFRA_CONNECTOR_URL:-mc-infra-connector}
+      - SPIDER_USERNAME=${MC_INFRA_CONNECTOR_API_USERNAME:-default}
+      - SPIDER_PASSWORD=${MC_INFRA_CONNECTOR_API_PASSWORD:-default}
 #      - ALERT_SLACK_CHANNEL_ID= # I You need Slack Alram. Please CHANGE ME.
       - RABBITMQ_URL=mc-observability-rabbitmq
     healthcheck:
