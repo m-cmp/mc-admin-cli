@@ -776,6 +776,33 @@ services:
       tumblebug.username: ${CO_TBB_USERNAME}
       tumblebug.password: ${CO_TBB_PW}
 
+  mc-cost-optimizer-ml-scorer:
+    restart: on-failure
+    container_name: mc-cost-optimizer-ml-scorer
+    image: cloudbaristaorg/mc-costopti-ml-scorer:0.5.5
+    networks:
+      - mc-cost-optimizer-network
+      - mc-observability-network
+      - mc-infra-manager-network
+      - mc-web-console-network
+    ports:
+      - target: 8096
+        published: ${MC_COST_OPTIMIZER_ML_SCORER_PORT}
+        protocol: tcp
+    depends_on:
+      - mc-cost-optimizer-db
+    volumes:
+      - ./tool/mcc:/app/tool/mcc
+    environment:
+      COST_DB_URL: ${CO_COST_DB_URL}
+      COST_DB_USERNM: ${CO_MYSQL_USER}
+      COST_DB_PW: ${CO_MYSQL_PASSWORD}
+      SERVER_PORT: 8096
+      WINDOW_DAYS: ${CO_ML_SCORER_WINDOW_DAYS:-30}
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8096/health')"]
+      <<: *default-health-check
+
   mc-cost-optimizer-init-volume:
     image: busybox:stable
     container_name: mc-cost-optimizer-init-volume
