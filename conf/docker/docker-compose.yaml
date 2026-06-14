@@ -437,6 +437,8 @@ services:
       costopti.costcollector.url: ${CO_COST_COLLECTOR_URL}
       costopti.costprocessor.url: ${CO_COST_PROCESSOR_URL}
       costopti.costselector.url: ${CO_COST_SELECTOR_URL}
+      ml.rightsize.base-url: ${CO_ML_SCORER_URL}
+      llm.key.master: ${CO_LLM_KEY_MASTER}
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get",  "http://localhost:9090/api/costopti/be/readyz" ]
       <<: *default-health-check
