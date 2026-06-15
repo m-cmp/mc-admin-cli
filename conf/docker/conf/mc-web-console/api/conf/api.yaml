@@ -1981,6 +1981,18 @@ serviceActions:
       method: post
       resourcePath: /ns/{nsId}/mciDynamicReview
       description: "Create MCI Dynamically from common spec and image"
+    Postinfradynamicreview:
+      method: post
+      resourcePath: /ns/{nsId}/infraDynamicReview
+      description: "Review and validate Infra dynamic request comprehensively before actual provisioning"
+    Postmcivmdynamic:
+      method: post
+      resourcePath: /ns/{nsId}/mci/{mciId}/vmDynamic
+      description: "Create VM Dynamically and add it to MCI"
+    Recommendvm:
+      method: post
+      resourcePath: /mciRecommendVm
+      description: "Recommend MCI plan (filter and priority) Find details from https://github.com/cloud-barista/cb-tumblebug/discussions/1234"
 
   mc-web-console:
     getSetupYamlCheck:
