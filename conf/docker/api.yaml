@@ -983,14 +983,6 @@ serviceActions:
       method: post
       resourcePath: /api/users
       description: "유저를 등록합니다."
-    ResetUserPassword:
-      method: put
-      resourcePath: /api/users/id/{userId}/password
-      description: "사용자 비밀번호를 초기화합니다."
-    AssignRoleToUser:
-      method: post
-      resourcePath: /api/roles/assign/platform-role
-      description: "사용자에게 플랫폼 역할을 할당합니다."
     Deactiveuser:
       method: post
       resourcePath: /api/user/deactive
@@ -999,110 +991,6 @@ serviceActions:
       method: delete
       resourcePath: /api/projects/unassign/workspaces
       description: "Workspace에서 Project 할당 해제"
-    # Group / Organization 관리
-    Getorganizations:
-      method: post
-      resourcePath: /api/organizations/list
-      description: "조직(그룹) 목록 조회"
-    listOrganizations:
-      method: get
-      resourcePath: /api/organizations
-      description: "조직(그룹) 전체 목록 조회"
-    createOrganization:
-      method: post
-      resourcePath: /api/organizations
-      description: "조직(그룹) 생성"
-    getOrganizationByID:
-      method: get
-      resourcePath: /api/organizations/id/{organizationId}
-      description: "조직(그룹) 단건 조회 by ID"
-    updateOrganization:
-      method: put
-      resourcePath: /api/organizations/id/{organizationId}
-      description: "조직(그룹) 수정"
-    deleteOrganization:
-      method: delete
-      resourcePath: /api/organizations/id/{organizationId}
-      description: "조직(그룹) 삭제"
-    getOrganizationUsers:
-      method: get
-      resourcePath: /api/organizations/id/{organizationId}/users
-      description: "조직(그룹) 소속 사용자 목록"
-    getOrganizationTree:
-      method: get
-      resourcePath: /api/organizations/tree
-      description: "조직 트리 조회"
-    assignUserOrganizations:
-      method: post
-      resourcePath: /api/users/{userId}/organizations
-      description: "사용자를 조직에 할당"
-    getUserOrganizations:
-      method: get
-      resourcePath: /api/users/{userId}/organizations
-      description: "사용자 소속 조직 목록"
-    removeUserOrganization:
-      method: delete
-      resourcePath: /api/users/{userId}/organizations/{organizationId}
-      description: "사용자 조직 할당 해제"
-    # Group Platform Role 관리
-    assignGroupPlatformRole:
-      method: post
-      resourcePath: /api/groups/id/{groupId}/platform-roles
-      description: "그룹에 플랫폼 역할 할당"
-    getGroupPlatformRoles:
-      method: get
-      resourcePath: /api/groups/id/{groupId}/platform-roles
-      description: "그룹의 플랫폼 역할 목록"
-    getAvailableGroupPlatformRoles:
-      method: get
-      resourcePath: /api/groups/id/{groupId}/platform-roles/available
-      description: "그룹에 할당 가능한 플랫폼 역할 목록"
-    removeGroupPlatformRole:
-      method: delete
-      resourcePath: /api/groups/id/{groupId}/platform-roles/{roleId}
-      description: "그룹 플랫폼 역할 할당 해제"
-    # Group Users 관리
-    assignGroupUsers:
-      method: post
-      resourcePath: /api/groups/id/{groupId}/users
-      description: "그룹에 사용자 일괄 할당"
-    removeGroupUser:
-      method: delete
-      resourcePath: /api/groups/id/{groupId}/users/{userId}
-      description: "그룹에서 사용자 제거"
-    assignUserGroups:
-      method: post
-      resourcePath: /api/users/id/{userId}/groups
-      description: "사용자를 그룹에 할당"
-    replaceUserGroups:
-      method: put
-      resourcePath: /api/users/id/{userId}/groups
-      description: "사용자 그룹 일괄 교체"
-    removeUserFromGroup:
-      method: delete
-      resourcePath: /api/users/id/{userId}/groups/{groupId}
-      description: "사용자를 그룹에서 제거"
-    # Group Workspace 관리
-    assignGroupWorkspace:
-      method: post
-      resourcePath: /api/groups/id/{groupId}/workspaces
-      description: "그룹을 워크스페이스에 매핑"
-    getGroupWorkspaces:
-      method: get
-      resourcePath: /api/groups/id/{groupId}/workspaces
-      description: "그룹의 워크스페이스 목록"
-    getAvailableGroupWorkspaces:
-      method: get
-      resourcePath: /api/groups/id/{groupId}/workspaces/available
-      description: "그룹에 할당 가능한 워크스페이스 목록"
-    updateGroupWorkspaceRole:
-      method: put
-      resourcePath: /api/groups/id/{groupId}/workspaces/{workspaceId}
-      description: "그룹-워크스페이스 역할 수정"
-    removeGroupWorkspaceRole:
-      method: delete
-      resourcePath: /api/groups/id/{groupId}/workspaces/{workspaceId}
-      description: "그룹-워크스페이스 매핑 해제"
 
   mc-infra-manager:
     Lookupspeclist:
