@@ -15,6 +15,7 @@
 # vendor/
 
 .DS_Store
+.worktrees/
 
 docker-compose-mode-files/data/influxdb/data/data/_internal/
 docker-compose-mode-files/data/influxdb/data/data/cbrestapigw/
