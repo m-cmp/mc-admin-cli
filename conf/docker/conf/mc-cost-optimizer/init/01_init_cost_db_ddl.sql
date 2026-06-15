@@ -356,84 +356,6 @@ CREATE TABLE `budget_monthly` (
                                   UNIQUE KEY `uq_csp_year_month_project` (`csp`,`year`,`month`,`project_cd`)
 ) ENGINE=InnoDB AUTO_INCREMENT=384 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci;
 
-CREATE TABLE TASM_AZR_RSRC_OPT_MODN_L
-(
-    PREV_GENTH  VARCHAR(50)  NOT NULL COMMENT 'Previous Generation',
-    NEW_GENTH   VARCHAR(50)  NULL COMMENT 'Current Generation',
-    RSRC_TYPE   VARCHAR(100) NOT NULL COMMENT 'Resource Type',
-    RGN_ID      VARCHAR(50)  NOT NULL COMMENT 'Region',
-    INST_FAMILY VARCHAR(50)  NULL COMMENT 'Instance Family',
-    PRIMARY KEY (RSRC_TYPE, RGN_ID, PREV_GENTH)
-)
-    CHARSET = utf8mb3;
-
-create index TASM_AZR_RSRC_OPT_MODN_L_IDX_01 ON TASM_AZR_RSRC_OPT_MODN_L (PREV_GENTH);
-
-CREATE TABLE TASM_AZR_VM_PRICING_L
-(
-    SKU                          VARCHAR(150) NOT NULL,
-    REGION                       VARCHAR(50)  NOT NULL,
-    INSTANCE_TYPE                VARCHAR(50)  NULL,
-    CORES                        DOUBLE       NULL,
-    RAM                          DOUBLE       NULL,
-    SERIES                       VARCHAR(50)  NULL,
-    OS                           VARCHAR(50)  NULL,
-    PER_HOUR                     DOUBLE       NULL,
-    PER_HOUR_ONE_YEAR_RESERVED   DOUBLE       NULL,
-    PER_HOUR_THREE_YEAR_RESERVED DOUBLE       NULL,
-    PER_HOUR_SPOT                DOUBLE       NULL,
-    IS_VCPU                      VARCHAR(50)  NULL,
-    AVAILABLE_FOR_ML             VARCHAR(50)  NULL,
-    IS_HIDDEN                    VARCHAR(50)  NULL,
-    DISK_SIZE                    DOUBLE       NULL,
-    GPU                          VARCHAR(50)  NULL,
-    PRICING_TYPES                VARCHAR(50)  NULL,
-    CREA_DT                      DATETIME     NULL COMMENT '생성일시',
-    PRIMARY KEY (SKU, REGION)
-);
-
-CREATE INDEX IX_TASM_AZR_VM_PRICING_L_02
-    ON TASM_AZR_VM_PRICING_L (REGION, INSTANCE_TYPE, OS, PRICING_TYPES);
-
-create table TASM_CLOUD_RGN_M
-(
-    CLOUD_VNDR_ID  VARCHAR(50)            NOT NULL COMMENT 'CLOUD VENDOR ID',
-    RGN_ID         VARCHAR(50)            NOT NULL COMMENT 'REGION ID',
-    RGN_NM         VARCHAR(100)           NOT NULL COMMENT 'REGION 명',
-    RGN_CODE       VARCHAR(100)           NULL,
-    UNIT_PRICE_RGN VARCHAR(100)           NULL,
-    MT_RGN_NM      VARCHAR(100)           NULL COMMENT 'REGION 명 (METERING)',
-    SVC_TYPE       VARCHAR(10)            NOT NULL COMMENT 'SERVICE TYPE( GLOBAL, CHINA)',
-    USE_YN         VARCHAR(1) DEFAULT 'Y' NOT NULL COMMENT 'CLOUD 사용 여부 (''N'':사용안함, ''Y'':사용)',
-    CREA_DT        DATETIME               NOT NULL COMMENT '생성일시',
-    CREA_ID        VARCHAR(50)            NOT NULL COMMENT '생성자 ID',
-    CREA_IPADDR    VARCHAR(39)            NOT NULL COMMENT '생성자 IP주소',
-    UPDT_DT        DATETIME               NULL COMMENT '수정일시',
-    UPDT_ID        VARCHAR(50)            NULL COMMENT '수정자 ID',
-    UPDT_IPADDR    VARCHAR(39)            NULL COMMENT '수정자 IP주소',
-    PRIMARY KEY (CLOUD_VNDR_ID, RGN_ID)
-)
-    COMMENT 'Cloud Region Informations' CHARSET = utf8mb3;
-
-create table TASM_NCP_INSTANCE_PRICING_L
-(
-    SKU            varchar(150) not null,
-    REGION         varchar(50)  not null,
-    INSTANCE_TYPE  varchar(50)  null,
-    SERIES         varchar(50)  null,
-    PRODUCT_NAME   varchar(150) null,
-    PRODUCT_CODE   varchar(100) null,
-    CORES          double       null,
-    MEMORY         double       null,
-    DISK_SIZE      double       null,
-    GPU            double       null,
-    UNIT_CODE      varchar(50)  not null,
-    UNIT_CODE_NAME varchar(150) not null,
-    USD            double       null,
-    CREA_DT        datetime     null comment '생성일시',
-    primary key (SKU, REGION, UNIT_CODE)
-);
-
 -- Azure/NCP용 Unused Daily Mart 테이블
 CREATE TABLE `unused_daily_mart` (
                                      `create_dt` timestamp NOT NULL COMMENT '생성일시 (배치 실행 시점)',
@@ -448,4 +370,63 @@ CREATE TABLE `unused_daily_mart` (
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci
 COMMENT='Azure/NCP Unused 자원 분석용 일별 메트릭 마트';
 
+-- cost.gcp_billing_raw definition
 
+CREATE TABLE `gcp_billing_raw` (
+                                   `id` bigint(20) NOT NULL AUTO_INCREMENT COMMENT 'PK',
+                                   `created` datetime DEFAULT NULL COMMENT '수집 시각',
+                                   `billing_account_id` varchar(255) DEFAULT NULL COMMENT '청구 계정 ID',
+                                   `cost` double DEFAULT NULL COMMENT '발생 비용',
+                                   `cost_type` varchar(50) DEFAULT NULL COMMENT '비용 타입 (regular, tax, adjustment, rounding_error)',
+                                   `currency` varchar(10) DEFAULT NULL COMMENT '통화 코드 (KRW, USD)',
+                                   `currency_conversion_rate` double DEFAULT NULL COMMENT '환율',
+                                   `export_time` datetime DEFAULT NULL COMMENT '데이터 추출 시각',
+                                   `invoice_month` varchar(6) DEFAULT NULL COMMENT '청구월 (YYYYMM)',
+                                   `service_id` varchar(255) DEFAULT NULL COMMENT '서비스 고유 ID',
+                                   `service_description` varchar(255) DEFAULT NULL COMMENT '서비스 명칭',
+                                   `sku_id` varchar(255) DEFAULT NULL COMMENT 'SKU 고유 ID',
+                                   `sku_description` varchar(512) DEFAULT NULL COMMENT 'SKU 상세 명칭',
+                                   `project_id` varchar(255) DEFAULT NULL COMMENT '프로젝트 ID',
+                                   `project_number` varchar(255) DEFAULT NULL COMMENT '프로젝트 번호',
+                                   `project_name` varchar(255) DEFAULT NULL COMMENT '프로젝트 명칭',
+                                   `project_ancestry_numbers` varchar(512) DEFAULT NULL COMMENT '상위 조직 경로',
+                                   `location` varchar(255) DEFAULT NULL COMMENT '상세 위치',
+                                   `location_country` varchar(10) DEFAULT NULL COMMENT '국가 코드',
+                                   `location_region` varchar(255) DEFAULT NULL COMMENT '리전',
+                                   `location_zone` varchar(255) DEFAULT NULL COMMENT '존',
+                                   `usage_start_time` datetime DEFAULT NULL COMMENT '사용 시작 시각',
+                                   `usage_end_time` datetime DEFAULT NULL COMMENT '사용 종료 시각',
+                                   `usage_amount` double DEFAULT NULL COMMENT '사용량',
+                                   `usage_unit` varchar(50) DEFAULT NULL COMMENT '사용량 단위',
+                                   `usage_amount_in_pricing_units` double DEFAULT NULL COMMENT '과금 단위 기준 수량',
+                                   `usage_pricing_unit` varchar(50) DEFAULT NULL COMMENT '과금 단위',
+                                   `adjustment_info_id` varchar(255) DEFAULT NULL COMMENT '조정 ID',
+                                   `adjustment_info_description` varchar(512) DEFAULT NULL COMMENT '조정 설명',
+                                   `adjustment_info_mode` varchar(50) DEFAULT NULL COMMENT '조정 모드',
+                                   `adjustment_info_type` varchar(50) DEFAULT NULL COMMENT '조정 타입',
+                                   `labels` text DEFAULT NULL COMMENT '라벨 (JSON)',
+                                   `system_labels` text DEFAULT NULL COMMENT '시스템 라벨 (JSON)',
+                                   `tags` text DEFAULT NULL COMMENT '태그 (JSON)',
+                                   `csp_instanceid` varchar(200) DEFAULT NULL COMMENT 'labels.sys_cspresourceid (servicegroup_meta 조인키)',
+                                   `vm_id` varchar(100) DEFAULT NULL COMMENT 'labels.sys_id',
+                                   `mci_id` varchar(100) DEFAULT NULL COMMENT 'labels.sys_infraid',
+                                   `service_cd` varchar(100) DEFAULT NULL COMMENT 'labels.sys_namespace (ns_id, 매핑 폴백)',
+                                   PRIMARY KEY (`id`),
+                                   KEY `idx_billing_date` (`billing_account_id`,`invoice_month`),
+                                   KEY `idx_project_date` (`project_id`,`usage_start_time`),
+                                   KEY `idx_service` (`service_description`,`usage_start_time`),
+                                   KEY `idx_gbr_csp_instanceid` (`csp_instanceid`)
+) ENGINE=InnoDB AUTO_INCREMENT=579 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_uca1400_ai_ci COMMENT='GCP 빌링 원본 데이터';
+
+CREATE TABLE IF NOT EXISTS `provider_keys` (
+                                               `id` bigint NOT NULL AUTO_INCREMENT,
+                                               `ns_id` varchar(100) NOT NULL COMMENT 'namespace ID',
+    `provider` varchar(20)  NOT NULL COMMENT 'openai | anthropic | google',
+    `enc_key` text NOT NULL COMMENT 'AES-256-GCM 암호문 (base64)',
+    `iv` varchar(100) NOT NULL COMMENT 'nonce 12바이트 (base64)',
+    `tag` varchar(100) NOT NULL COMMENT 'GCM 인증 태그 16바이트 (base64)',
+    `created_at` timestamp DEFAULT current_timestamp(),
+    `updated_at` timestamp DEFAULT current_timestamp() ON UPDATE current_timestamp(),
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `uq_ns_provider` (`ns_id`, `provider`)
+    ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci COMMENT='LLM 프로바이더 API 키 (AES-256-GCM 암호화 저장)';
