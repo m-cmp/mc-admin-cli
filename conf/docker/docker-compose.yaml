@@ -872,6 +872,7 @@ services:
   mc-application-manager-sonatype-nexus:
     image: sonatype/nexus3:latest
     container_name: mc-application-manager-sonatype-nexus
+    restart: unless-stopped
     platform: linux/amd64
     networks:
       - mc-application-manager-network
@@ -896,8 +897,15 @@ services:
   mc-application-manager:
     image: cloudbaristaorg/mc-application-manager:0.5.2
     container_name: mc-application-manager
+    restart: unless-stopped
     depends_on:
       mc-application-manager-db:
+        condition: service_healthy
+      mc-application-manager-sonatype-nexus:
+        condition: service_started
+      mc-infra-manager:
+        condition: service_healthy
+      mc-observability-rabbitmq:
         condition: service_healthy
     networks:
       - mc-application-manager-network
@@ -959,6 +967,10 @@ services:
     image: cloudbaristaorg/mc-workflow-manager:0.5.3
     container_name: mc-workflow-manager
     platform: linux/amd64
+    restart: unless-stopped
+    depends_on:
+      mc-workflow-manager-jenkins:
+        condition: service_healthy
     networks:
       - mc-workflow-manager-network
       - mc-web-console-network
@@ -1026,6 +1038,7 @@ services:
   mc-data-manager-db:
     image: mariadb:latest
     container_name: mc-data-manager-db
+    restart: always
     command:
       - --skip-character-set-client-handshake
     volumes:
