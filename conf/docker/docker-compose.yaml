@@ -354,6 +354,7 @@ services:
       - "${MC_WORKFLOW_MANAGER_PROXY_PORT}:${MC_WORKFLOW_MANAGER_PROXY_PORT}"
       - "${MC_DATA_MANAGER_PROXY_PORT}:${MC_DATA_MANAGER_PROXY_PORT}"
       - "${MC_APPLICATION_MANAGER_PROXY_PORT}:${MC_APPLICATION_MANAGER_PROXY_PORT}"
+      - "${MC_OBSERVABILITY_FRONT_PORT}:${MC_OBSERVABILITY_FRONT_PORT}"
     environment:
       - DOMAIN_NAME=${MC_IAM_MANAGER_PUBLIC_DOMAIN}
     volumes:
@@ -1168,10 +1169,6 @@ services:
       - mc-infra-manager-network
       - mc-infra-connector-network
       - mc-web-console-network
-    ports:
-      - target: 18080
-        published: ${MC_OBSERVABILITY_MANAGER_PORT}
-        protocol: tcp
     depends_on:
       mc-observability-grafana:
         condition: service_healthy
@@ -1207,10 +1204,6 @@ services:
       - mc-observability-network
       - mc-infra-manager-network
       - mc-infra-connector-network
-    ports:
-      - target: 18081
-        published: ${MC_OBSERVABILITY_FRONT_PORT}
-        protocol: tcp
     depends_on:
       mc-observability-manager:
         condition: service_healthy
@@ -1266,7 +1259,7 @@ services:
   mc-observability-rabbitmq:
     image: rabbitmq:4.1.4-management-alpine
     container_name: mc-observability-rabbitmq
-    restart: on-failure
+    restart: unless-stopped
     networks:
       - mc-observability-network
     ports:
@@ -1343,7 +1336,7 @@ services:
   mc-observability-influx:
     image: cloudbaristaorg/mc-observability-influx:edge
     container_name: mc-observability-influx
-    restart: on-failure
+    restart: unless-stopped
     networks:
       - mc-observability-network
     ports:
@@ -1380,7 +1373,7 @@ services:
   mc-observability-influx-2:
     image: cloudbaristaorg/mc-observability-influx:edge
     container_name: mc-observability-influx-2
-    restart: on-failure
+    restart: unless-stopped
     networks:
       - mc-observability-network
     ports:
@@ -1434,7 +1427,7 @@ services:
   mc-observability-loki:
     image: grafana/loki:3.4.2
     container_name: mc-observability-loki
-    restart: on-failure
+    restart: unless-stopped
     networks:
       - mc-observability-network
     ports:

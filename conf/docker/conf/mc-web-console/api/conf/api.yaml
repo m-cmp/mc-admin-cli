@@ -75,6 +75,11 @@ services:
     baseurl: http://mc-application-manager:18084
     auth:
 
+  mc-observability-fe:
+    version: v0.0.1
+    baseurl: http://mc-observability-front:18081
+    auth:
+
   # sample:
   #   baseurl: http://localhost:1323/test
   #   auth:
