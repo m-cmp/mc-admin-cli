@@ -605,6 +605,37 @@ update_public_service_urls() {
         return 1
     fi
 
+    # mc-observability-fe: register and update dedicated iframe nginx HTTPS proxy URL
+    local obs_fe_public_url="${MC_OBSERVABILITY_FRONT_PUBLIC_HOST}"
+    reg_body=$(printf '{"name":"mc-observability-fe","version":"v0.0.1","baseUrl":"http://mc-observability-front:18081","authType":"none","authUser":"","authPass":"","isActive":true}')
+    reg_resp=$(curl -s -w "HTTPSTATUS:%{http_code}" -X POST \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "$reg_body" \
+        "$MC_IAM_MANAGER_HOST/api/mcmp-apis")
+    reg_code=$(echo $reg_resp | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    if [ "$reg_code" = "201" ]; then
+        echo "  ✓ mc-observability-fe registered"
+    elif [ "$reg_code" = "409" ]; then
+        echo "  ✓ mc-observability-fe already registered"
+    else
+        echo "  ✗ Failed to register mc-observability-fe (HTTP $reg_code)"
+        return 1
+    fi
+    response=$(curl -s -w "HTTPSTATUS:%{http_code}" -X PUT \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        --data "{\"base_url\": \"${obs_fe_public_url}\"}" \
+        "$MC_IAM_MANAGER_HOST/api/mcmp-apis/name/mc-observability-fe")
+    http_code=$(echo $response | tr -d '\n' | sed -e 's/.*HTTPSTATUS://')
+    response_body=$(echo $response | sed -e 's/HTTPSTATUS\:.*//g')
+    if [ "$http_code" = "200" ]; then
+        echo "  ✓ Updated mc-observability-fe baseurl: ${obs_fe_public_url}"
+    else
+        echo "  ✗ Failed to update mc-observability-fe (HTTP $http_code): $response_body"
+        return 1
+    fi
+
     echo "Public service URL update completed"
     return 0
 }
