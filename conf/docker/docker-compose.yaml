@@ -23,7 +23,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.12.30
+    image: cloudbaristaorg/cb-spider:0.12.32
     pull_policy: missing
     container_name: mc-infra-connector
     restart: unless-stopped
@@ -56,7 +56,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.12.15
+    image: cloudbaristaorg/cb-tumblebug:0.12.18
     container_name: mc-infra-manager
     restart: unless-stopped
     pull_policy: missing
