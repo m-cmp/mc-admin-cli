@@ -894,7 +894,7 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:0.5.2
+    image: cloudbaristaorg/mc-application-manager:0.5.4
     container_name: mc-application-manager
     depends_on:
       mc-application-manager-db:
