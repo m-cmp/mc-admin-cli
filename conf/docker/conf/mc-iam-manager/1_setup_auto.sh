@@ -466,10 +466,20 @@ register_framework_services() {
 update_public_service_urls() {
     echo "Updating framework service URLs to public-accessible addresses..."
 
+    _public_fe_scheme() {
+        case "${MC_IAM_MANAGER_PUBLIC_DOMAIN:-}" in
+            localhost|127.0.0.1|mciam.local) echo "http" ;;
+            *) echo "https" ;;
+        esac
+    }
+
+    local public_scheme
+    public_scheme=$(_public_fe_scheme)
+
     # mc-cost-optimizer-fe: replace the internal container URL (http://mc-cost-optimizer-fe:7780)
-    # with the nginx HTTPS proxy URL accessible directly from the browser.
+    # with the nginx proxy URL accessible directly from the browser.
     # /api/getapihosts returns this value as the iframe src in MCIAM_USE=true environments.
-    local cost_fe_public_url="${MC_COST_OPTIMIZER_FE_PUBLIC_HOST:-http://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_COST_OPTIMIZER_FE_PROXY_PORT}}"
+    local cost_fe_public_url="${MC_COST_OPTIMIZER_FE_PUBLIC_HOST:-${public_scheme}://${MC_IAM_MANAGER_PUBLIC_DOMAIN}:${MC_COST_OPTIMIZER_FE_PROXY_PORT}}"
 
     # mc-cost-optimizer-fe is not in the upstream api.yaml, so attempt registration first (idempotent)
     local reg_body

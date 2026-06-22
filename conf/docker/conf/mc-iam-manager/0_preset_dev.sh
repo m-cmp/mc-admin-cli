@@ -10,6 +10,7 @@ echo "PROJECT_ROOT: $PROJECT_ROOT"
 
 # .env file path
 ENV_FILE="${PROJECT_ROOT}/.env"
+IAM_ENV_FILE="${SCRIPT_DIR}/.env"
 
 
 # Certificate output path (same structure as Let's Encrypt)
@@ -133,6 +134,46 @@ echo "  DATABASE_NAME: $MC_IAM_MANAGER_DATABASE_NAME"
 echo "  DATABASE_USER: $MC_IAM_MANAGER_DATABASE_USER"
 echo "  DATABASE_HOST: $MC_IAM_MANAGER_DATABASE_HOST"
 echo "  MC_IAM_MANAGER_PORT: $MC_IAM_MANAGER_PORT"
+
+# =============================================================================
+# Rewrite PUBLIC_HOST variables from http:// to https:// for remote IP/domain
+# =============================================================================
+
+_sedi() {
+    if [[ "$(uname)" == "Darwin" ]]; then
+        sed -i '' "$@"
+    else
+        sed -i "$@"
+    fi
+}
+
+rewrite_http_to_https() {
+    local env_file="$1"
+    if [ ! -f "$env_file" ]; then
+        return 0
+    fi
+    echo "Rewriting http:// → https:// in ${env_file##*/conf/docker/}..."
+
+    local vars=(
+        "MC_IAM_MANAGER_PUBLIC_HOST"
+        "MC_OBSERVABILITY_FRONT_PUBLIC_HOST"
+        "MC_OBSERVABILITY_GRAFANA_PUBLIC_HOST"
+        "MC_COST_OPTIMIZER_FE_PUBLIC_HOST"
+        "MC_WORKFLOW_MANAGER_PUBLIC_HOST"
+        "MC_DATA_MANAGER_PUBLIC_HOST"
+        "MC_APPLICATION_MANAGER_PUBLIC_HOST"
+    )
+
+    for var in "${vars[@]}"; do
+        if grep -qE "^${var}=http://" "$env_file"; then
+            _sedi "s|^${var}=http://|${var}=https://|" "$env_file"
+            echo "  ✓ ${var}: http:// → https://"
+        fi
+    done
+}
+
+rewrite_http_to_https "$ENV_FILE"
+rewrite_http_to_https "$IAM_ENV_FILE"
 
 # Define certificate directory based on PUBLIC_DOMAIN (same structure as Let's Encrypt)
 CERT_DIR="${CERT_PARENT_DIR}/certs/live/${MC_IAM_MANAGER_PUBLIC_DOMAIN}"
