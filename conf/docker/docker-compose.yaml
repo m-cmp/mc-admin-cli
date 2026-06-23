@@ -1359,7 +1359,10 @@ services:
       - ./container-volume/mc-observability/influxdb/influxdb_data:/var/lib/influxdb
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
-      <<: *default-health-check
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
 
   mc-observability-influx-2-init-volumes:
     image: busybox:stable
@@ -1396,7 +1399,10 @@ services:
       - ./container-volume/mc-observability/influxdb/influxdb2_data:/var/lib/influxdb
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
-      <<: *default-health-check
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
 
 ##### Remove annotations if data inquiry is required with chronograf during development phase #####
 #  mc-observability-chronograf:
