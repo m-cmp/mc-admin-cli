@@ -46,6 +46,7 @@ MC_IAM_MANAGER_PUBLIC_DOMAIN=$(grep -m1 "^MC_IAM_MANAGER_PUBLIC_DOMAIN=" "$ENV_F
 MC_IAM_MANAGER_KEYCLOAK_DOMAIN=$(grep -m1 "^MC_IAM_MANAGER_KEYCLOAK_DOMAIN=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
 MC_IAM_MANAGER_KEYCLOAK_PORT=$(grep -m1 "^MC_IAM_MANAGER_KEYCLOAK_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
 MC_OBSERVABILITY_GRAFANA_PROXY_PORT=$(grep -m1 "^MC_OBSERVABILITY_GRAFANA_PROXY_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
+MC_OBSERVABILITY_FRONT_PORT=$(grep -m1 "^MC_OBSERVABILITY_FRONT_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
 MC_COST_OPTIMIZER_FE_PROXY_PORT=$(grep -m1 "^MC_COST_OPTIMIZER_FE_PROXY_PORT=" "$ENV_FILE" | cut -d'=' -f2 | tr -d '"' | tr -d "'" | xargs)
 
 echo "Loaded environment variables:"
@@ -55,6 +56,7 @@ echo "  MC_IAM_MANAGER_PUBLIC_DOMAIN: $MC_IAM_MANAGER_PUBLIC_DOMAIN"
 echo "  MC_IAM_MANAGER_KEYCLOAK_DOMAIN: $MC_IAM_MANAGER_KEYCLOAK_DOMAIN"
 echo "  MC_IAM_MANAGER_KEYCLOAK_PORT: $MC_IAM_MANAGER_KEYCLOAK_PORT"
 echo "  MC_OBSERVABILITY_GRAFANA_PROXY_PORT: $MC_OBSERVABILITY_GRAFANA_PROXY_PORT"
+echo "  MC_OBSERVABILITY_FRONT_PORT: $MC_OBSERVABILITY_FRONT_PORT"
 echo "  MC_COST_OPTIMIZER_FE_PROXY_PORT: $MC_COST_OPTIMIZER_FE_PROXY_PORT"
 
 # Copy template file and substitute environment variables
@@ -93,6 +95,13 @@ if [ -n "$MC_OBSERVABILITY_GRAFANA_PROXY_PORT" ]; then
     echo "✓ MC_OBSERVABILITY_GRAFANA_PROXY_PORT substitution done: $MC_OBSERVABILITY_GRAFANA_PROXY_PORT"
 else
     echo "Warning: MC_OBSERVABILITY_GRAFANA_PROXY_PORT environment variable is not set."
+fi
+
+if [ -n "$MC_OBSERVABILITY_FRONT_PORT" ]; then
+    sed -i "s/\${MC_OBSERVABILITY_FRONT_PORT}/$MC_OBSERVABILITY_FRONT_PORT/g" "$OUTPUT_FILE"
+    echo "✓ MC_OBSERVABILITY_FRONT_PORT substitution done: $MC_OBSERVABILITY_FRONT_PORT"
+else
+    echo "Warning: MC_OBSERVABILITY_FRONT_PORT environment variable is not set."
 fi
 
 if [ -n "$MC_COST_OPTIMIZER_FE_PROXY_PORT" ]; then
