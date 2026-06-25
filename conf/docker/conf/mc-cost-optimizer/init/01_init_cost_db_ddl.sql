@@ -430,3 +430,15 @@ CREATE TABLE IF NOT EXISTS `provider_keys` (
     PRIMARY KEY (`id`),
     UNIQUE KEY `uq_ns_provider` (`ns_id`, `provider`)
     ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci COMMENT='LLM 프로바이더 API 키 (AES-256-GCM 암호화 저장)';
+
+-- cost.recommendation_history definition (LLM 추천 이력 - source DDL엔 있으나 deploy 복사본에서 누락되어 추가)
+CREATE TABLE IF NOT EXISTS `recommendation_history` (
+    `id`             bigint NOT NULL AUTO_INCREMENT,
+    `ns_id`          varchar(100) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
+    `instance_id`    varchar(200) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci NOT NULL,
+    `recommendation` varchar(20) CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci DEFAULT NULL,
+    `response_json`  text CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_520_ci,
+    `created_at`     timestamp NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (`id`),
+    KEY `idx_ns` (`ns_id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_520_ci;
