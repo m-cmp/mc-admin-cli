@@ -399,7 +399,7 @@ services:
   mc-cost-optimizer-fe:
     restart: unless-stopped
     container_name: mc-cost-optimizer-fe
-    image: cloudbaristaorg/mc-costopti-ui:0.5.5
+    image: cloudbaristaorg/mc-costopti-ui:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -416,7 +416,7 @@ services:
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: cloudbaristaorg/mc-costopti-api:0.5.5
+    image: cloudbaristaorg/mc-costopti-api:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -430,16 +430,16 @@ services:
       spring.datasource.hikari.cost.optimize.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL_NEW}
       spring.datasource.hikari.cost.optimize.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
       spring.datasource.hikari.cost.optimize.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
-      tumblebug.url: ${CO_TBB_URL}
-      tumblebug.username: ${CO_TBB_USERNAME:-default}
-      tumblebug.password: ${CO_TBB_PW:-default}
+      tumblebug.url: ${MC_COST_OPTIMIZER_TBB_URL}
+      tumblebug.username: ${MC_COST_OPTIMIZER_TBB_USERNAME:-default}
+      tumblebug.password: ${MC_COST_OPTIMIZER_TBB_PW:-default}
       costopti.alarmservice.url: ${MC_COST_OPTIMIZER_ALARM_URL}
       costopti.assetcollector.url: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
       costopti.costcollector.url: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
       costopti.costprocessor.url: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
       costopti.costselector.url: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
-      ml.rightsize.base-url: ${CO_ML_SCORER_URL}
-      llm.key.master: ${CO_LLM_KEY_MASTER}
+      ml.rightsize.base-url: ${MC_COST_OPTIMIZER_ML_SCORER_URL}
+      llm.key.master: ${MC_COST_OPTIMIZER_LLM_KEY_MASTER}
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get",  "http://localhost:9090/api/costopti/be/readyz" ]
       <<: *default-health-check
@@ -447,7 +447,7 @@ services:
   mc-cost-optimizer-cost-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
-    image: cloudbaristaorg/mc-costopti-costcollector:0.5.5
+    image: cloudbaristaorg/mc-costopti-costcollector:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -466,9 +466,9 @@ services:
       spring.datasource.hikari.batch.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
       spring.datasource.hikari.batch.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
 
-      OPENBAO_ENABLED: ${CO_OPENBAO_ENABLED}
-      OPENBAO_ADDRESS: ${CO_OPENBAO_ADDRESS}
-      OPENBAO_TOKEN: ${CO_OPENBAO_TOKEN}
+      OPENBAO_ENABLED: ${MC_COST_OPTIMIZER_OPENBAO_ENABLED}
+      OPENBAO_ADDRESS: ${MC_COST_OPTIMIZER_OPENBAO_ADDRESS}
+      OPENBAO_TOKEN: ${MC_COST_OPTIMIZER_OPENBAO_TOKEN}
 
       unusedBatchCronSchedule: ${MC_COST_OPTIMIZER_COST_COLLECT_UNUSED_CRON_SCHEDULE}
       curBatchCronSchedule: ${MC_COST_OPTIMIZER_COST_COLLECT_CUR_CRON_SCHEDULE}
@@ -480,7 +480,7 @@ services:
   mc-cost-optimizer-cost-processor:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
-    image: cloudbaristaorg/mc-costopti-costprocessor:0.5.5
+    image: cloudbaristaorg/mc-costopti-costprocessor:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -506,7 +506,7 @@ services:
   mc-cost-optimizer-cost-selector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
-    image: cloudbaristaorg/mc-costopti-costselector:0.5.5
+    image: cloudbaristaorg/mc-costopti-costselector:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -525,14 +525,14 @@ services:
       spring.datasource.hikari.cost.optimize.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
       spring.datasource.hikari.cost.optimize.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
       opti.alarm.url: ${MC_COST_OPTIMIZER_ALARM_URL}
-      tumblebug.url: ${CO_TBB_URL}
-      tumblebug.username: ${CO_TBB_USERNAME}
-      tumblebug.password: ${CO_TBB_PW}
+      tumblebug.url: ${MC_COST_OPTIMIZER_TBB_URL}
+      tumblebug.username: ${MC_COST_OPTIMIZER_TBB_USERNAME}
+      tumblebug.password: ${MC_COST_OPTIMIZER_TBB_PW}
 
   mc-cost-optimizer-alarm-service:
     restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
-    image: cloudbaristaorg/mc-costopti-alarm:0.5.5
+    image: cloudbaristaorg/mc-costopti-alarm:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -556,7 +556,7 @@ services:
   mc-cost-optimizer-asset-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-asset-collector
-    image: cloudbaristaorg/mc-costopti-assetcollector:0.5.5
+    image: cloudbaristaorg/mc-costopti-assetcollector:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -581,7 +581,7 @@ services:
   mc-cost-optimizer-cost-azure-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-azure-collector
-    image: cloudbaristaorg/mc-costopti-azure-collector:0.5.5
+    image: cloudbaristaorg/mc-costopti-azure-collector:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -600,9 +600,9 @@ services:
       SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
 
-      OPENBAO_ENABLED: ${CO_OPENBAO_ENABLED}
-      OPENBAO_ADDRESS: ${CO_OPENBAO_ADDRESS}
-      OPENBAO_TOKEN: ${CO_OPENBAO_TOKEN}
+      OPENBAO_ENABLED: ${MC_COST_OPTIMIZER_OPENBAO_ENABLED}
+      OPENBAO_ADDRESS: ${MC_COST_OPTIMIZER_OPENBAO_ADDRESS}
+      OPENBAO_TOKEN: ${MC_COST_OPTIMIZER_OPENBAO_TOKEN}
 
       AZURE_CREDENTIAL_TENANT_ID: ${MC_COST_OPTIMIZER_AZURE_TENANT_ID}
       AZURE_CREDENTIAL_CLIENT_ID: ${MC_COST_OPTIMIZER_AZURE_CLIENT_ID}
@@ -621,7 +621,7 @@ services:
   mc-cost-optimizer-gcp-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-gcp-collector
-    image: cloudbaristaorg/mc-costopti-gcpcollector:0.5.5
+    image: cloudbaristaorg/mc-costopti-gcpcollector:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -629,7 +629,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 8095
-        published: ${CO_GCP_COLLECTOR_PORT}
+        published: ${MC_COST_OPTIMIZER_GCP_COLLECTOR_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -641,27 +641,27 @@ services:
       spring.datasource.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
       spring.datasource.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
 
-      gcp.project-id: ${CO_GCP_PROJECT_ID}
-      gcp.client-email: ${CO_GCP_CLIENT_EMAIL}
-      gcp.private-key: ${CO_GCP_PRIVATE_KEY}
-      gcp.private-key-id: ${CO_GCP_PRIVATE_KEY_ID}
-      gcp.dataset: ${CO_GCP_BQ_DATASET}
-      gcp.table: ${CO_GCP_BQ_TABLE}
-      gcpBillingCronSchedule: ${CO_GCP_BATCH_CRON_SCHEDULE}
+      gcp.project-id: ${MC_COST_OPTIMIZER_GCP_PROJECT_ID}
+      gcp.client-email: ${MC_COST_OPTIMIZER_GCP_CLIENT_EMAIL}
+      gcp.private-key: ${MC_COST_OPTIMIZER_GCP_PRIVATE_KEY}
+      gcp.private-key-id: ${MC_COST_OPTIMIZER_GCP_PRIVATE_KEY_ID}
+      gcp.dataset: ${MC_COST_OPTIMIZER_GCP_BQ_DATASET}
+      gcp.table: ${MC_COST_OPTIMIZER_GCP_BQ_TABLE}
+      gcpBillingCronSchedule: ${MC_COST_OPTIMIZER_GCP_BATCH_CRON_SCHEDULE}
       costopti.alarmservice.url: ${MC_COST_OPTIMIZER_ALARM_URL}
-      OPENBAO_ENABLED: ${CO_OPENBAO_ENABLED}
-      OPENBAO_ADDRESS: ${CO_OPENBAO_ADDRESS}
-      OPENBAO_TOKEN: ${CO_OPENBAO_TOKEN}
+      OPENBAO_ENABLED: ${MC_COST_OPTIMIZER_OPENBAO_ENABLED}
+      OPENBAO_ADDRESS: ${MC_COST_OPTIMIZER_OPENBAO_ADDRESS}
+      OPENBAO_TOKEN: ${MC_COST_OPTIMIZER_OPENBAO_TOKEN}
 
-      tumblebug.url: ${CO_TBB_URL}
-      tumblebug.username: ${CO_TBB_USERNAME}
-      tumblebug.password: ${CO_TBB_PW}
+      tumblebug.url: ${MC_COST_OPTIMIZER_TBB_URL}
+      tumblebug.username: ${MC_COST_OPTIMIZER_TBB_USERNAME}
+      tumblebug.password: ${MC_COST_OPTIMIZER_TBB_PW}
 
 
   mc-cost-optimizer-cost-ncp-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-ncp-collector
-    image: cloudbaristaorg/mc-costopti-ncp-collector:0.5.5
+    image: cloudbaristaorg/mc-costopti-ncp-collector:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -680,9 +680,9 @@ services:
       SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
 
-      OPENBAO_ENABLED: ${CO_OPENBAO_ENABLED}
-      OPENBAO_ADDRESS: ${CO_OPENBAO_ADDRESS}
-      OPENBAO_TOKEN: ${CO_OPENBAO_TOKEN}
+      OPENBAO_ENABLED: ${MC_COST_OPTIMIZER_OPENBAO_ENABLED}
+      OPENBAO_ADDRESS: ${MC_COST_OPTIMIZER_OPENBAO_ADDRESS}
+      OPENBAO_TOKEN: ${MC_COST_OPTIMIZER_OPENBAO_TOKEN}
 
       NCP_CREDENTIAL_IAM_ACCESS_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_ACCESS_KEY}
       NCP_CREDENTIAL_IAM_SECRET_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_SECRET_KEY}
@@ -702,7 +702,7 @@ services:
   mc-cost-optimizer-azure-vm-rightsizer:
     restart: on-failure
     container_name: mc-cost-optimizer-azure-vm-rightsizer
-    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:0.5.5
+    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -721,9 +721,9 @@ services:
       SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
 
-      OPENBAO_ENABLED: ${CO_OPENBAO_ENABLED}
-      OPENBAO_ADDRESS: ${CO_OPENBAO_ADDRESS}
-      OPENBAO_TOKEN: ${CO_OPENBAO_TOKEN}
+      OPENBAO_ENABLED: ${MC_COST_OPTIMIZER_OPENBAO_ENABLED}
+      OPENBAO_ADDRESS: ${MC_COST_OPTIMIZER_OPENBAO_ADDRESS}
+      OPENBAO_TOKEN: ${MC_COST_OPTIMIZER_OPENBAO_TOKEN}
 
       AZURE_CREDENTIAL_TENANT_ID: ${MC_COST_OPTIMIZER_AZURE_TENANT_ID}
       AZURE_CREDENTIAL_CLIENT_ID: ${MC_COST_OPTIMIZER_AZURE_CLIENT_ID}
@@ -742,7 +742,7 @@ services:
   mc-cost-optimizer-ncp-vm-rightsizer:
     restart: on-failure
     container_name: mc-cost-optimizer-ncp-vm-rightsizer
-    image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:0.5.5
+    image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -761,9 +761,9 @@ services:
       SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
 
-      OPENBAO_ENABLED: ${CO_OPENBAO_ENABLED}
-      OPENBAO_ADDRESS: ${CO_OPENBAO_ADDRESS}
-      OPENBAO_TOKEN: ${CO_OPENBAO_TOKEN}
+      OPENBAO_ENABLED: ${MC_COST_OPTIMIZER_OPENBAO_ENABLED}
+      OPENBAO_ADDRESS: ${MC_COST_OPTIMIZER_OPENBAO_ADDRESS}
+      OPENBAO_TOKEN: ${MC_COST_OPTIMIZER_OPENBAO_TOKEN}
 
       NCP_CREDENTIAL_IAM_ACCESS_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_ACCESS_KEY}
       NCP_CREDENTIAL_IAM_SECRET_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_SECRET_KEY}
@@ -775,14 +775,14 @@ services:
       COSTOPTI_COSTCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
       COSTOPTI_COSTPROCESSOR_URL: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
       COSTOPTI_COSTSELECTOR_URL: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
-      tumblebug.url: ${CO_TBB_URL}
-      tumblebug.username: ${CO_TBB_USERNAME}
-      tumblebug.password: ${CO_TBB_PW}
+      tumblebug.url: ${MC_COST_OPTIMIZER_TBB_URL}
+      tumblebug.username: ${MC_COST_OPTIMIZER_TBB_USERNAME}
+      tumblebug.password: ${MC_COST_OPTIMIZER_TBB_PW}
 
   mc-cost-optimizer-ml-scorer:
     restart: on-failure
     container_name: mc-cost-optimizer-ml-scorer
-    image: cloudbaristaorg/mc-costopti-ml-scorer:0.5.5
+    image: cloudbaristaorg/mc-costopti-ml-scorer:0.5.6
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -790,7 +790,7 @@ services:
       - mc-web-console-network
     ports:
       - target: 8096
-        published: ${CO_ML_SCORER_PORT}
+        published: ${MC_COST_OPTIMIZER_ML_SCORER_PORT}
         protocol: tcp
     depends_on:
       - mc-cost-optimizer-db
@@ -801,7 +801,7 @@ services:
       COST_DB_USERNM: ${MC_COST_OPTIMIZER_MYSQL_USER}
       COST_DB_PW: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
       SERVER_PORT: 8096
-      WINDOW_DAYS: ${CO_ML_SCORER_WINDOW_DAYS:-30}
+      WINDOW_DAYS: ${MC_COST_OPTIMIZER_ML_SCORER_WINDOW_DAYS:-30}
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:8096/health')"]
       <<: *default-health-check
@@ -1359,7 +1359,10 @@ services:
       - ./container-volume/mc-observability/influxdb/influxdb_data:/var/lib/influxdb
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
-      <<: *default-health-check
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
 
   mc-observability-influx-2-init-volumes:
     image: busybox:stable
@@ -1396,7 +1399,10 @@ services:
       - ./container-volume/mc-observability/influxdb/influxdb2_data:/var/lib/influxdb
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8086/health"]
-      <<: *default-health-check
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
 
 ##### Remove annotations if data inquiry is required with chronograf during development phase #####
 #  mc-observability-chronograf:
