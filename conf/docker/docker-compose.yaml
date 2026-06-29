@@ -56,7 +56,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.12.21
+    image: cloudbaristaorg/cb-tumblebug:0.12.22
     container_name: mc-infra-manager
     restart: unless-stopped
     pull_policy: missing
@@ -227,7 +227,7 @@ services:
 
   # CB-MapUI is a Web-based test client (disable it for production use)
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.12.46
+    image: cloudbaristaorg/cb-mapui:0.12.47
     container_name: cb-mapui
     networks:
       - mc-infra-manager-network
