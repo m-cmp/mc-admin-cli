@@ -83,6 +83,7 @@ export default defineConfig({
   testDir: '.',
   // testMatch 미지정 시 모든 tc/**와 scenarios/**를 포함 (project별 testMatch로 분기)
   outputDir: `${outDir}/test-results`,
+  timeout: 3 * 60 * 1000,         // 테스트당 최대 3분 (기본 30초 → 확장)
   fullyParallel: false, // 각 project 내부 시나리오는 순차 실행 (스텝 의존성 보존)
   workers: process.env.SESSION ? 1 : 4, // 단일 세션 실행 시 1, 전체 실행 시 4
   reporter: [

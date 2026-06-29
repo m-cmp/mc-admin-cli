@@ -106,6 +106,51 @@ ACCESS_MODE=external-domain npx playwright test \
 
 ---
 
+## 녹화 (Recording)
+
+### 1. Codegen — UI 조작을 코드로 자동 생성
+
+브라우저를 열고 직접 조작하면 Playwright 코드가 자동 생성됩니다.
+
+```bash
+npx playwright codegen \
+  --viewport-size=1920,1080 \
+  --ignore-https-errors \
+  https://<EXTERNAL_IP>:<EXTERNAL_PORT>/
+```
+
+생성된 코드를 복사해 TC spec 파일에 붙여넣어 사용합니다.
+
+### 2. 영상 녹화 — 테스트 실행 과정 캡처
+
+```bash
+E2E=/path/to/mc-admin-cli/e2e
+
+ACCESS_MODE=external-ip npx playwright test \
+  --config=$E2E/playwright.config.ts \
+  --video=on \
+  --headed \
+  $E2E/tc/infra/TC-INFRA-DEPLOY-05.spec.ts
+```
+
+영상 파일(`.webm`)은 `e2e_result/test-results/` 하위에 저장됩니다.
+
+> **타임아웃**: `playwright.config.ts`의 `timeout: 3 * 60 * 1000` 설정으로 테스트당 최대 **3분**까지 녹화됩니다.  
+> 기본값은 30초이므로, 더 긴 작업을 녹화하려면 이 값을 조정하세요.
+
+### 3. 실패 시 영상 자동 저장 (기본값)
+
+`playwright.config.ts`의 `video: 'retain-on-failure'` 설정으로 테스트 실패 시에만 영상이 자동 저장됩니다.  
+별도 옵션 없이 일반 실행하면 됩니다.
+
+```bash
+ACCESS_MODE=external-ip npx playwright test \
+  --config=$E2E/playwright.config.ts \
+  $E2E/tc/infra/TC-INFRA-DEPLOY-05.spec.ts
+```
+
+---
+
 ## Folder Structure
 
 ```
