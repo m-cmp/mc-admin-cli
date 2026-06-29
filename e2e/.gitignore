@@ -1,0 +1,10 @@
+# 환경별 설정 — 자격증명 포함, 절대 커밋 금지
+.env.*
+!.env.*.example
+
+# 테스트 결과 및 런타임 아티팩트
+test-results/
+node_modules/
+
+*.xlsx
+.DS_Store
