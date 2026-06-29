@@ -1080,6 +1080,14 @@ serviceActions:
       method: delete
       resourcePath: /api/roles/unassign/platform-role
       description: 사용자에게서 Platform Role 제거
+    assignWorkspaceRole:
+      method: post
+      resourcePath: /api/roles/assign/workspace-role
+      description: Workspace Role 할당
+    removeWorkspaceRole:
+      method: delete
+      resourcePath: /api/roles/unassign/workspace-role
+      description: 사용자에게서 Workspace Role 제거
     UpdateUserStatus:
       method: post
       resourcePath: /api/users/id/{userId}/status
@@ -1207,7 +1215,7 @@ serviceActions:
       description: "Lookup spec list"
     AddNLBVMs:
       method: post
-      resourcePath: /ns/{nsId}/infra/{mciId}/nlb/{nlbId}/node
+      resourcePath: /ns/{nsId}/infra/{infraId}/nlb/{nlbId}/node
       description: Add VMs to NLB
     AnalyzeProvisioningRisk:
       method: get
@@ -1307,7 +1315,7 @@ serviceActions:
         Records are grouped by domain and submitted as a single ChangeBatch per domain for efficiency.'
     CancelExecutionTask:
       method: post
-      resourcePath: /ns/{nsId}/cmd/infra/{mciId}/task/{taskId}/cancel
+      resourcePath: /ns/{nsId}/cmd/infra/{infraId}/task/{taskId}/cancel
       description: Cancel a running execution task by task ID. This will send a cancellation signal to the task and update the VM command status.
     CheckHTTPVersion:
       method: get
@@ -1331,7 +1339,7 @@ serviceActions:
       description: Check resources' existence
     ClearAllVmCommandStatus:
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/commandStatusAll
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/commandStatusAll
       description: Delete all command status records for a VM
     ComplementSshKeyRemoteCommand:
       method: put
@@ -1384,7 +1392,7 @@ serviceActions:
       description: Delete all MCI policies
     DelAllNLB:
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/nlb
+      resourcePath: /ns/{nsId}/infra/{infraId}/nlb
       description: Delete all NLBs
     DelAllNs:
       method: delete
@@ -1447,21 +1455,21 @@ serviceActions:
     DelInfra:
 
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}
+      resourcePath: /ns/{nsId}/infra/{infraId}
       description: Delete MCI
     DelInfraPolicy:
 
       method: delete
-      resourcePath: /ns/{nsId}/policy/infra/{mciId}
+      resourcePath: /ns/{nsId}/policy/infra/{infraId}
       description: Delete MCI Policy
     DelInfraNode:
 
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}
       description: Delete VM in specified MCI
     DelNLB:
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/nlb/{nlbId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/nlb/{nlbId}
       description: Delete NLB
     DelNs:
       method: delete
@@ -1741,7 +1749,7 @@ serviceActions:
       description: Delete a specific SecurityGroup Template.
     DeleteSiteToSiteVpn:
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/vpn/{vpnId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/vpn/{vpnId}
       description: 'Delete a site-to-site VPN
 
 
@@ -1773,15 +1781,15 @@ serviceActions:
       description: (To be deprecated) Delete a specific version of an object in an object storage (bucket)
     DeleteVmCommandStatus:
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/commandStatus/{index}
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/commandStatus/{index}
       description: Delete a specific command status record by index for a VM
     DeleteVmCommandStatusByCriteria:
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/commandStatus
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/commandStatus
       description: Delete multiple command status records for a VM based on filtering criteria
     DeleteVmSshHostKey:
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/sshHostKey
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/sshHostKey
       description: Reset the stored SSH host key for a specific VM. This should be used when the VM's host key has legitimately changed (e.g., after VM recreation) and you trust the new key. The next SSH connection will store the new host key (TOFU).
     DeregisterCustomImage:
       method: delete
@@ -1794,7 +1802,7 @@ serviceActions:
     DeregisterInfraNode:
 
       method: delete
-      resourcePath: /ns/{nsId}/deregisterResource/infra/{mciId}/node/{vmId}
+      resourcePath: /ns/{nsId}/deregisterResource/infra/{infraId}/node/{nodeId}
       description: Deregister VM from Spider and TB without deleting the actual CSP resource
     DeregisterSecurityGroup:
       method: delete
@@ -1967,7 +1975,7 @@ serviceActions:
         ```'
     GetAllBenchmark:
       method: post
-      resourcePath: /ns/{nsId}/benchmarkAll/infra/{mciId}
+      resourcePath: /ns/{nsId}/benchmarkAll/infra/{infraId}
       description: Run MCI benchmark for all performance metrics and return results
     GetAllConfig:
       method: get
@@ -2008,7 +2016,7 @@ serviceActions:
       description: List all MCI policies
     GetAllNLB:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/nlb
+      resourcePath: /ns/{nsId}/infra/{infraId}/nlb
       description: List all NLBs or NLBs' ID
     GetAllNs:
       method: get
@@ -2030,7 +2038,7 @@ serviceActions:
         Optionally filter by keyword matching against template name or description (case-insensitive).'
     GetAllSiteToSiteVpn:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/vpn
+      resourcePath: /ns/{nsId}/infra/{infraId}/vpn
       description: Get all site-to-site VPNs
     GetAllSqlDb:
       method: get
@@ -2076,11 +2084,11 @@ serviceActions:
       description: Query verified zones for a spec based on connection configs. Returns zones that are both verified and available for the specified spec. For Alibaba Cloud, additional CSP API filtering is applied.
     GetBastionNodes:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{targetVmId}/bastion
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{targetVmId}/bastion
       description: Get bastion nodes for a VM
     GetBenchmark:
       method: post
-      resourcePath: /ns/{nsId}/benchmark/infra/{mciId}
+      resourcePath: /ns/{nsId}/benchmark/infra/{infraId}
       description: Run MCI benchmark for a single performance metric and return results
     GetCloudInfo:
       method: get
@@ -2089,7 +2097,7 @@ serviceActions:
     GetCmdInfraStream:
 
       method: get
-      resourcePath: /ns/{nsId}/stream/cmd/infra/{mciId}
+      resourcePath: /ns/{nsId}/stream/cmd/infra/{infraId}
       description: 'Subscribe to Server-Sent Events (SSE) for real-time command execution logs.
 
         Use the xRequestId returned from POST /ns/{nsId}/cmd/mci/{mciId}?async=true to connect.
@@ -2118,12 +2126,12 @@ serviceActions:
     GetControlInfra:
 
       method: get
-      resourcePath: /ns/{nsId}/control/infra/{mciId}
+      resourcePath: /ns/{nsId}/control/infra/{infraId}
       description: Control the lifecycle of MCI (refine, suspend, resume, reboot, terminate)
     GetControlInfraNode:
 
       method: get
-      resourcePath: /ns/{nsId}/control/infra/{mciId}/node/{vmId}
+      resourcePath: /ns/{nsId}/control/infra/{infraId}/node/{nodeId}
       description: Control the lifecycle of VM (suspend, resume, reboot, terminate)
     GetCredentialHolder:
       method: get
@@ -2165,7 +2173,7 @@ serviceActions:
         - The generated `Download file` link in Swagger UI may not work because this API get the object metadata only.'
     GetExecutionTask:
       method: get
-      resourcePath: /ns/{nsId}/cmd/infra/{mciId}/task/{taskId}
+      resourcePath: /ns/{nsId}/cmd/infra/{infraId}/task/{taskId}
       description: Get detailed information about a specific execution task by taskId
     GetFetchImagesAsyncResult:
       method: get
@@ -2203,17 +2211,17 @@ serviceActions:
       description: Get labels for a resource identified by its uid
     GetLatencyBenchmark:
       method: get
-      resourcePath: /ns/{nsId}/benchmarkLatency/infra/{mciId}
+      resourcePath: /ns/{nsId}/benchmarkLatency/infra/{infraId}
       description: Run MCI benchmark for network latency
     GetInfra:
 
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}
+      resourcePath: /ns/{nsId}/infra/{infraId}
       description: 'Get MCI object (option: status, accessInfo, vmId)'
     GetInfraAssociatedResources:
 
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/associatedResources
+      resourcePath: /ns/{nsId}/infra/{infraId}/associatedResources
       description: Get associated resource ID list for a given MCI (VNet, Subnet, SecurityGroup, SSHKey, etc.)
     GetInfraDynamicTemplate:
 
@@ -2223,32 +2231,32 @@ serviceActions:
     GetInfraExecutionTasks:
 
       method: get
-      resourcePath: /ns/{nsId}/cmd/infra/{mciId}/task
+      resourcePath: /ns/{nsId}/cmd/infra/{infraId}/task
       description: List all running and completed execution tasks for a specific MCI. These tasks can be cancelled if still in progress. The task list is based on persistent VM command status records.
     GetInfraGroupIds:
 
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/nodegroup
+      resourcePath: /ns/{nsId}/infra/{infraId}/nodegroup
       description: List SubGroup IDs in a specified MCI
     GetInfraGroupNodes:
 
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/nodegroup/{subgroupId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/nodegroup/{nodegroupId}
       description: List VMs with a SubGroup label in a specified MCI
     GetInfraHandlingCommandCount:
 
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/handlingCount
+      resourcePath: /ns/{nsId}/infra/{infraId}/handlingCount
       description: Get the number of commands currently in 'Handling' status for all VMs in an MCI. Returns per-VM counts and total count.
     GetInfraPolicy:
 
       method: get
-      resourcePath: /ns/{nsId}/policy/infra/{mciId}
+      resourcePath: /ns/{nsId}/policy/infra/{infraId}
       description: Get MCI Policy
     GetInfraReqFromInfra:
 
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/configCopy
+      resourcePath: /ns/{nsId}/infra/{infraId}/configCopy
       description: 'Reconstruct an MCI dynamic creation request body from an existing MCI''s information.
 
         Returns a dynamic request format where networking resources (vNet, subnet, SG, sshKey)
@@ -2264,19 +2272,19 @@ serviceActions:
     GetInfraNode:
 
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}
       description: Get VM in specified MCI
     GetMonitorData:
       method: get
-      resourcePath: /ns/{nsId}/monitoring/infra/{mciId}/metric/{metric}
+      resourcePath: /ns/{nsId}/monitoring/infra/{infraId}/metric/{metric}
       description: Get monitoring data of specified MCI for specified monitoring metric (cpu, memory, disk, network)
     GetNLB:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/nlb/{nlbId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/nlb/{nlbId}
       description: Get NLB
     GetNLBHealth:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/nlb/{nlbId}/healthz
+      resourcePath: /ns/{nsId}/infra/{infraId}/nlb/{nlbId}/healthz
       description: Get NLB Health
     GetNs:
       method: get
@@ -2530,7 +2538,7 @@ serviceActions:
       description: Get details of a specific request
     GetRequestStatusOfSiteToSiteVpn:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/vpn/{vpnId}/request/{requestId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/vpn/{vpnId}/request/{requestId}
       description: Check the status of a specific request by its ID
     GetRequiredK8sSubnetCount:
       method: get
@@ -2604,12 +2612,12 @@ serviceActions:
       description: Retrieve a specific SecurityGroup Template by ID.
     GetSiteToSiteVpn:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/vpn/{vpnId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/vpn/{vpnId}
       description: Get resource info of a site-to-site VPN
     GetSitesInInfra:
 
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/site
+      resourcePath: /ns/{nsId}/infra/{infraId}/site
       description: Get sites in MCI
     GetSpec:
       method: get
@@ -2641,19 +2649,19 @@ serviceActions:
       description: Retrieve a specific vNet Template by ID.
     GetVmCommandStatus:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/commandStatus/{index}
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/commandStatus/{index}
       description: Get a specific command status record by index for a VM
     GetVmDataDisk:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/dataDisk
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/dataDisk
       description: Get available dataDisks for a VM
     GetVmHandlingCommandCount:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/handlingCount
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/handlingCount
       description: Get the number of commands currently in 'Handling' status for a specific VM. Optimized for frequent polling.
     GetVmSshHostKey:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/sshHostKey
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/sshHostKey
       description: Get the stored SSH host key information for a specific VM. This is used for TOFU (Trust On First Use) verification.
     InitAllConfig:
       method: delete
@@ -2787,7 +2795,7 @@ serviceActions:
         ```'
     ListVmCommandStatus:
       method: get
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/commandStatus
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/commandStatus
       description: List command status records for a VM with various filtering options
     GetAssetsSummary:
       method: get
@@ -2836,7 +2844,7 @@ serviceActions:
     PostCmdInfra:
 
       method: post
-      resourcePath: /ns/{nsId}/cmd/infra/{mciId}
+      resourcePath: /ns/{nsId}/cmd/infra/{infraId}
       description: 'Send a command to specified MCI. Use query parameters to target specific subGroup or VM.
 
         When async=true, returns immediately with xRequestId and streams results via SSE at GET /stream/ns/{nsId}/cmd/mci/{mciId}?xRequestId={xRequestId}'
@@ -2855,7 +2863,7 @@ serviceActions:
     PostDownloadFileFromInfraNode:
 
       method: post
-      resourcePath: /ns/{nsId}/downloadFile/infra/{mciId}/node/{vmId}
+      resourcePath: /ns/{nsId}/downloadFile/infra/{infraId}/node/{nodeId}
       description: 'Download a file from a specific VM in MCI via SCP through bastion host.
 
         The file size should be less than 200MB.'
@@ -2872,7 +2880,7 @@ serviceActions:
     PostFileToInfra:
 
       method: post
-      resourcePath: /ns/{nsId}/transferFile/infra/{mciId}
+      resourcePath: /ns/{nsId}/transferFile/infra/{infraId}
       description: 'Transfer a file to specified MCI to the specified path.
 
         The file size should be less than 10MB.
@@ -2917,12 +2925,12 @@ serviceActions:
     PostInstallBenchmarkAgentToInfra:
 
       method: post
-      resourcePath: /ns/{nsId}/installBenchmarkAgent/infra/{mciId}
+      resourcePath: /ns/{nsId}/installBenchmarkAgent/infra/{infraId}
       description: Install the benchmark agent to specified MCI
     PostInstallMonitorAgentToInfra:
 
       method: post
-      resourcePath: /ns/{nsId}/monitoring/install/infra/{mciId}
+      resourcePath: /ns/{nsId}/monitoring/install/infra/{infraId}
       description: Install monitoring agent (CB-Dragonfly agent) to MCI
     PostK8sCluster:
       method: post
@@ -3002,7 +3010,7 @@ serviceActions:
       description: Create K8sNodeGroup Dynamically from common spec and image
     PostMcNLB:
       method: post
-      resourcePath: /ns/{nsId}/infra/{mciId}/mcSwNlb
+      resourcePath: /ns/{nsId}/infra/{infraId}/mcSwNlb
       description: Create a special purpose MCI for NLB and depoly and setting SW NLB
     PostInfra:
 
@@ -3356,7 +3364,7 @@ serviceActions:
     PostInfraDynamicNodeGroupNodeReview:
 
       method: post
-      resourcePath: /ns/{nsId}/infra/{mciId}/nodeGroupDynamicReview
+      resourcePath: /ns/{nsId}/infra/{infraId}/nodeGroupDynamicReview
       description: 'Review and validate a VM dynamic addition request for an existing MCI before actual provisioning.
 
         This endpoint provides comprehensive validation for adding new VMs to existing MCIs without actually creating resources.
@@ -3434,17 +3442,17 @@ serviceActions:
     PostInfraPolicy:
 
       method: post
-      resourcePath: /ns/{nsId}/policy/infra/{mciId}
+      resourcePath: /ns/{nsId}/policy/infra/{infraId}
       description: Create MCI Automation policy
     PostInfraSnapshot:
 
       method: post
-      resourcePath: /ns/{nsId}/infra/{mciId}/snapshot
+      resourcePath: /ns/{nsId}/infra/{infraId}/snapshot
       description: Create snapshots for the first running VM in each subgroup of an MCI in parallel
     PostInfraNodeGroupDynamic:
 
       method: post
-      resourcePath: /ns/{nsId}/infra/{mciId}/nodeGroupDynamic
+      resourcePath: /ns/{nsId}/infra/{infraId}/nodeGroupDynamic
       description: 'Dynamically add new virtual machines to an existing MCI using common specifications and automated resource management.
 
         This endpoint provides elastic scaling capabilities for running MCIs:
@@ -3532,7 +3540,7 @@ serviceActions:
     PostInfraNodeGroupScaleOut:
 
       method: post
-      resourcePath: /ns/{nsId}/infra/{mciId}/nodegroup/{subgroupId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/nodegroup/{nodegroupId}
       description: 'Horizontally scale an existing VM subgroup by adding more identical instances for increased capacity.
 
         This endpoint provides elastic scaling capabilities for running application tiers:
@@ -3639,7 +3647,7 @@ serviceActions:
     PostInfraNode:
 
       method: post
-      resourcePath: /ns/{nsId}/infra/{mciId}/node
+      resourcePath: /ns/{nsId}/infra/{infraId}/node
       description: 'Create and add a group of identical virtual machines (subgroup) to an existing MCI using detailed specifications.
 
         This endpoint provides precise control over VM configuration and placement within existing infrastructure:
@@ -3733,11 +3741,11 @@ serviceActions:
     PostInfraNodeSnapshot:
 
       method: post
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/snapshot
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/snapshot
       description: Snapshot VM and create a Custom Image Object using the Snapshot
     PostNLB:
       method: post
-      resourcePath: /ns/{nsId}/infra/{mciId}/nlb
+      resourcePath: /ns/{nsId}/infra/{infraId}/nlb
       description: Create NLB
     PostNs:
       method: post
@@ -3928,7 +3936,7 @@ serviceActions:
         Templates can be created manually with desired SecurityGroup configurations.'
     PostSiteToSiteVpn:
       method: post
-      resourcePath: /ns/{nsId}/infra/{mciId}/vpn
+      resourcePath: /ns/{nsId}/infra/{infraId}/vpn
       description: 'Create a site-to-site VPN
 
 
@@ -4124,7 +4132,7 @@ serviceActions:
         Templates can be created manually with desired vNet configurations.'
     PostVmDataDisk:
       method: post
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/dataDisk
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/dataDisk
       description: Provisioning (Create and attach) dataDisk
     PutChangeK8sNodeGroupAutoscaleSize:
       method: put
@@ -4155,7 +4163,7 @@ serviceActions:
     PutInfraAssociatedSecurityGroups:
 
       method: put
-      resourcePath: /ns/{nsId}/infra/{mciId}/associatedSecurityGroups
+      resourcePath: /ns/{nsId}/infra/{infraId}/associatedSecurityGroups
       description: 'Update all Security Groups associated with a given MCI. The firewall rules of all Security Groups will be synchronized to match the requested set.
 
         Update all Security Groups associated with a given MCI. The firewall rules of all associated Security Groups will be synchronized to match the requested set.
@@ -4201,7 +4209,7 @@ serviceActions:
       description: Update an existing MCI Dynamic Template.
     PutMonitorAgentStatusInstalled:
       method: put
-      resourcePath: /ns/{nsId}/monitoring/status/infra/{mciId}/node/{vmId}
+      resourcePath: /ns/{nsId}/monitoring/status/infra/{infraId}/node/{nodeId}
       description: Set monitoring agent (CB-Dragonfly agent) installation status installed (for Windows VM only)
     PutNs:
       method: put
@@ -4308,7 +4316,7 @@ serviceActions:
       description: Update an existing vNet Template.
     PutVmDataDisk:
       method: put
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{vmId}/dataDisk
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{nodeId}/dataDisk
       description: Attach/Detach available dataDisk
     RecommendK8sNode:
       method: post
@@ -4424,16 +4432,16 @@ serviceActions:
         - New: `POST /registerCspResources` with `{"connectionName": "", "nsId": "default", "mciNamePrefix": "mci-all"}`'
     RemoveBastionNodes:
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/bastion/{bastionVmId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/bastion/{bastionVmId}
       description: Remove a bastion VM from all vNets
     RemoveBastionNodesWithInfra:
 
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/bastion/{bastionMciId}/{bastionVmId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/bastion/{bastionMciId}/{bastionVmId}
       description: Remove a specific cross-MCI bastion from all vNets of the target MCI
     RemoveBastionNodesWithNs:
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/bastion/{bastionNsId}/{bastionMciId}/{bastionVmId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/bastion/{bastionNsId}/{bastionMciId}/{bastionVmId}
       description: Remove a specific cross-namespace bastion from all vNets of the target MCI
     RemoveLabel:
       method: delete
@@ -4441,7 +4449,7 @@ serviceActions:
       description: Remove a label from a resource identified by its uid
     RemoveNLBVMs:
       method: delete
-      resourcePath: /ns/{nsId}/infra/{mciId}/nlb/{nlbId}/node
+      resourcePath: /ns/{nsId}/infra/{infraId}/nlb/{nlbId}/node
       description: Delete VMs from NLB
     RestDeleteObjectStorage:
       method: delete
@@ -4461,7 +4469,7 @@ serviceActions:
       description: Get all available options for image search fields
     SetBastionNodes:
       method: put
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{targetVmId}/bastion/{bastionVmId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{targetVmId}/bastion/{bastionVmId}
       description: "Set bastion nodes for a VM"
     Inspectresourcesoverview:
       method: get
@@ -4554,11 +4562,11 @@ serviceActions:
     SetBastionNodesWithInfra:
 
       method: put
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{targetVmId}/bastion/{bastionMciId}/{bastionVmId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{targetVmId}/bastion/{bastionMciId}/{bastionVmId}
       description: Set bastion nodes for a target VM, specifying a bastion VM that belongs to a different MCI within the same namespace (cross-MCI bastion). This allows, for example, an AWS VM to serve as a bastion for an OpenStack VM.
     SetBastionNodesWithNs:
       method: put
-      resourcePath: /ns/{nsId}/infra/{mciId}/node/{targetVmId}/bastion/{bastionNsId}/{bastionMciId}/{bastionVmId}
+      resourcePath: /ns/{nsId}/infra/{infraId}/node/{targetVmId}/bastion/{bastionNsId}/{bastionMciId}/{bastionVmId}
       description: Set bastion nodes for a target VM, specifying a bastion VM that belongs to a different namespace and MCI (cross-namespace bastion). This allows, for example, a VM in a shared-services namespace to act as a bastion for VMs in other namespaces.
     SetObjectStorageCORS:
       method: put
