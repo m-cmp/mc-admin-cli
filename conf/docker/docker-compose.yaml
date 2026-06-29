@@ -23,7 +23,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.12.32
+    image: cloudbaristaorg/cb-spider:0.12.33
     pull_policy: missing
     container_name: mc-infra-connector
     restart: unless-stopped
@@ -56,7 +56,7 @@ services:
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.12.18
+    image: cloudbaristaorg/cb-tumblebug:0.12.20
     container_name: mc-infra-manager
     restart: unless-stopped
     pull_policy: missing
@@ -227,7 +227,7 @@ services:
 
   # CB-MapUI is a Web-based test client (disable it for production use)
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.12.39
+    image: cloudbaristaorg/cb-mapui:0.12.45
     container_name: cb-mapui
     networks:
       - mc-infra-manager-network
@@ -242,7 +242,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: cloudbaristaorg/mc-iam-manager:0.5.3
+    image: cloudbaristaorg/mc-iam-manager:0.5.4
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
@@ -399,7 +399,8 @@ services:
   mc-cost-optimizer-fe:
     restart: unless-stopped
     container_name: mc-cost-optimizer-fe
-    image: cloudbaristaorg/mc-costopti-ui:0.5.6
+    image: cloudbaristaorg/mc-costopti-ui:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -416,7 +417,8 @@ services:
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: cloudbaristaorg/mc-costopti-api:0.5.6
+    image: cloudbaristaorg/mc-costopti-api:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -447,7 +449,8 @@ services:
   mc-cost-optimizer-cost-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
-    image: cloudbaristaorg/mc-costopti-costcollector:0.5.6
+    image: cloudbaristaorg/mc-costopti-costcollector:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -480,7 +483,8 @@ services:
   mc-cost-optimizer-cost-processor:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
-    image: cloudbaristaorg/mc-costopti-costprocessor:0.5.6
+    image: cloudbaristaorg/mc-costopti-costprocessor:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -506,7 +510,8 @@ services:
   mc-cost-optimizer-cost-selector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
-    image: cloudbaristaorg/mc-costopti-costselector:0.5.6
+    image: cloudbaristaorg/mc-costopti-costselector:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -532,7 +537,8 @@ services:
   mc-cost-optimizer-alarm-service:
     restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
-    image: cloudbaristaorg/mc-costopti-alarm:0.5.6
+    image: cloudbaristaorg/mc-costopti-alarm:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -556,7 +562,8 @@ services:
   mc-cost-optimizer-asset-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-asset-collector
-    image: cloudbaristaorg/mc-costopti-assetcollector:0.5.6
+    image: cloudbaristaorg/mc-costopti-assetcollector:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -581,7 +588,8 @@ services:
   mc-cost-optimizer-cost-azure-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-azure-collector
-    image: cloudbaristaorg/mc-costopti-azure-collector:0.5.6
+    image: cloudbaristaorg/mc-costopti-azure-collector:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -621,7 +629,8 @@ services:
   mc-cost-optimizer-gcp-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-gcp-collector
-    image: cloudbaristaorg/mc-costopti-gcpcollector:0.5.6
+    image: cloudbaristaorg/mc-costopti-gcpcollector:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -661,7 +670,8 @@ services:
   mc-cost-optimizer-cost-ncp-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-ncp-collector
-    image: cloudbaristaorg/mc-costopti-ncp-collector:0.5.6
+    image: cloudbaristaorg/mc-costopti-ncp-collector:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -702,7 +712,8 @@ services:
   mc-cost-optimizer-azure-vm-rightsizer:
     restart: on-failure
     container_name: mc-cost-optimizer-azure-vm-rightsizer
-    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:0.5.6
+    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -742,7 +753,8 @@ services:
   mc-cost-optimizer-ncp-vm-rightsizer:
     restart: on-failure
     container_name: mc-cost-optimizer-ncp-vm-rightsizer
-    image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:0.5.6
+    image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:edge
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -783,6 +795,7 @@ services:
     restart: on-failure
     container_name: mc-cost-optimizer-ml-scorer
     image: cloudbaristaorg/mc-costopti-ml-scorer:0.5.6
+    pull_policy: always
     networks:
       - mc-cost-optimizer-network
       - mc-observability-network
@@ -896,7 +909,8 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:0.5.4
+    image: cloudbaristaorg/mc-application-manager:edge
+    pull_policy: always
     container_name: mc-application-manager
     restart: unless-stopped
     depends_on:
@@ -965,7 +979,8 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:0.5.3
+    image: cloudbaristaorg/mc-workflow-manager:edge
+    pull_policy: always
     container_name: mc-workflow-manager
     platform: linux/amd64
     restart: unless-stopped
