@@ -1,0 +1,76 @@
+/**
+ * deploy/params/env/local.params.ts_sample
+ * 로컬 환경 파라미터 샘플
+ *
+ * ── 사용 방법 ──────────────────────────────────────────────────────
+ *   cp deploy/params/env/local.params.ts_sample deploy/params/env/local.params.ts
+ *   # local.params.ts 를 실제 값으로 편집 (커밋 금지 — .gitignore 적용됨)
+ *
+ * ── 파라미터 우선순위 ──────────────────────────────────────────────
+ *   Layer 1: base/tc/{domain}/{TC-ID}.params.ts   (기본값)
+ *   Layer 2: 이 파일 → local.params.ts             (환경별 공통 오버라이드)
+ *   Layer 3: base/scenarios/{id}.params.ts         (시나리오 스텝 오버라이드)
+ *   Layer 4: PW_* 환경변수                          (최고 우선순위 — CI/민감정보)
+ *
+ * ── 민감값 주입 방법 (Layer 4) ────────────────────────────────────
+ *   PW_adminPassword=실제비밀번호 npx playwright test ...
+ *   PW_credentialKeyId=AKIA... PW_credentialKeyValue=secret npx playwright test ...
+ */
+import type { EnvParams } from '../types';
+
+export default {
+  env: 'local',
+
+  // ── 전역 — 모든 TC에 적용 ───────────────────────────────────────────────
+  global: {
+    adminId:       'mcmp',
+    adminPassword: 'mcmp_password',       // 실제 값으로 변경 또는 PW_adminPassword 사용
+    baseUrl:       'http://localhost:3000',
+  },
+
+  // ── TC별 오버라이드 ──────────────────────────────────────────────────────
+  tc: {
+    // CSP Credential — 실제 Key 는 PW_credentialKeyId / PW_credentialKeyValue 로 주입 권장
+    'TC-CSP-CREDENTIAL-03': {
+      credentialHolder:   'e2e-credential',
+      credentialKeyId:    'AKIA_CHANGE_ME',
+      credentialKeyValue: 'SECRET_CHANGE_ME',
+    },
+
+    // RDB — 실제 DB 비밀번호는 PW_dbPassword 로 주입 권장
+    'TC-DATA-RDB-01': {
+      dbUser:     'e2e_user',
+      dbPassword: 'CHANGE_ME',
+    },
+
+    // mc-data-manager — AWS/Alibaba 접속정보 (deploy/params/base/tc/data/connections.ts)
+    'TC-DATA-RDB-01': {
+      sourcePoint: { password: 'mcmp_test' },
+      targetPoint: { password: 'mcmp_test123' },
+    },
+    'TC-DATA-RDB-MIG-01': {
+      sourcePoint: { password: 'mcmp_test' },
+      targetPoint: { password: 'mcmp_test123' },
+    },
+    'TC-DATA-NORDB-MIG-01': {
+      mongoPassword: 'mcmp_test123',
+    },
+  },
+
+  // ── 시나리오별 오버라이드 ────────────────────────────────────────────────
+  scenario: {
+    // C4 spec 검색 / MCI 중복 — Layer 4 PW_* 또는 shell env 로도 주입 가능
+    // 'C4-001': {
+    //   specSearch: { notFoundMode: 'fallback', maxCpu: 4, maxCost: 1 },
+    //   mciDuplicateMode: 'rename',
+    // },
+  },
+} satisfies EnvParams;
+
+// ── C4 시나리오 환경변수 (Layer 4, integration spec) ─────────────────────
+// C4_SPEC_NOT_FOUND_MODE=fail|fallback     (기본 fail)
+// C4_SPEC_MAX_CPU=4
+// C4_SPEC_MAX_COST=1
+// C4_MCI_DUPLICATE_MODE=rename|duplicate   (기본 rename)
+// C4_MCI_NAME=e2e-mci-c4
+// C5_MCI_NAME=c4-rec-aws

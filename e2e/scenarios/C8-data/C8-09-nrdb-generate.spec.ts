@@ -1,0 +1,18 @@
+/**
+ * deploy/scenarios/C8-data/C8-09-nrdb-generate.spec.ts
+ * [C8-09] NRDBMS 테스트 데이터 생성
+ *
+ * NRDBMS 인스턴스에 테스트 데이터를 생성(Generate)한다.
+ *
+ * actor:  DBA / 인프라 엔지니어
+ * status: ready
+ *
+ * 전제조건:
+ *   - C1 MC-DATA-MANAGER-INIT에서 NRDBMS 인스턴스가 가동 중이어야 한다.
+ *
+ * 스텝:
+ *   Step 1. TC-DATA-NRDB-01  NRDBMS 데이터 생성 (Generate)
+ */
+import { bootstrapScenario } from '../shared/createScenarioSuite';
+
+bootstrapScenario('C8-09-nrdb-generate');
