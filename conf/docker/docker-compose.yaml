@@ -909,7 +909,7 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:edge
+    image: cloudbaristaorg/mc-application-manager:0.6.0
     pull_policy: always
     container_name: mc-application-manager
     restart: unless-stopped
