@@ -979,7 +979,7 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:edge
+    image: cloudbaristaorg/mc-workflow-manager:0.6.0
     pull_policy: always
     container_name: mc-workflow-manager
     platform: linux/amd64
