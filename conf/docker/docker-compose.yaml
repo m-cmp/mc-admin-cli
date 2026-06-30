@@ -1488,7 +1488,7 @@ services:
     init: true
 
   mc-observability-tempo:
-    image: grafana/tempo:2.8.2
+    image: grafana/tempo:2.9.2
     container_name: mc-observability-tempo
     restart: always
     networks:
@@ -1579,7 +1579,7 @@ services:
         protocol: tcp
     environment:
       - TZ=Asia/Seoul
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://210.207.104.224:11434}
     volumes:
       - shared_logs:/mc-insight/log:rw
     depends_on:
