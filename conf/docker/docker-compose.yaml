@@ -1368,7 +1368,9 @@ services:
       - INFLUXDB_HTTP_AUTH_ENABLED=${MC_OBSERVABILITY_INFLUXDB_HTTP_AUTH_ENABLED:-true}
       - INFLUXDB_ADMIN_USER=${MC_OBSERVABILITY_INFLUXDB_ADMIN_USER:-mc-agent}
       - INFLUXDB_ADMIN_PASSWORD=${MC_OBSERVABILITY_INFLUXDB_ADMIN_PASSWORD:-mc-agent}
-      - INFLUXDB_DB=${MC_OBSERVABILITY_INFLUXDB_DB:-mc-observability}
+      # INFLUXDB_DB intentionally omitted: the image entrypoint issues an
+      # unquoted "CREATE DATABASE mc-observability" which fails on the hyphen.
+      # The DB is created (quoted) by influxdb_init/init-database.sh instead.
     volumes:
       - ./conf/mc-observability/influxdb/influxdb_init:/docker-entrypoint-initdb.d
       - ./container-volume/mc-observability/influxdb/influxdb_data:/var/lib/influxdb
@@ -1408,7 +1410,9 @@ services:
       - INFLUXDB_HTTP_AUTH_ENABLED=${MC_OBSERVABILITY_INFLUXDB_HTTP_AUTH_ENABLED:-true}
       - INFLUXDB_ADMIN_USER=${MC_OBSERVABILITY_INFLUXDB_ADMIN_USER:-mc-agent}
       - INFLUXDB_ADMIN_PASSWORD=${MC_OBSERVABILITY_INFLUXDB_ADMIN_PASSWORD:-mc-agent}
-      - INFLUXDB_DB=${MC_OBSERVABILITY_INFLUXDB_DB:-mc-observability}
+      # INFLUXDB_DB intentionally omitted: the image entrypoint issues an
+      # unquoted "CREATE DATABASE mc-observability" which fails on the hyphen.
+      # The DB is created (quoted) by influxdb_init/init-database.sh instead.
     volumes:
       - ./conf/mc-observability/influxdb/influxdb_init:/docker-entrypoint-initdb.d
       - ./container-volume/mc-observability/influxdb/influxdb2_data:/var/lib/influxdb
