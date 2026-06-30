@@ -909,7 +909,7 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:edge
+    image: cloudbaristaorg/mc-application-manager:0.6.0
     pull_policy: always
     container_name: mc-application-manager
     restart: unless-stopped
@@ -979,7 +979,7 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:edge
+    image: cloudbaristaorg/mc-workflow-manager:0.6.0
     pull_policy: always
     container_name: mc-workflow-manager
     platform: linux/amd64
@@ -1488,7 +1488,7 @@ services:
     init: true
 
   mc-observability-tempo:
-    image: grafana/tempo:2.8.2
+    image: grafana/tempo:2.9.2
     container_name: mc-observability-tempo
     restart: always
     networks:
@@ -1579,7 +1579,7 @@ services:
         protocol: tcp
     environment:
       - TZ=Asia/Seoul
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-}
+      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://210.207.104.224:11434}
     volumes:
       - shared_logs:/mc-insight/log:rw
     depends_on:
