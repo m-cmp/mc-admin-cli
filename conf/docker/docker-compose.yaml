@@ -37,12 +37,15 @@ services:
         protocol: tcp
     volumes:
       - ./tool/mcc:/app/tool/mcc
-      - ./container-volume/mc-infra-connector/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
       - ./container-volume/mc-infra-connector/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
     environment:
       - SERVER_ADDRESS=0.0.0.0:1024
       - SPIDER_USERNAME=${MC_INFRA_CONNECTOR_API_USERNAME:-default}
       - SPIDER_PASSWORD=${MC_INFRA_CONNECTOR_API_PASSWORD:-default}
+      - SPIDER_METADB_ENDPOINT=mc-infra-connector-postgres:5432
+      - SPIDER_METADB_USER=${MC_INFRA_CONNECTOR_POSTGRES_USER:-spider}
+      - SPIDER_METADB_PASSWORD=${MC_INFRA_CONNECTOR_POSTGRES_PASSWORD:-spider}
+      - SPIDER_METADB_DATABASE=${MC_INFRA_CONNECTOR_POSTGRES_DB:-cb_spider}
       - SPIDER_LOG_LEVEL=${MC_INFRA_CONNECTOR_LOG_LEVEL:-error}
       - SPIDER_HISCALL_LOG_LEVEL=${MC_INFRA_CONNECTOR_HISCALL_LOG_LEVEL:-error}
       - ID_TRANSFORM_MODE=OFF
@@ -52,6 +55,30 @@ services:
     healthcheck: # for CB-Spider
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:1024/spider/readyz" ]
       <<: *default-health-check
+
+  # This is used for storing CB-Spider metadata (replaces the legacy SQLite-based meta_db).
+  mc-infra-connector-postgres:
+    image: postgres:16-alpine
+    container_name: mc-infra-connector-postgres
+    restart: always
+    networks:
+      - mc-infra-connector-network
+      # # Enable external network for outbound access (not ideal for security)
+      # - external_network
+    ports:
+      - ${MC_INFRA_CONNECTOR_POSTGRES_HOST_PORT}:5432
+    volumes:
+      - ./container-volume/mc-infra-connector/meta_db/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${MC_INFRA_CONNECTOR_POSTGRES_USER:-spider}
+      - POSTGRES_PASSWORD=${MC_INFRA_CONNECTOR_POSTGRES_PASSWORD:-spider}
+      - POSTGRES_DB=${MC_INFRA_CONNECTOR_POSTGRES_DB:-cb_spider}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MC_INFRA_CONNECTOR_POSTGRES_USER:-spider}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
 
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
