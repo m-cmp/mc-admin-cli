@@ -1233,7 +1233,7 @@ serviceActions:
     InitialMenus:
       method: post
       resourcePath: /api/setup/initial-menus
-      description: "menu.yaml 기반 메뉴 일괄 재등록 (1_setup_auto.sh init_menu와 동일). FR-006-08 Re-sync."
+      description: "메뉴 카탈로그 yaml 시딩 (1_setup_auto.sh init_menu와 동일). 메뉴가 이미 있으면 skip(200, skipped=true); queryParams force=true면 역할-메뉴 매핑 백업 후 덮어씀. FR-006-08 Force re-seed."
     SyncMcmpApis:
       method: post
       resourcePath: /api/setup/sync-mcmp-apis

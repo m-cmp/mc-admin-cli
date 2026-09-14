@@ -105,7 +105,9 @@ cd ~/workspace/mc-admin-cli/bin
 ./installAll.sh
 ```
 
-`installAll.sh` prompts interactively for deployment mode and domain (see the main [README's Quick Guide](https://github.com/m-cmp/mc-admin-cli#quick-guide) for the Mode A/Mode B distinction and non-interactive flags), generates TLS certs and nginx config, then starts every container — including `mc-iam-manager-post-initial`, a one-shot setup container that seeds Keycloak realms/roles, registers the platform's menu catalog (mc-web-console's `conf/webconsole_menu_resources.yaml`, fetched via `MC_WEB_CONSOLE_MENUYAML`), and seeds role-menu permissions (mc-iam-manager's `asset/menu/permission.yaml`). This container exiting with code `0` is expected, not a failure.
+`installAll.sh` prompts interactively for deployment mode and domain (see the main [README's Quick Guide](https://github.com/m-cmp/mc-admin-cli#quick-guide) for the Mode A/Mode B distinction and non-interactive flags), generates TLS certs and nginx config, then starts every container — including `mc-iam-manager-post-initial`, a one-shot setup container that seeds Keycloak realms/roles, seeds the platform's menu catalog (the bundled copy `conf/docker/conf/mc-web-console/api/conf/webconsole_menu_resources.yaml`, mounted into mc-iam-manager and pointed to by `MC_WEB_CONSOLE_MENUYAML`), and seeds role-menu permissions (bundled `conf/docker/conf/mc-iam-manager/permission.yaml`). Both seeds are applied once at first install; afterwards menus and role-menu mappings are edited in the console and live in the IAM DB (re-running post-init skips the menu step). This container exiting with code `0` is expected, not a failure.
+
+Upgrading an existing install: `installAll.sh` only adds *missing* variables to your `.env` files, so if `conf/docker/conf/mc-iam-manager/.env` still has `MC_WEB_CONSOLE_MENUYAML` set to the old raw GitHub URL, change it to `asset/menu/webconsole_menu_resources.yaml` (or keep the URL deliberately) before re-running.
 
 Allow a few minutes for every container to reach a healthy state.
 

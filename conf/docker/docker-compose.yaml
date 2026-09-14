@@ -268,6 +268,11 @@ services:
       - ./conf/mc-iam-manager/.env
     volumes:
       - ./tool/mcc:/app/tool/mcc
+      # Menu catalog seed: bundled copy of mc-web-console conf/webconsole_menu_resources.yaml
+      # (same file mc-web-console-api mounts for self mode). Read once at first install via
+      # MC_WEB_CONSOLE_MENUYAML=asset/menu/webconsole_menu_resources.yaml; later menu changes
+      # live in the IAM DB. Not mounted over asset/menu/menu.yaml, which IAM uses as a URL cache.
+      - ./conf/mc-web-console/api/conf/webconsole_menu_resources.yaml:/app/asset/menu/webconsole_menu_resources.yaml:ro
       # Role-menu seed overlay (SSOT bundle; post-init calls YAML API without filePath)
       - ./conf/mc-iam-manager/permission.yaml:/app/asset/menu/permission.yaml:ro
     healthcheck:

@@ -198,7 +198,7 @@ Expected: `"issuer": "https://<DOMAIN>/auth/realms/mciam"` — must start with `
 
 **(d) mc-iam-manager-post-initial 11-step setup:**
 
-Among other things, these steps register the platform's menu catalog (from mc-web-console's canonical menu yaml) and seed role-menu permissions — both chained into a single server-side call, so a single step covers both.
+Among other things, these steps seed the platform's menu catalog and role-menu permissions — both chained into a single server-side call, so a single step covers both. The seeds are the bundled copies `conf/docker/conf/mc-web-console/api/conf/webconsole_menu_resources.yaml` (a copy of mc-web-console's canonical catalog) and `conf/docker/conf/mc-iam-manager/permission.yaml`, mounted read-only into the mc-iam-manager container. They are read **once, at first install**: re-running post-init skips the menu step when menus already exist (`skipped: true` in its log), and later menu / role-menu changes are made in the console (Menus, Roles screens) and live in the IAM DB. To overwrite from the yaml again, use the console's Setup Status "Force re-seed ▶ Menu" or `1_setup_manual.sh` option 4b (role mappings are backed up first). When the bundled copies are updated in this repo (new console release), existing installs pick them up only through such a forced re-seed.
 
 ```shell
 docker logs mc-iam-manager-post-initial | tail -5

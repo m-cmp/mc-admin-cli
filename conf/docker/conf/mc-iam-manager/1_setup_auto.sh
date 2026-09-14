@@ -281,35 +281,50 @@ init_predefined_roles() {
 
 # IAM now chains role-menu permission seeding onto POST /api/setup/initial-menus
 # server-side, so auto_setup no longer calls init_menu_permissions separately.
+# The seed file is resolved by IAM itself from its own MC_WEB_CONSOLE_MENUYAML
+# (default: the bundled copy mounted at /app/asset/menu/webconsole_menu_resources.yaml;
+# a URL is downloaded server-side). Nothing is fetched here.
+# IAM seeds menus once: if menus already exist it answers 200 with skipped=true,
+# so re-running post-init is idempotent and never overwrites DB-edited menus.
 init_menu() {
     echo "Initializing menu data..."
-    wget -q -O ./menu.yaml "$MC_WEB_CONSOLE_MENUYAML"
-    
-    # Check if wget succeeded
-    if [ $? -ne 0 ]; then
-        echo "ERROR: Failed to download menu.yaml"
-        return 1
-    fi
-    
+    case "$MC_WEB_CONSOLE_MENUYAML" in
+        http://*|https://*)
+            # Remote seed: fail fast here with a clear message instead of a vague IAM fallback
+            if ! wget -q --spider "$MC_WEB_CONSOLE_MENUYAML"; then
+                echo "ERROR: MC_WEB_CONSOLE_MENUYAML is not reachable: $MC_WEB_CONSOLE_MENUYAML"
+                return 1
+            fi
+            ;;
+        *)
+            echo "Menu seed source: local file in IAM container ($MC_WEB_CONSOLE_MENUYAML)"
+            ;;
+    esac
+
     response=$(curl -s -X POST \
         --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
         "$MC_IAM_MANAGER_HOST/api/setup/initial-menus")
-    
+
     # Validate response
     if [ $? -ne 0 ]; then
         echo "ERROR: Failed to initialize menu data"
         return 1
     fi
-    
+
     echo "Menu initialization response: $response"
-    
+
     # Check success
     if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
         echo "ERROR: Menu initialization failed"
         return 1
     fi
-    
+
+    if [ "$(echo "$response" | jq -r '.skipped // false' 2>/dev/null)" = "true" ]; then
+        echo "Menus already seeded ($(echo "$response" | jq -r '.existingMenuCount // "?"') found) — skipped. Use 1_setup_manual.sh option 4b to force a re-seed."
+        return 0
+    fi
+
     echo "Menu data initialized"
     return 0
 }

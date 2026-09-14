@@ -83,15 +83,46 @@ init_predefined_roles() {
 
 # IAM now chains role-menu permission seeding onto POST /api/setup/initial-menus
 # server-side, so option 4) below no longer calls init_menu_permissions separately.
+# IAM resolves the seed file itself from its own MC_WEB_CONSOLE_MENUYAML (default: the
+# bundled copy mounted into the container). Seeds once: if menus already exist it
+# answers skipped=true — use option 4b to force a re-seed.
 init_menu() {
     echo "Initializing menu data..."
-    wget -q -O ./menu.yaml "$MC_WEB_CONSOLE_MENUYAML"
     response=$(curl -s -X POST \
         --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         --header 'Content-Type: application/json' \
         "$MC_IAM_MANAGER_HOST/api/setup/initial-menus")
     echo "Menu initialization response: $response"
-    echo "Menu data initialized"
+    if [ "$(echo "$response" | jq -r '.skipped // false' 2>/dev/null)" = "true" ]; then
+        echo "Menus already seeded — skipped (option 4b forces a re-seed)"
+    else
+        echo "Menu data initialized"
+    fi
+}
+
+# Force re-seed (option 4b): overwrites menus from the seed yaml even if menus exist.
+# IAM backs up the current role-menu mappings to asset/menu/backups/ first and
+# returns backupPath; DB-edited menus/mappings are overwritten by the yaml.
+force_reseed_menu() {
+    echo "This will OVERWRITE menus (and re-apply permission.yaml) from the seed yaml."
+    echo "Menus/role-menu mappings edited in the DB will be lost (role mappings are backed up first)."
+    read -p "Type 'yes' to continue: " confirm
+    if [ "$confirm" != "yes" ]; then
+        echo "Cancelled."
+        return 0
+    fi
+    response=$(curl -s -X POST \
+        --header "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
+        --header 'Content-Type: application/json' \
+        "$MC_IAM_MANAGER_HOST/api/setup/initial-menus?force=true")
+    echo "Force re-seed response: $response"
+    if echo "$response" | jq -e '.error' > /dev/null 2>&1; then
+        echo "ERROR: Force re-seed failed"
+        return 1
+    fi
+    echo "Role permission backup: $(echo "$response" | jq -r '.backupPath // "(none)"')"
+    echo "Orphan menus (in DB, not in yaml): $(echo "$response" | jq -r '(.orphanMenusDetected // []) | join(", ")')"
+    echo "Missing permission menu ids: $(echo "$response" | jq -r '(.missingPermissionMenuIDs // []) | join(", ")')"
 }
 
 # Manual re-seed only (option 4a below) — option 4) no longer calls this
@@ -264,8 +295,9 @@ while true; do
     echo "1. Init Platform And PlatformAdmin"
     echo "2. PlatformAdmin Login"
     echo "3. Init Role Data"
-    echo "4. Init Menu Data (role-menu YAML permissions chained server-side)"
-    echo "4a. Init Menu Role Permissions (YAML) (re-seed only)"
+    echo "4. Init Menu Data (first install; skips if menus exist; role-menu YAML permissions chained server-side)"
+    echo "4a. Init Menu Role Permissions (YAML) (additive re-seed only)"
+    echo "4b. Force re-seed Menu Data (overwrites DB-edited menus; role mappings backed up first)"
     echo "5. Init API Resource Data"
     echo "6. Init Cloud Resource Data"
     echo "7. Map API-Cloud Resources"
@@ -309,6 +341,14 @@ while true; do
                 echo "Current token value: '$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN'"
             else
                 init_menu_permissions
+            fi
+            ;;
+        4b)
+            if [ -z "$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" ]; then
+                echo "Please login first (option 2)"
+                echo "Current token value: '$MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN'"
+            else
+                force_reseed_menu
             fi
             ;;
         5)
