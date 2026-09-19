@@ -20,6 +20,8 @@ permissions:
       - infraworkloads
       - k8sworkloads
       - workflows
+      - mcworkflows
+      - mceventlistener
       - swcatalogs
       - mcdatamanager
       - datamigrations
@@ -94,6 +96,8 @@ permissions:
       - infraworkloads
       - k8sworkloads
       - workflows
+      - mcworkflows
+      - mceventlistener
       - swcatalogs
       - mcdatamanager
       - datamigrations
