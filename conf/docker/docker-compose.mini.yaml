@@ -219,7 +219,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: cloudbaristaorg/mc-iam-manager:0.6.2
+    image: cloudbaristaorg/mc-iam-manager:0.6.3
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
