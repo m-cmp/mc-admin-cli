@@ -23,7 +23,7 @@ services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
 
   mc-infra-connector:
-    image: cloudbaristaorg/cb-spider:0.12.35
+    image: cloudbaristaorg/cb-spider:0.13.2
     pull_policy: missing
     container_name: mc-infra-connector
     restart: unless-stopped
@@ -37,12 +37,15 @@ services:
         protocol: tcp
     volumes:
       - ./tool/mcc:/app/tool/mcc
-      - ./container-volume/mc-infra-connector/meta_db/:/root/go/src/github.com/cloud-barista/cb-spider/meta_db/
       - ./container-volume/mc-infra-connector/log/:/root/go/src/github.com/cloud-barista/cb-spider/log/
     environment:
       - SERVER_ADDRESS=0.0.0.0:1024
       - SPIDER_USERNAME=${MC_INFRA_CONNECTOR_API_USERNAME:-default}
       - SPIDER_PASSWORD=${MC_INFRA_CONNECTOR_API_PASSWORD:-default}
+      - SPIDER_METADB_ENDPOINT=mc-infra-connector-postgres:5432
+      - SPIDER_METADB_USER=${MC_INFRA_CONNECTOR_POSTGRES_USER:-spider}
+      - SPIDER_METADB_PASSWORD=${MC_INFRA_CONNECTOR_POSTGRES_PASSWORD:-spider}
+      - SPIDER_METADB_DATABASE=${MC_INFRA_CONNECTOR_POSTGRES_DB:-cb_spider}
       - SPIDER_LOG_LEVEL=${MC_INFRA_CONNECTOR_LOG_LEVEL:-error}
       - SPIDER_HISCALL_LOG_LEVEL=${MC_INFRA_CONNECTOR_HISCALL_LOG_LEVEL:-error}
       - ID_TRANSFORM_MODE=OFF
@@ -53,10 +56,34 @@ services:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:1024/spider/readyz" ]
       <<: *default-health-check
 
+  # This is used for storing CB-Spider metadata (replaces the legacy SQLite-based meta_db).
+  mc-infra-connector-postgres:
+    image: postgres:16-alpine
+    container_name: mc-infra-connector-postgres
+    restart: always
+    networks:
+      - mc-infra-connector-network
+      # # Enable external network for outbound access (not ideal for security)
+      # - external_network
+    ports:
+      - ${MC_INFRA_CONNECTOR_POSTGRES_HOST_PORT}:5432
+    volumes:
+      - ./container-volume/mc-infra-connector/meta_db/postgres:/var/lib/postgresql/data
+    environment:
+      - POSTGRES_USER=${MC_INFRA_CONNECTOR_POSTGRES_USER:-spider}
+      - POSTGRES_PASSWORD=${MC_INFRA_CONNECTOR_POSTGRES_PASSWORD:-spider}
+      - POSTGRES_DB=${MC_INFRA_CONNECTOR_POSTGRES_DB:-cb_spider}
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${MC_INFRA_CONNECTOR_POSTGRES_USER:-spider}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
 ##### MC-INFRA-MANAGER #########################################################################################################################
 
   mc-infra-manager:
-    image: cloudbaristaorg/cb-tumblebug:0.12.25
+    image: cloudbaristaorg/cb-tumblebug:0.13.2
     container_name: mc-infra-manager
     restart: unless-stopped
     pull_policy: missing
@@ -229,7 +256,7 @@ services:
 
   # CB-MapUI is a Web-based test client (disable it for production use)
   cb-mapui:
-    image: cloudbaristaorg/cb-mapui:0.12.50
+    image: cloudbaristaorg/cb-mapui:0.13.6
     container_name: cb-mapui
     networks:
       - mc-infra-manager-network
@@ -409,7 +436,7 @@ services:
   mc-cost-optimizer-fe:
     restart: unless-stopped
     container_name: mc-cost-optimizer-fe
-    image: cloudbaristaorg/mc-costopti-ui:0.6.0
+    image: cloudbaristaorg/mc-costopti-ui:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -427,7 +454,7 @@ services:
   mc-cost-optimizer-be:
     restart: on-failure
     container_name: mc-cost-optimizer-be
-    image: cloudbaristaorg/mc-costopti-api:0.6.0
+    image: cloudbaristaorg/mc-costopti-api:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -439,6 +466,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
+      TZ: Asia/Seoul
       spring.datasource.hikari.cost.optimize.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL_NEW}
       spring.datasource.hikari.cost.optimize.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
       spring.datasource.hikari.cost.optimize.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
@@ -450,8 +478,17 @@ services:
       costopti.costcollector.url: ${MC_COST_OPTIMIZER_COST_COLLECTOR_URL}
       costopti.costprocessor.url: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
       costopti.costselector.url: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
+      costopti.azurerightsizer.url: ${MC_COST_OPTIMIZER_AZURE_RIGHTSIZER_URL}
+      costopti.ncprightsizer.url: ${MC_COST_OPTIMIZER_NCP_RIGHTSIZER_URL}
+      costopti.gcpcollector.url: ${MC_COST_OPTIMIZER_COST_GCP_COLLECTOR_URL}
+      costopti.azurecollector.url: ${MC_COST_OPTIMIZER_COST_AZURE_COLLECTOR_URL}
+      costopti.ncpcollector.url: ${MC_COST_OPTIMIZER_COST_NCP_COLLECTOR_URL}
       ml.rightsize.base-url: ${MC_COST_OPTIMIZER_ML_SCORER_URL}
       llm.key.master: ${MC_COST_OPTIMIZER_LLM_KEY_MASTER}
+      OPENBAO_ENABLED: ${MC_COST_OPTIMIZER_OPENBAO_ENABLED}
+      OPENBAO_ADDRESS: ${MC_COST_OPTIMIZER_OPENBAO_ADDRESS}
+      OPENBAO_TOKEN: ${MC_COST_OPTIMIZER_OPENBAO_TOKEN}
+      
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get",  "http://localhost:9090/api/costopti/be/readyz" ]
       <<: *default-health-check
@@ -459,7 +496,7 @@ services:
   mc-cost-optimizer-cost-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-collector
-    image: cloudbaristaorg/mc-costopti-costcollector:0.6.0
+    image: cloudbaristaorg/mc-costopti-costcollector:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -475,9 +512,11 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
+      TZ: Asia/Seoul
       spring.datasource.hikari.batch.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
       spring.datasource.hikari.batch.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
       spring.datasource.hikari.batch.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
+      ALARM_SERVICE: ${MC_COST_OPTIMIZER_ALARM_URL}
 
       OPENBAO_ENABLED: ${MC_COST_OPTIMIZER_OPENBAO_ENABLED}
       OPENBAO_ADDRESS: ${MC_COST_OPTIMIZER_OPENBAO_ADDRESS}
@@ -493,7 +532,7 @@ services:
   mc-cost-optimizer-cost-processor:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-processor
-    image: cloudbaristaorg/mc-costopti-costprocessor:0.6.0
+    image: cloudbaristaorg/mc-costopti-costprocessor:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -509,6 +548,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
+      TZ: Asia/Seoul
       spring.datasource.hikari.batch.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
       spring.datasource.hikari.batch.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
       spring.datasource.hikari.batch.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
@@ -516,11 +556,12 @@ services:
       abnormalProcessCronSchedule: ${MC_COST_OPTIMIZER_COST_PROCESS_ABNORMAL_CRON_SCHEDULE}
       cost.selector.url: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
       opti.alarm.url: ${MC_COST_OPTIMIZER_ALARM_URL}
+      
 
   mc-cost-optimizer-cost-selector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-selector
-    image: cloudbaristaorg/mc-costopti-costselector:0.6.0
+    image: cloudbaristaorg/mc-costopti-costselector:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -536,6 +577,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
+      TZ: Asia/Seoul
       spring.datasource.hikari.cost.optimize.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
       spring.datasource.hikari.cost.optimize.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
       spring.datasource.hikari.cost.optimize.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
@@ -547,7 +589,7 @@ services:
   mc-cost-optimizer-alarm-service:
     restart: on-failure
     container_name: mc-cost-optimizer-alarm-service
-    image: cloudbaristaorg/mc-costopti-alarm:0.6.0
+    image: cloudbaristaorg/mc-costopti-alarm:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -559,6 +601,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
+      TZ: Asia/Seoul
       spring.datasource.hikari.slack.jdbc-url: ${MC_COST_OPTIMIZER_SLACK_DB_URL}
       spring.datasource.hikari.slack.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
       spring.datasource.hikari.slack.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
@@ -572,7 +615,7 @@ services:
   mc-cost-optimizer-asset-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-asset-collector
-    image: cloudbaristaorg/mc-costopti-assetcollector:0.6.0
+    image: cloudbaristaorg/mc-costopti-assetcollector:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -588,6 +631,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
+      TZ: Asia/Seoul
       spring.datasource.hikari.batch.jdbc-url: ${MC_COST_OPTIMIZER_COST_DB_URL}
       spring.datasource.hikari.batch.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
       spring.datasource.hikari.batch.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
@@ -598,7 +642,7 @@ services:
   mc-cost-optimizer-cost-azure-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-azure-collector
-    image: cloudbaristaorg/mc-costopti-azure-collector:0.6.0
+    image: cloudbaristaorg/mc-costopti-azure-collector:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -614,6 +658,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
+      TZ: Asia/Seoul
       SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
       SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
@@ -639,7 +684,7 @@ services:
   mc-cost-optimizer-gcp-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-gcp-collector
-    image: cloudbaristaorg/mc-costopti-gcpcollector:0.6.0
+    image: cloudbaristaorg/mc-costopti-gcpcollector:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -655,7 +700,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
-
+      TZ: Asia/Seoul
       spring.datasource.url: ${MC_COST_OPTIMIZER_COST_DB_URL}
       spring.datasource.username: ${MC_COST_OPTIMIZER_MYSQL_USER}
       spring.datasource.password: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
@@ -680,7 +725,7 @@ services:
   mc-cost-optimizer-cost-ncp-collector:
     restart: on-failure
     container_name: mc-cost-optimizer-cost-ncp-collector
-    image: cloudbaristaorg/mc-costopti-ncp-collector:0.6.0
+    image: cloudbaristaorg/mc-costopti-ncp-collector:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -696,6 +741,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
+      TZ: Asia/Seoul
       SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
       SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
@@ -716,13 +762,10 @@ services:
       COSTOPTI_COSTPROCESSOR_URL: ${MC_COST_OPTIMIZER_COST_PROCESSOR_URL}
       COSTOPTI_COSTSELECTOR_URL: ${MC_COST_OPTIMIZER_COST_SELECTOR_URL}
 
-      ##timezone setting
-      TZ: Asia/Seoul
-
   mc-cost-optimizer-azure-vm-rightsizer:
     restart: on-failure
     container_name: mc-cost-optimizer-azure-vm-rightsizer
-    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:0.6.0
+    image: cloudbaristaorg/mc-costopti-azure-vm-rightsizer:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -738,6 +781,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
+      TZ: Asia/Seoul
       SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
       SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
@@ -763,7 +807,7 @@ services:
   mc-cost-optimizer-ncp-vm-rightsizer:
     restart: on-failure
     container_name: mc-cost-optimizer-ncp-vm-rightsizer
-    image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:0.6.0
+    image: cloudbaristaorg/mc-costopti-ncp-vm-rightsizer:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -779,6 +823,7 @@ services:
     volumes:
       - ./tool/mcc:/app/tool/mcc
     environment:
+      TZ: Asia/Seoul
       SPRING_DATASOURCE_URL: ${MC_COST_OPTIMIZER_COST_DB_URL}
       SPRING_DATASOURCE_USERNAME: ${MC_COST_OPTIMIZER_MYSQL_USER}
       SPRING_DATASOURCE_PASSWORD: ${MC_COST_OPTIMIZER_MYSQL_PASSWORD}
@@ -790,7 +835,7 @@ services:
       NCP_CREDENTIAL_IAM_ACCESS_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_ACCESS_KEY}
       NCP_CREDENTIAL_IAM_SECRET_KEY: ${MC_COST_OPTIMIZER_NCP_IAM_SECRET_KEY}
 
-      AZURE_RIGHTSIZER_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_AZURE_VM_RIGHTSIZER_SCHEDULE}
+      AZURE_RIGHTSIZER_BATCH_CRON_SCHEDULE: ${MC_COST_OPTIMIZER_NCP_VM_RIGHTSIZER_SCHEDULE}
 
       COSTOPTI_ALARMSERVICE_URL: ${MC_COST_OPTIMIZER_ALARM_URL}
       COSTOPTI_ASSETCOLLECTOR_URL: ${MC_COST_OPTIMIZER_COST_ASSET_COLLECTOR_URL}
@@ -804,7 +849,7 @@ services:
   mc-cost-optimizer-ml-scorer:
     restart: on-failure
     container_name: mc-cost-optimizer-ml-scorer
-    image: cloudbaristaorg/mc-costopti-ml-scorer:0.6.0
+    image: cloudbaristaorg/mc-costopti-ml-scorer:0.6.5
     pull_policy: always
     networks:
       - mc-cost-optimizer-network
@@ -842,7 +887,7 @@ services:
     restart: "no"
 
   mc-cost-optimizer-db:
-    image: mariadb:latest
+    image: mariadb:12.3.2
     container_name: mc-cost-optimizer-db
     depends_on:
       mc-cost-optimizer-init-volume:
@@ -919,7 +964,7 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:0.6.0
+    image: cloudbaristaorg/mc-application-manager:0.6.2
     pull_policy: always
     container_name: mc-application-manager
     restart: unless-stopped
@@ -961,7 +1006,7 @@ services:
 ##### MC-WORKFLOW-MANAGER #########################################################################################################################
 
   mc-workflow-manager-jenkins:
-    image: jenkins/jenkins:2.504.1-lts-jdk17
+    image: jenkins/jenkins:2.504.3-lts-jdk17
     container_name: mc-workflow-manager-jenkins
     platform: linux/amd64
     networks:
@@ -980,16 +1025,23 @@ services:
     environment:
       JENKINS_USERNAME: ${MC_WORKFLOW_MANAGER_JENKINS_USERNAME:-admin}
       JENKINS_PASSWORD: ${MC_WORKFLOW_MANAGER_JENKINS_PASSWORD:-123456}
-      JAVA_OPTS: -Djenkins.install.runSetupWizard=false
+      PRE_CLEAR_INIT_GROOVY_D: true
+      JAVA_OPTS: -Djenkins.install.runSetupWizard=false -Dhudson.lifecycle=hudson.lifecycle.UnixLifecycle
     user: root
     restart: always
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:8080/login"]
+      test:
+        - CMD-SHELL
+        - >-
+          test -f /var/jenkins_home/.mcmp-init-complete &&
+          curl -fsS -u "$${JENKINS_USERNAME}:$${JENKINS_PASSWORD}"
+          http://localhost:8080/api/json > /dev/null
       <<: *default-health-check
+      start_period: 6m
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:0.6.0
+    image: cloudbaristaorg/mc-workflow-manager:0.6.2
     pull_policy: always
     container_name: mc-workflow-manager
     platform: linux/amd64
@@ -1185,7 +1237,7 @@ services:
       <<: *default-health-check
 ##### MC-OBSERVABILITY #########################################################################################################################
   mc-observability-manager:
-    image: cloudbaristaorg/mc-observability:0.6.0
+    image: cloudbaristaorg/mc-observability:0.6.1
     container_name: mc-observability-manager
     restart: unless-stopped
     networks:
@@ -1225,7 +1277,7 @@ services:
       start_period: 5m
 
   mc-observability-front:
-    image: cloudbaristaorg/mc-observability-front:0.6.0
+    image: cloudbaristaorg/mc-observability-front:0.6.1
     container_name: mc-observability-front
     restart: unless-stopped
     networks:
@@ -1237,7 +1289,7 @@ services:
         condition: service_started
 
   mc-observability-infra:
-    image: cloudbaristaorg/mc-observability-infra:0.6.0
+    image: cloudbaristaorg/mc-observability-infra:0.6.1
     container_name: mc-observability-infra
     restart: unless-stopped
     networks:
@@ -1362,7 +1414,7 @@ services:
     init: true
 
   mc-observability-influx:
-    image: cloudbaristaorg/mc-observability-influx:0.6.0
+    image: cloudbaristaorg/mc-observability-influx:0.6.1
     container_name: mc-observability-influx
     restart: unless-stopped
     networks:
@@ -1404,7 +1456,7 @@ services:
       - mc-observability-network
 
   mc-observability-influx-2:
-    image: cloudbaristaorg/mc-observability-influx:0.6.0
+    image: cloudbaristaorg/mc-observability-influx:0.6.1
     container_name: mc-observability-influx-2
     restart: unless-stopped
     networks:
@@ -1580,7 +1632,7 @@ services:
     init: true
 
   mc-observability-grafana:
-    image: cloudbaristaorg/mc-observability-grafana:0.6.0
+    image: cloudbaristaorg/mc-observability-grafana:0.6.1
     container_name: mc-observability-grafana
     restart: unless-stopped
     networks:
@@ -1615,7 +1667,7 @@ services:
         fi
 
   mc-observability-insight:
-    image: cloudbaristaorg/mc-observability-insight:0.6.0
+    image: cloudbaristaorg/mc-observability-insight:0.6.1
     container_name: mc-observability-insight
     restart: always
     networks:
@@ -1642,7 +1694,7 @@ services:
       start_period: 10s
 
   mc-observability-insight-scheduler:
-    image: cloudbaristaorg/mc-observability-insight-scheduler:0.6.0
+    image: cloudbaristaorg/mc-observability-insight-scheduler:0.6.1
     container_name: mc-observability-insight-scheduler
     restart: always
     ports:
@@ -1721,7 +1773,7 @@ services:
       - mc-observability-network
 
   mc-observability-mcp-maria:
-    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.6.0
+    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.6.1
     container_name: mc-observability-mcp-maria
     restart: always
     networks:
@@ -1745,7 +1797,7 @@ services:
       - OPENAI_API_KEY=${MC_OBSERVABILITY_OPENAI_API_KEY:-}
 
   mc-observability-mcp-influx:
-    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.6.0
+    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.6.1
     container_name: mc-observability-mcp-influx
     restart: always
     ports:

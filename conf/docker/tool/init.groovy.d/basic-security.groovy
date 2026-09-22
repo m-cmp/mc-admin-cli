@@ -1,7 +1,6 @@
 import jenkins.model.*
 import hudson.model.*
-import jenkins.install.*
-import hudson.PluginWrapper
+import hudson.security.*
 
 // 설치할 플러그인 목록
 def pluginParameter = """
@@ -29,9 +28,48 @@ ssh-agent
 publish-over-ssh
 """
 
-def plugins = pluginParameter.split("\\s+")
+def plugins = pluginParameter.trim().split("\\s+")
 
 def instance = Jenkins.getInstance()
+def readinessMarker = new File(instance.getRootDir(), ".mcmp-init-complete")
+
+if (readinessMarker.exists() && !readinessMarker.delete()) {
+    throw new IllegalStateException("Failed to clear the Jenkins initialization marker")
+}
+
+// Configure the Jenkins user used by mc-workflow-manager for REST API calls.
+def username = System.getenv("JENKINS_USERNAME")?.trim()
+def password = System.getenv("JENKINS_PASSWORD")
+
+if (!username) {
+    throw new IllegalStateException("JENKINS_USERNAME must not be empty")
+}
+if (!password) {
+    throw new IllegalStateException("JENKINS_PASSWORD must not be empty")
+}
+
+def securityRealm = instance.getSecurityRealm()
+if (!(securityRealm instanceof HudsonPrivateSecurityRealm)) {
+    securityRealm = new HudsonPrivateSecurityRealm(false)
+    instance.setSecurityRealm(securityRealm)
+}
+
+def user = User.getById(username, false)
+def userDetails = user?.getProperty(HudsonPrivateSecurityRealm.Details)
+if (userDetails == null || !userDetails.isPasswordCorrect(password)) {
+    securityRealm.createAccount(username, password)
+    println "--> Jenkins administrator account created or updated: ${username}"
+} else {
+    println "--> Jenkins administrator account already configured: ${username}"
+}
+
+def authorizationStrategy = new FullControlOnceLoggedInAuthorizationStrategy()
+authorizationStrategy.setAllowAnonymousRead(false)
+instance.setAuthorizationStrategy(authorizationStrategy)
+instance.save()
+
+println "--> Jenkins security enabled; anonymous access disabled."
+
 def pm = instance.getPluginManager()
 def uc = instance.getUpdateCenter()
 
@@ -66,6 +104,14 @@ if (needsRestart) {
     println "--> Plugins installed. Jenkins will restart now..."
     instance.safeRestart() // 안전하게 재시작
 } else {
-    println "--> All plugins are already installed. No restart needed."
-}
+    def inactivePlugins = plugins.findAll { pluginName ->
+        def installedPlugin = pm.getPlugin(pluginName)
+        installedPlugin == null || !installedPlugin.isActive()
+    }
+    if (!inactivePlugins.isEmpty()) {
+        throw new IllegalStateException("Required Jenkins plugins are not active: ${inactivePlugins.join(', ')}")
+    }
 
+    readinessMarker.text = "ready\n"
+    println "--> All required plugins are active. Jenkins initialization is complete."
+}
