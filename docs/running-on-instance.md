@@ -8,7 +8,7 @@ This guide covers the necessary preparations for deploying the MCMP platform on 
 
 ## ✅ Prerequisites
 
-Ensure you have **sudo** privileges and access to the **VM instance** where you intend to set up the MCMP platform. The guide covers installing Docker, setting up necessary directories, cloning repositories, and initializing credentials and IAM (Identity and Access Management).
+Ensure you have **sudo** privileges and access to the **VM instance** where you intend to set up the MCMP platform. The guide covers installing Docker, cloning `mc-admin-cli`, and running `installAll.sh` — the unified installer for the whole platform (mc-infra-manager/cb-tumblebug, mc-iam-manager, mc-web-console, and the rest of the microservices).
 
 To enable full functionality, open your firewall or security group to allow all traffic.
 
@@ -37,7 +37,7 @@ To run the entire platform on a single instance using mc-admin-cli, the followin
 
 The following instructions **should be executed on the provisioned VM.**
 
-> If the key pair is correctly stored on your local host, you can connect to the instance via SSH. Otherwise, you may use the web terminal provided by AWS or other cloud consoles to establish an SSH connection and access the instance’s terminal before proceeding with the next steps.
+> If the key pair is correctly stored on your local host, you can connect to the instance via SSH. Otherwise, you may use the web terminal provided by AWS or other cloud consoles to establish an SSH connection and access the instance's terminal before proceeding with the next steps.
 
 ```bash
 ssh -i <YOUR_KEY_PAIR_DIRECTORY> <VM_USER_NAME>@<VM_PUBLIC_IP>
@@ -67,132 +67,71 @@ docker ps  # Verifies Docker installation by listing running containers
 
 <br>
 
-## Step 2: Create Required Directories and Credentials File
-
-Set up a working directory and initialize the necessary credentials configuration:
+## Step 2: Create a Working Directory
 
 ```bash
 mkdir -p ~/workspace
-mkdir -p ~/.cloud-barista
+cd ~/workspace
 ```
 
 <br>
 
-## Step 3: Clone Required Git Repositories
+## Step 3: Clone mc-admin-cli
 
-Navigate to the workspace directory and clone the necessary repositories:
+`mc-admin-cli` is the **unified installer** for the whole MCMP platform — you do not clone `mc-iam-manager` or `cb-tumblebug` separately. `installAll.sh` brings every subsystem up as containers via its bundled `docker-compose.yaml`.
+
+For stable deployment, clone a specific [released version](https://github.com/m-cmp/mc-admin-cli/releases):
 
 ```bash
-cd ~/workspace
-git clone --branch v0.10.0 https://github.com/cloud-barista/cb-tumblebug.git
-git clone --branch v0.3.2 https://github.com/m-cmp/mc-admin-cli.git
-git clone --branch v0.3.0 https://github.com/m-cmp/mc-iam-manager.git
+git clone https://github.com/m-cmp/mc-admin-cli.git -b v0.5.0
+cd mc-admin-cli/bin
+./mcc --version   # optional: confirm the pre-built binary runs on this OS
 ```
 
-## Step 4: Run mc-admin-cli
+If `./mcc --version` fails with a `GLIBC` version error (e.g. on Ubuntu 20.04), rebuild from source as a static binary — see the main [README's "Build a Static Binary" section](https://github.com/m-cmp/mc-admin-cli#build-a-static-binary).
 
-Execute `mc-admin-cli` to initialize the MCMP infrastructure:
+## Step 4: Configure Environment
+
+```bash
+cd ~/workspace/mc-admin-cli/conf/docker/conf/mc-iam-manager
+cp .env.setup .env
+# Edit .env — set the platform admin ID/password and any other REQUIRE-marked values
+```
+
+## Step 5: Run installAll.sh
 
 ```bash
 cd ~/workspace/mc-admin-cli/bin
-./mcc infra run -d
+./installAll.sh
 ```
 
-Wait for Services to Initialize
-Allow some time for all services to start and reach a healthy state. You may verify health checks for each service if required.
-**It will take approximately 5 mins.**
+`installAll.sh` prompts interactively for deployment mode and domain (see the main [README's Quick Guide](https://github.com/m-cmp/mc-admin-cli#quick-guide) for the Mode A/Mode B distinction and non-interactive flags), generates TLS certs and nginx config, then starts every container — including `mc-iam-manager-post-initial`, a one-shot setup container that seeds Keycloak realms/roles, seeds the platform's menu catalog (the bundled copy `conf/docker/conf/mc-web-console/api/conf/webconsole_menu_resources.yaml`, mounted into mc-iam-manager and pointed to by `MC_WEB_CONSOLE_MENUYAML`), and seeds role-menu permissions (bundled `conf/docker/conf/mc-iam-manager/permission.yaml`). Both seeds are applied once at first install; afterwards menus and role-menu mappings are edited in the console and live in the IAM DB (re-running post-init skips the menu step). This container exiting with code `0` is expected, not a failure.
 
-> ❗Following Two steps (step 5 and 6) is crutial steps for using MCMP normally.
+Upgrading an existing install: `installAll.sh` only adds *missing* variables to your `.env` files, so if `conf/docker/conf/mc-iam-manager/.env` still has `MC_WEB_CONSOLE_MENUYAML` set to the old raw GitHub URL, change it to `asset/menu/webconsole_menu_resources.yaml` (or keep the URL deliberately) before re-running.
 
-## ❗ Step 5: Initialize Credentials ⭐
+Allow a few minutes for every container to reach a healthy state.
 
-If you're setting up a new instance of Tumblebug, follow these initialization steps (otherwise, skip this section if you already have Tumblebug set up).
-
-For more information, refer to the [Tumblebug initialization guide.](https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#3-initialize-cb-tumblebug-to-configure-multi-cloud-info)
-
-## ❗ Step 6: Initialize MC-IAM-MANAGER ⭐
-
-Install jq, a lightweight JSON processor, and set up IAM configurations:
+## Step 6: Verify Startup
 
 ```bash
-sudo apt-get install -y jq
+cd ~/workspace/mc-admin-cli/bin
+./mcc infra info
 ```
 
-### Configure MC-IAM-MANAGER Environment Variables
+Confirm no container shows `unhealthy` (`mc-iam-manager-post-initial` showing `Exited (0)` is expected). See the main README's Step 5 "Verify Startup" for the full set of readyz/health checks, and its Troubleshooting section if `mc-iam-manager` stays unhealthy.
 
-Edit .env to configure IAM service properties:
-
-```bash
-cd ~/workspace/mc-iam-manager/scripts/init
-cp .env.initsample .env
-sed -i 's|MCIAMMANAGER_HOST=https://MCIAMMANAGER_HOST|MCIAMMANAGER_HOST=http://127.0.0.1:5005|' .env
-sed -i 's|MCIAMMANAGER_PLATFORMADMIN_ID=|MCIAMMANAGER_PLATFORMADMIN_ID=mcmpadmin|' .env
-sed -i 's|MCIAMMANAGER_PLATFORMADMIN_PASSWORD=|MCIAMMANAGER_PLATFORMADMIN_PASSWORD=mcmpAdminPassword#@!|' .env
-```
-
-### Finalize MC-IAM-MANAGER Initialization
-
-Execute the IAM auto-initialization script:
-
-```bash
-./initauto.sh -f
-
-
-# Login successful.
-# Role created successfully: admin
-# First Role ID saved as ROLE_ID: d291b29a-2d36-41e7-b50d-cac7df88dde3
-# Role created successfully: operator
-# Role created successfully: viewer
-# Role created successfully: billadmin
-# Role created successfully: billviewer
-# Downloaded mcwebconsoleMenu.yaml successfully.
-# Uploaded mcwebconsoleMenu.yaml successfully.
-# Downloaded permission.csv successfully.
-# Uploaded permission.csv successfully.
-# {"id":"95d97e4e-5882-4782-b6ce-d17bf949a43f","name":"workspace1","description":"workspace1 desc","created_at":"2024-10-31T07:27:36.533011Z","updated_at":"2024-10-31T07:27:36.533011Z"} 200
-# Workspace created successfully. ID: 95d97e4e-5882-4782-b6ce-d17bf949a43f
-# {"id":"ed17c0a7-2317-40c3-b4f1-6b7f224fc681","ns_id":"project1","name":"project1","description":"project1 desc","created_at":"2024-10-31T07:27:36.572527Z","updated_at":"2024-10-31T07:27:36.572527Z"} 200
-# Project created successfully. ID: ed17c0a7-2317-40c3-b4f1-6b7f224fc681
-# {"workspace":{"id":"95d97e4e-5882-4782-b6ce-d17bf949a43f","name":"workspace1","description":"workspace1 desc","created_at":"2024-10-31T07:27:36.533011Z","updated_at":"2024-10-31T07:27:36.533011Z"},"projects":[{"id":"ed17c0a7-2317-40c3-b4f1-6b7f224fc681","ns_id":"project1","name":"project1","description":"project1 desc","created_at":"2024-10-31T07:27:36.572527Z","updated_at":"2024-10-31T07:27:36.572527Z"}]} 200
-# Project Worksapce mapping created successfully.
-# User role assigned to workspace successfully
-```
-
-### Add user for Console user
-
-Execute the IAM auto-add-user script:
-
-```bash
-./add_demo_user.sh -f
-
-# Login successful.
-# {"id":"eric","password":"changeMe!","firstName":"Eric","lastName":"Schmidt","email":"eric@mcmpemail.com","description":"ericDesc"} {"id":"elon","password":"changeMe!","firstName":"Elon","lastName":"Musk","email":"elon@mcmpemail.com","description":"elonDesc"} {"id":"jeffrey","password":"changeMe!","firstName":"Jeffrey","lastName":"PrestonBezos","email":"jeffrey@mcmpemail.com","description":"jeffreyDesc"} {"id":"gates","password":"changeMe!","firstName":"Bill","lastName":"Gates","email":"gates@mcmpemail.com","description":"gatesDesc"}
-# {"id":"eric","password":"changeMe!","firstName":"Eric","lastName":"Schmidt","email":"eric@mcmpemail.com","description":"ericDesc"}
-# User created successfully: eric
-# User activated successfully: eric
-# {"id":"elon","password":"changeMe!","firstName":"Elon","lastName":"Musk","email":"elon@mcmpemail.com","description":"elonDesc"}
-# User created successfully: elon
-# User activated successfully: elon
-# {"id":"jeffrey","password":"changeMe!","firstName":"Jeffrey","lastName":"PrestonBezos","email":"jeffrey@mcmpemail.com","description":"jeffreyDesc"}
-# User created successfully: jeffrey
-# User activated successfully: jeffrey
-# {"id":"gates","password":"changeMe!","firstName":"Bill","lastName":"Gates","email":"gates@mcmpemail.com","description":"gatesDesc"}
-# User created successfully: gates
-# User activated successfully: gates
-```
+If you're setting up a new instance of Tumblebug, also follow the [Tumblebug initialization guide](https://github.com/cloud-barista/cb-tumblebug?tab=readme-ov-file#3-initialize-cb-tumblebug-to-configure-multi-cloud-info).
 
 ## Step 7: Access the MCMP Platform
 
-Upon successful initialization, access the MCMP platform via:
-
 ```bash
-http://{vm-public-ip}:3001
+https://{vm-public-ip}:3001
 ```
 
-#### - initial id: mcmpadmin
+#### - initial id: mcmp
 
-#### - initial password: mcmpAdminPassword#@!
+#### - initial password: mcmp_password
 
-Replace {vm-public-ip} with the actual public IP of your VM instance.
+Replace `{vm-public-ip}` with the actual public IP (or domain) of your VM instance. Use **https**; a browser certificate warning is expected in Mode A (self-signed) and can be accepted/continued through.
 
 This completes the setup. You are now ready to manage multi-cloud services using MCMP on your instance. Happy managing!

@@ -168,7 +168,6 @@ echo
 echo "Deleting mc-iam-manager configuration files..."
 files_to_delete=(
   "../conf/docker/conf/mc-iam-manager/api.yaml"
-  "../conf/docker/conf/mc-iam-manager/menu.yaml"
   "../conf/docker/conf/mc-iam-manager/nginx.conf"
 )
 

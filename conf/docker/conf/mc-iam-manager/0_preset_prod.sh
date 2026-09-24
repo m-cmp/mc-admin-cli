@@ -62,6 +62,13 @@ echo "  MC_COST_OPTIMIZER_FE_PROXY_PORT: $MC_COST_OPTIMIZER_FE_PROXY_PORT"
 # Copy template file and substitute environment variables
 cp "$TEMPLATE_FILE" "$OUTPUT_FILE" || { echo "Error: Failed to copy template file: $TEMPLATE_FILE → $OUTPUT_FILE"; exit 1; }
 
+if [ -n "$MC_IAM_MANAGER_DOMAIN" ]; then
+    sed -i "s/\${MC_IAM_MANAGER_DOMAIN}/$MC_IAM_MANAGER_DOMAIN/g" "$OUTPUT_FILE"
+    echo "✓ MC_IAM_MANAGER_DOMAIN substitution done: $MC_IAM_MANAGER_DOMAIN"
+else
+    echo "Warning: MC_IAM_MANAGER_DOMAIN environment variable is not set."
+fi
+
 if [ -n "$MC_IAM_MANAGER_PORT" ]; then
     sed -i "s/\${MC_IAM_MANAGER_PORT}/$MC_IAM_MANAGER_PORT/g" "$OUTPUT_FILE"
     echo "✓ MC_IAM_MANAGER_PORT substitution done: $MC_IAM_MANAGER_PORT"

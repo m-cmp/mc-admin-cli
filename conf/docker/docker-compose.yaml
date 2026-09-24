@@ -115,6 +115,8 @@ services:
     environment:
       # - TB_ROOT_PATH=/app
       - TB_SPIDER_REST_URL=${MC_INFRA_CONNECTOR_REST_URL:-http://mc-infra-connector:1024/spider}
+      - TB_SPIDER_USERNAME=${MC_INFRA_CONNECTOR_API_USERNAME:-default}
+      - TB_SPIDER_PASSWORD=${MC_INFRA_CONNECTOR_API_PASSWORD:-default}
       - TB_ETCD_ENDPOINTS=http://mc-infra-manager-etcd:2379
       - TB_TERRARIUM_REST_URL=http://mc-terrarium:8055/terrarium
       - TB_TERRARIUM_API_USERNAME=${MC_INFRA_MANAGER_TERRARIUM_API_USERNAME:-}
@@ -269,7 +271,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: cloudbaristaorg/mc-iam-manager:0.6.2
+    image: cloudbaristaorg/mc-iam-manager:0.6.3
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
@@ -284,8 +286,6 @@ services:
         condition: service_healthy
       mc-iam-manager-kc:
         condition: service_healthy
-      mc-iam-manager-nginx:
-        condition: service_started
       mc-infra-manager:
         condition: service_healthy
     environment:
@@ -295,6 +295,11 @@ services:
       - ./conf/mc-iam-manager/.env
     volumes:
       - ./tool/mcc:/app/tool/mcc
+      # Menu catalog seed: bundled copy of mc-web-console conf/webconsole_menu_resources.yaml
+      # (same file mc-web-console-api mounts for self mode). Read once at first install via
+      # MC_WEB_CONSOLE_MENUYAML=asset/menu/webconsole_menu_resources.yaml; later menu changes
+      # live in the IAM DB. Not mounted over asset/menu/menu.yaml, which IAM uses as a URL cache.
+      - ./conf/mc-web-console/api/conf/webconsole_menu_resources.yaml:/app/asset/menu/webconsole_menu_resources.yaml:ro
       # Role-menu seed overlay (SSOT bundle; post-init calls YAML API without filePath)
       - ./conf/mc-iam-manager/permission.yaml:/app/asset/menu/permission.yaml:ro
     healthcheck:
@@ -392,6 +397,9 @@ services:
       - ./container-volume/certbot/www:/var/www/certbot:ro
     depends_on:
       - mc-iam-manager-kc
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/nginx-health || exit 1" ]
+      <<: *default-health-check
     networks:
       - mc-iam-manager-network
       - mc-observability-network
@@ -1062,7 +1070,7 @@ services:
   mc-data-manager-init-volumes:
     image: busybox:stable
     container_name: mc-data-manager-init-volumes
-    command: ["sh", "-c", "chown -R ${UID:-0}:${GID:-0} /app/data"]
+    command: ["sh", "-c", "chown -R ${MC_DATA_MANAGER_UID:-0}:${MC_DATA_MANAGER_GID:-0} /app/data"]
     volumes:
       - ./conf/mc-data-manager/data:/app/data/
     user: root
@@ -1162,7 +1170,7 @@ services:
             exec docker-entrypoint.sh postgres"
 
   mc-web-console-api:
-    image: cloudbaristaorg/mc-web-console-api:0.6.2
+    image: cloudbaristaorg/mc-web-console-api:0.6.5
     pull_policy: always
     container_name: mc-web-console-api
     platform: linux/amd64
@@ -1206,7 +1214,7 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    image: cloudbaristaorg/mc-web-console-front:0.6.2
+    image: cloudbaristaorg/mc-web-console-front:0.6.5
     pull_policy: always
     container_name: mc-web-console-front
     platform: linux/amd64
@@ -1670,7 +1678,7 @@ services:
         protocol: tcp
     environment:
       - TZ=Asia/Seoul
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL:-http://210.207.104.224:11434}
+      - OLLAMA_BASE_URL=${MC_OBSERVABILITY_OLLAMA_BASE_URL:-http://210.207.104.224:11434}
     volumes:
       - shared_logs:/mc-insight/log:rw
     depends_on:
@@ -1755,7 +1763,7 @@ services:
         condition: service_healthy
     environment:
       - GRAFANA_URL=http://mc-observability-grafana:3000
-      - GRAFANA_API_KEY=${GRAFANA_API_KEY:-}
+      - GRAFANA_API_KEY=${MC_OBSERVABILITY_GRAFANA_API_KEY:-}
     entrypoint: ["/bin/bash", "/app/docker-entrypoint.sh"]
     command: ["/bin/bash", "-c", "chmod +x /app/docker-entrypoint.sh"]
     volumes:
@@ -1786,7 +1794,7 @@ services:
       - DB_NAME=mc_observability
       - MCP_READ_ONLY=true
       - MCP_MAX_POOL_SIZE=10
-      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - OPENAI_API_KEY=${MC_OBSERVABILITY_OPENAI_API_KEY:-}
 
   mc-observability-mcp-influx:
     image: cloudbaristaorg/mc-observability-mcp-influxdb:0.6.1

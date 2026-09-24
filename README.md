@@ -17,7 +17,7 @@ If you have any difficulties in using mcc, please let us know.
 - Management tool that supports the installation, execution, status information provision, termination, and API calls of the M-CMP system.
 - Currently, infra subcommand is only support docker compose base infra install and management.
   - [infra subcommand](./docs/mc-admin-cli-infra.md)
-- If you want to checkout how to run the whole subsystem on the single instance on CSP Instance, see [this document](./docs/mc-admin-cli-infra.md).
+- If you want to checkout how to run the whole subsystem on the single instance on CSP Instance, see [this document](./docs/running-on-instance.md).
 
 ## Development & Test Environment
 - Go 1.25.0 (minimum required version)
@@ -196,7 +196,10 @@ curl -k https://<DOMAIN>/auth/realms/mciam/.well-known/openid-configuration | gr
 ```
 Expected: `"issuer": "https://<DOMAIN>/auth/realms/mciam"` — must start with `https://` and include `/auth/`.
 
-**(d) mc-iam-manager-post-initial 8-step setup:**
+**(d) mc-iam-manager-post-initial 11-step setup:**
+
+Among other things, these steps seed the platform's menu catalog and role-menu permissions — both chained into a single server-side call, so a single step covers both. The seeds are the bundled copies `conf/docker/conf/mc-web-console/api/conf/webconsole_menu_resources.yaml` (a copy of mc-web-console's canonical catalog) and `conf/docker/conf/mc-iam-manager/permission.yaml`, mounted read-only into the mc-iam-manager container. They are read **once, at first install**: re-running post-init skips the menu step when menus already exist (`skipped: true` in its log), and later menu / role-menu changes are made in the console (Menus, Roles screens) and live in the IAM DB. To overwrite from the yaml again, use the console's Setup Status "Force re-seed ▶ Menu" or `1_setup_manual.sh` option 4b (role mappings are backed up first). When the bundled copies are updated in this repo (new console release), existing installs pick them up only through such a forced re-seed.
+
 ```shell
 docker logs mc-iam-manager-post-initial | tail -5
 ```
@@ -449,7 +452,7 @@ cd bin && ./mcc infra info
 docker rm mc-iam-manager-post-initial 2>/dev/null
 ./mcc infra run -s mc-iam-manager-post-initial
 docker logs -f mc-iam-manager-post-initial
-# Each of the 8 setup steps should finish with ✓
+# Each of the 11 setup steps should finish with ✓
 
 # 3. Verify
 curl -s http://localhost:5000/readyz | jq .

@@ -157,8 +157,12 @@ EXIT_STREAK_THRESHOLD=3
 # depends_on chain automatically (already-running dependencies are a no-op).
 # mc-application-manager/mc-cost-optimizer-* depend on mc-observability-rabbitmq,
 # so the observability backbone wave runs before the app-tier wave.
+# mc-iam-manager-nginx is listed explicitly: mc-iam-manager no longer declares a
+# compose dependency on it (that dependency caused a startup deadlock), but the
+# IAM manager still needs the public-domain endpoints nginx serves to become
+# healthy, so nginx must start in the same wave.
 STARTUP_WAVES=(
-    "mc-infra-connector mc-infra-manager mc-iam-manager mc-iam-manager-post-initial"
+    "mc-infra-connector mc-infra-manager mc-iam-manager-nginx mc-iam-manager mc-iam-manager-post-initial"
     "mc-data-manager mc-web-console-api mc-web-console-front"
     "mc-observability-manager mc-observability-front mc-observability-insight mc-observability-insight-scheduler mc-observability-mcp-grafana mc-observability-mcp-maria mc-observability-mcp-influx mc-observability-log-collector"
     "mc-application-manager mc-workflow-manager mc-cost-optimizer-fe"

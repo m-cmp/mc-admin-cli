@@ -219,7 +219,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: cloudbaristaorg/mc-iam-manager:0.6.2
+    image: cloudbaristaorg/mc-iam-manager:0.6.3
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
@@ -232,7 +232,6 @@ services:
     depends_on:
       - mc-iam-manager-db
       - mc-iam-manager-kc
-      - mc-iam-manager-nginx
     environment:
       DATABASE_URL: postgres://${MC_IAM_MANAGER_DATABASE_USER}:${MC_IAM_MANAGER_DATABASE_PASSWORD}@${MC_IAM_MANAGER_DATABASE_HOST}:5432/${MC_IAM_MANAGER_DATABASE_NAME}
       PORT: ${MC_IAM_MANAGER_PORT}
@@ -240,6 +239,11 @@ services:
       - ./conf/mc-iam-manager/.env
     volumes:
       - ./tool/mcc:/app/tool/mcc
+      # Menu catalog seed (bundled copy of mc-web-console conf/webconsole_menu_resources.yaml),
+      # read once at first install via MC_WEB_CONSOLE_MENUYAML=asset/menu/webconsole_menu_resources.yaml
+      - ./conf/mc-web-console/api/conf/webconsole_menu_resources.yaml:/app/asset/menu/webconsole_menu_resources.yaml:ro
+      # Role-menu seed overlay (post-init calls YAML API without filePath)
+      - ./conf/mc-iam-manager/permission.yaml:/app/asset/menu/permission.yaml:ro
     healthcheck:
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://${MC_IAM_MANAGER_DOMAIN}:${MC_IAM_MANAGER_PORT}/readyz" ]
       <<: *default-health-check
@@ -326,6 +330,9 @@ services:
       - ./container-volume/certbot/www:/var/www/certbot:ro
     depends_on:
       - mc-iam-manager-kc
+    healthcheck:
+      test: [ "CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/nginx-health || exit 1" ]
+      <<: *default-health-check
     networks:
       - mc-iam-manager-network
 

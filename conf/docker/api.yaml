@@ -3,7 +3,7 @@
 
 services:
   mc-infra-connector:
-    version: 0.12.18
+    version: 0.13.2
     baseurl: http://mc-infra-connector:1024/spider
     auth:
       type: basic
@@ -17,7 +17,7 @@ services:
       type: bearer
 
   mc-infra-manager:
-    version: 0.12.9
+    version: 0.13.2
     baseurl: http://mc-infra-manager:1323/tumblebug
     auth:
       type: basic
@@ -1195,7 +1195,7 @@ serviceActions:
     InitialMenus:
       method: post
       resourcePath: /api/setup/initial-menus
-      description: "menu.yaml 기반 메뉴 일괄 재등록 (1_setup_auto.sh init_menu와 동일). FR-006-08 Re-sync."
+      description: "메뉴 카탈로그 yaml 시딩 (1_setup_auto.sh init_menu와 동일). 메뉴가 이미 있으면 skip(200, skipped=true); queryParams force=true면 역할-메뉴 매핑 백업 후 덮어씀. FR-006-08 Force re-seed."
     SyncMcmpApis:
       method: post
       resourcePath: /api/setup/sync-mcmp-apis
@@ -2831,16 +2831,6 @@ serviceActions:
       method: post
       resourcePath: /ns/{nsId}/buildAgnosticImage
       description: Creates an MCI infrastructure, executes post-deployment commands, creates snapshots from each subgroup, and optionally cleans up the MCI. This is a complete workflow for building CSP-agnostic custom images.
-    PostCmdK8sCluster:
-      method: post
-      resourcePath: /ns/{nsId}/cmd/k8sCluster/{k8sClusterId}
-      description: 'Send a command to specified Container in K8sCluster
-
-        [note] This feature is not intended for general use
-
-        This API is provided as an exceptional and limited function for specific purposes such as migration.
-
-        Kubernetes resource information required as input for this API is not currently provided, and its availability in the future is uncertain.'
     PostCmdInfra:
 
       method: post
@@ -2867,16 +2857,6 @@ serviceActions:
       description: 'Download a file from a specific VM in MCI via SCP through bastion host.
 
         The file size should be less than 200MB.'
-    PostFileToK8sCluster:
-      method: post
-      resourcePath: /ns/{nsId}/transferFile/k8sCluster/{k8sClusterId}
-      description: 'Transfer a file to specified Container in K8sCluster. The tar command is required in the container.
-
-        [note] This feature is not intended for general use
-
-        This API is provided as an exceptional and limited function for specific purposes such as migration.
-
-        Kubernetes resource information required as input for this API is not currently provided, and its availability in the future is uncertain.'
     PostFileToInfra:
 
       method: post

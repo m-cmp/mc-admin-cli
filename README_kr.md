@@ -177,7 +177,7 @@ curl -k https://<DOMAIN>/auth/realms/mciam/.well-known/openid-configuration | gr
 ```
 기대 응답: `"issuer": "https://<DOMAIN>/auth/realms/mciam"` — 반드시 `https://`로 시작하고 `/auth/`가 포함되어야 합니다.
 
-**(d) mc-iam-manager-post-initial 8단계 설정 완료 확인:**
+**(d) mc-iam-manager-post-initial 11단계 설정 완료 확인:**
 ```shell
 docker logs mc-iam-manager-post-initial | tail -5
 ```
@@ -425,7 +425,7 @@ cd bin && ./mcc infra info
 docker rm mc-iam-manager-post-initial 2>/dev/null
 ./mcc infra run -s mc-iam-manager-post-initial
 docker logs -f mc-iam-manager-post-initial
-# 8단계 각각이 ✓ 로 완료되어야 합니다
+# 11단계 각각이 ✓ 로 완료되어야 합니다
 
 # 3. 헬스 상태 확인
 curl -s http://localhost:5000/readyz | jq .
