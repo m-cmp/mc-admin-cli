@@ -18,6 +18,7 @@ If you have any difficulties in using mcc, please let us know.
 - Currently, infra subcommand is only support docker compose base infra install and management.
   - [infra subcommand](./docs/mc-admin-cli-infra.md)
 - If you want to checkout how to run the whole subsystem on the single instance on CSP Instance, see [this document](./docs/running-on-instance.md).
+- To enable GCP billing collection in mc-cost-optimizer (BigQuery billing export, OpenBao credentials, GCP setup flow), see [GCP Billing Setup](./docs/cost-optimizer-gcp-billing.md).
 
 ## Development & Test Environment
 - Go 1.25.0 (minimum required version)
@@ -372,6 +373,9 @@ The following ports should be registered in the firewall if needed:
 | mc-cost-optimizer-cost-selector | 8083 | TCP | Cost Selector |
 | mc-cost-optimizer-alarm-service | 9000 | TCP | Alarm Service (internal, accessed via IAM nginx :9000 HTTPS proxy) |
 | mc-cost-optimizer-asset-collector | 8091 | TCP | Asset Collector |
+| mc-cost-optimizer-cost-azure-collector | 18093 | TCP | Azure Cost Collector |
+| mc-cost-optimizer-cost-ncp-collector | 18094 | TCP | NCP Cost Collector |
+| mc-cost-optimizer-gcp-collector | 28095 | TCP | GCP Billing Collector ([setup guide](./docs/cost-optimizer-gcp-billing.md)) |
 | mc-cost-optimizer-db | 3307 | TCP | MariaDB |
 
 ### **MC-APPLICATION-MANAGER**

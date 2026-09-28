@@ -712,8 +712,6 @@ services:
       gcp.client-email: ${MC_COST_OPTIMIZER_GCP_CLIENT_EMAIL}
       gcp.private-key: ${MC_COST_OPTIMIZER_GCP_PRIVATE_KEY}
       gcp.private-key-id: ${MC_COST_OPTIMIZER_GCP_PRIVATE_KEY_ID}
-      gcp.dataset: ${MC_COST_OPTIMIZER_GCP_BQ_DATASET}
-      gcp.table: ${MC_COST_OPTIMIZER_GCP_BQ_TABLE}
       gcpBillingCronSchedule: ${MC_COST_OPTIMIZER_GCP_BATCH_CRON_SCHEDULE}
       costopti.alarmservice.url: ${MC_COST_OPTIMIZER_ALARM_URL}
       OPENBAO_ENABLED: ${MC_COST_OPTIMIZER_OPENBAO_ENABLED}
