@@ -1042,7 +1042,10 @@ services:
           curl -fsS -u "$${JENKINS_USERNAME}:$${JENKINS_PASSWORD}"
           http://localhost:8080/api/json > /dev/null
       <<: *default-health-check
-      start_period: 6m
+      # First boot downloads ~100 plugins and restarts Jenkins; a clean install
+      # was observed taking ~9.5 min. start_period only suppresses failures, so a
+      # generous value costs nothing once Jenkins is actually ready.
+      start_period: 15m
 
 
   mc-workflow-manager:
