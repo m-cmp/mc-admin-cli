@@ -890,6 +890,7 @@ services:
   mc-cost-optimizer-db:
     image: mariadb:12.3.2
     container_name: mc-cost-optimizer-db
+    restart: always
     depends_on:
       mc-cost-optimizer-init-volume:
         condition: service_completed_successfully
