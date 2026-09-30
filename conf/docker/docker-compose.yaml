@@ -52,6 +52,9 @@ services:
       - PLUGIN_SW=OFF
       - ADMINWEB=OFF
       - SPIDER_BACKUP_ENABLED=false
+    depends_on:
+      mc-infra-connector-postgres:
+        condition: service_healthy
     healthcheck: # for CB-Spider
       test: [ "CMD", "/app/tool/mcc", "rest", "get", "http://localhost:1024/spider/readyz" ]
       <<: *default-health-check
