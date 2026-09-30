@@ -168,6 +168,35 @@ STARTUP_WAVES=(
     "mc-application-manager mc-workflow-manager mc-cost-optimizer-fe"
 )
 
+# Starts every wave detached (-d), then one final full-stack `run -d` for the
+# services no wave entry point reaches (cost-optimizer collectors/rightsizers,
+# cb-mapui, ...). Waves must always be detached: an attached `compose up` never
+# returns, so later waves would never start.
+run_startup_waves() {
+    local wave_num=0
+    local run_exit
+    for wave_services in "${STARTUP_WAVES[@]}"; do
+        wave_num=$((wave_num + 1))
+        echo ""
+        echo "---- Wave $wave_num/${#STARTUP_WAVES[@]}: $wave_services ----"
+        ./mcc infra run -d -s "$wave_services"
+        run_exit=$?
+        if [ $run_exit -ne 0 ]; then
+            report_run_failure "$run_exit" "Wave $wave_num ($wave_services)"
+            exit 1
+        fi
+    done
+
+    echo ""
+    echo "---- Remaining services (not reached by any wave) ----"
+    ./mcc infra run -d
+    run_exit=$?
+    if [ $run_exit -ne 0 ]; then
+        report_run_failure "$run_exit" "remaining services"
+        exit 1
+    fi
+}
+
 # Prints a consistent failure banner for a failed `./mcc infra run` invocation.
 report_run_failure() {
     local exit_code="$1"
@@ -543,20 +572,14 @@ case $RUN_MODE in
             exit 1
         fi
 
-        wave_num=0
-        for wave_services in "${STARTUP_WAVES[@]}"; do
-            wave_num=$((wave_num + 1))
-            echo ""
-            echo "---- Wave $wave_num/${#STARTUP_WAVES[@]}: $wave_services ----"
-            ./mcc infra run -s "$wave_services"
-            run_exit=$?
-            if [ $run_exit -ne 0 ]; then
-                report_run_failure "$run_exit" "Wave $wave_num ($wave_services)"
-                exit 1
-            fi
-        done
-
+        run_startup_waves
         check_post_initial
+
+        # Attach to the whole stack only after every wave is up (Ctrl+C to detach;
+        # containers keep running)
+        echo ""
+        echo "All services started. Attaching to logs (Ctrl+C to stop following)..."
+        ./mcc infra run
         ;;
     background)
         echo ""
@@ -579,18 +602,7 @@ case $RUN_MODE in
         echo "Image download and initial setup in progress..."
         echo ""
 
-        wave_num=0
-        for wave_services in "${STARTUP_WAVES[@]}"; do
-            wave_num=$((wave_num + 1))
-            echo ""
-            echo "---- Wave $wave_num/${#STARTUP_WAVES[@]}: $wave_services ----"
-            ./mcc infra run -d -s "$wave_services"
-            run_exit=$?
-            if [ $run_exit -ne 0 ]; then
-                report_run_failure "$run_exit" "Wave $wave_num ($wave_services)"
-                exit 1
-            fi
-        done
+        run_startup_waves
 
         echo ""
         echo "Image download and initial setup completed."
