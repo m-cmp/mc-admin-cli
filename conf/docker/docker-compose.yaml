@@ -1082,7 +1082,7 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: cloudbaristaorg/mc-data-manager:0.6.1
+    image: cloudbaristaorg/mc-data-manager:0.7.1
     container_name: mc-data-manager
     depends_on:
       mc-data-manager-init-volumes:
@@ -1095,6 +1095,7 @@ services:
       - ./data:/app/data/ # container-volume
       - ./scripts:/app/scripts/ # container-volume
       - /etc/localtime:/etc/localtime:ro # timezone
+      - ./container-volume/mc-data-manager/backup:/root/backup
     environment:
       - TUMBLEBUG_URL=http://mc-infra-manager:1323
       - VAULT_ADDR=http://mc-infra-manager-openbao:${MC_INFRA_MANAGER_OPENBAO_PORT}
