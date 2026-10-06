@@ -97,6 +97,37 @@ plugins.each { pluginName ->
     }
 }
 
+// deploy() also queues each dependency as its own InstallationJob, and a failed
+// download (e.g. "Connection reset" from the update site) does not throw -- it
+// only leaves that job in Failure state. Without a retry the missing dependency
+// (e.g. joda-time-api) makes dependents fail to load after restart, and Jenkins
+// only converges after several restart cycles.
+def failedInstalls = {
+    def latestJobs = [:]
+    uc.getJobs().findAll { it instanceof UpdateCenter.InstallationJob }.each { job ->
+        latestJobs[job.plugin.name] = job
+    }
+    latestJobs.findAll { name, job -> job.status instanceof UpdateCenter.DownloadJob.Failure }.keySet()
+}
+
+def maxInstallRetries = 5
+for (int attempt = 1; attempt <= maxInstallRetries; attempt++) {
+    def failed = failedInstalls()
+    if (failed.isEmpty()) {
+        break
+    }
+    println "--> Retrying failed plugin downloads (${attempt}/${maxInstallRetries}): ${failed.join(', ')}"
+    sleep(5000L * attempt)
+    failed.each { pluginName ->
+        uc.getPlugin(pluginName)?.deploy()?.get()
+    }
+}
+
+def stillFailed = failedInstalls()
+if (!stillFailed.isEmpty()) {
+    throw new IllegalStateException("Jenkins plugin download failed after ${maxInstallRetries} retries: ${stillFailed.join(', ')}")
+}
+
 println "--> Saving Jenkins state..."
 instance.save()
 

@@ -277,7 +277,7 @@ services:
 
   mc-iam-manager:
     container_name: mc-iam-manager
-    image: cloudbaristaorg/mc-iam-manager:0.6.3
+    image: cloudbaristaorg/mc-iam-manager:0.6.4
     restart: unless-stopped
     networks:
       - mc-iam-manager-network
@@ -1042,7 +1042,10 @@ services:
           curl -fsS -u "$${JENKINS_USERNAME}:$${JENKINS_PASSWORD}"
           http://localhost:8080/api/json > /dev/null
       <<: *default-health-check
-      start_period: 6m
+      # First boot downloads ~100 plugins and restarts Jenkins; a clean install
+      # was observed taking ~9.5 min. start_period only suppresses failures, so a
+      # generous value costs nothing once Jenkins is actually ready.
+      start_period: 15m
 
 
   mc-workflow-manager:
@@ -1176,7 +1179,7 @@ services:
             exec docker-entrypoint.sh postgres"
 
   mc-web-console-api:
-    image: cloudbaristaorg/mc-web-console-api:0.6.5
+    image: cloudbaristaorg/mc-web-console-api:0.6.6
     pull_policy: always
     container_name: mc-web-console-api
     platform: linux/amd64
@@ -1220,7 +1223,7 @@ services:
       <<: *default-health-check
 
   mc-web-console-front:
-    image: cloudbaristaorg/mc-web-console-front:0.6.5
+    image: cloudbaristaorg/mc-web-console-front:0.6.6
     pull_policy: always
     container_name: mc-web-console-front
     platform: linux/amd64
