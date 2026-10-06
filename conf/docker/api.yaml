@@ -11,7 +11,7 @@ services:
       password:
 
   mc-iam-manager:
-    version: 0.5.2
+    version: 0.6.4
     baseurl: http://mc-iam-manager:5000
     auth:
       type: bearer
@@ -25,7 +25,7 @@ services:
       password: spider
 
   mc-web-console:
-    version: 0.5.2
+    version: 0.6.6
     baseurl: http://mc-web-console:3000
     auth:
       type: bearer
