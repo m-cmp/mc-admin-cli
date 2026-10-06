@@ -1716,6 +1716,8 @@ services:
     depends_on:
       mc-observability-maria:
         condition: service_healthy
+      mc-observability-insight:
+        condition: service_healthy
     environment:
       - TZ=Asia/Seoul
       - AIRFLOW__DATABASE__SQL_ALCHEMY_CONN=mysql+mysqldb://mc-agent:mc-agent@mc-observability-maria:3306/mc_airflow
