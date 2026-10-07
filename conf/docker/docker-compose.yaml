@@ -18,6 +18,7 @@ networks:
 volumes:
   grafana_shared_config:
   shared_logs:
+  insight_secrets:
 
 services:
 ##### MC-INFRA-CONNECTOR #########################################################################################################################
@@ -969,7 +970,7 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:0.6.4
+    image: cloudbaristaorg/mc-application-manager:0.7.0
     pull_policy: always
     container_name: mc-application-manager
     restart: unless-stopped
@@ -1049,7 +1050,7 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:0.6.4
+    image: cloudbaristaorg/mc-workflow-manager:0.7.0
     pull_policy: always
     container_name: mc-workflow-manager
     platform: linux/amd64
@@ -1246,7 +1247,7 @@ services:
       <<: *default-health-check
 ##### MC-OBSERVABILITY #########################################################################################################################
   mc-observability-manager:
-    image: cloudbaristaorg/mc-observability:0.6.1
+    image: cloudbaristaorg/mc-observability:0.6.2
     container_name: mc-observability-manager
     restart: unless-stopped
     networks:
@@ -1286,7 +1287,7 @@ services:
       start_period: 5m
 
   mc-observability-front:
-    image: cloudbaristaorg/mc-observability-front:0.6.1
+    image: cloudbaristaorg/mc-observability-front:0.6.2
     container_name: mc-observability-front
     restart: unless-stopped
     networks:
@@ -1298,7 +1299,7 @@ services:
         condition: service_started
 
   mc-observability-infra:
-    image: cloudbaristaorg/mc-observability-infra:0.6.1
+    image: cloudbaristaorg/mc-observability-infra:0.6.2
     container_name: mc-observability-infra
     restart: unless-stopped
     networks:
@@ -1423,7 +1424,7 @@ services:
     init: true
 
   mc-observability-influx:
-    image: cloudbaristaorg/mc-observability-influx:0.6.1
+    image: cloudbaristaorg/mc-observability-influx:0.6.2
     container_name: mc-observability-influx
     restart: unless-stopped
     networks:
@@ -1465,7 +1466,7 @@ services:
       - mc-observability-network
 
   mc-observability-influx-2:
-    image: cloudbaristaorg/mc-observability-influx:0.6.1
+    image: cloudbaristaorg/mc-observability-influx:0.6.2
     container_name: mc-observability-influx-2
     restart: unless-stopped
     networks:
@@ -1641,7 +1642,7 @@ services:
     init: true
 
   mc-observability-grafana:
-    image: cloudbaristaorg/mc-observability-grafana:0.6.1
+    image: cloudbaristaorg/mc-observability-grafana:0.6.2
     container_name: mc-observability-grafana
     restart: unless-stopped
     networks:
@@ -1676,7 +1677,7 @@ services:
         fi
 
   mc-observability-insight:
-    image: cloudbaristaorg/mc-observability-insight:0.6.1
+    image: cloudbaristaorg/mc-observability-insight:0.6.2
     container_name: mc-observability-insight
     restart: always
     networks:
@@ -1688,8 +1689,10 @@ services:
     environment:
       - TZ=Asia/Seoul
       - OLLAMA_BASE_URL=${MC_OBSERVABILITY_OLLAMA_BASE_URL:-http://210.207.104.224:11434}
+      - LLM_CREDENTIAL_KEY=${MC_OBSERVABILITY_LLM_CREDENTIAL_KEY:-}
     volumes:
       - shared_logs:/mc-insight/log:rw
+      - insight_secrets:/mc-insight/secrets:rw
     depends_on:
       mc-observability-maria:
         condition: service_healthy
@@ -1703,7 +1706,7 @@ services:
       start_period: 10s
 
   mc-observability-insight-scheduler:
-    image: cloudbaristaorg/mc-observability-insight-scheduler:0.6.1
+    image: cloudbaristaorg/mc-observability-insight-scheduler:0.6.2
     container_name: mc-observability-insight-scheduler
     restart: always
     ports:
@@ -1712,6 +1715,8 @@ services:
         protocol: tcp
     depends_on:
       mc-observability-maria:
+        condition: service_healthy
+      mc-observability-insight:
         condition: service_healthy
     environment:
       - TZ=Asia/Seoul
@@ -1739,10 +1744,17 @@ services:
 
         airflow connections add --conn-type http --conn-host mc-observability-insight --conn-schema http --conn-port 9001 api_base_url
         airflow connections add --conn-type mysql --conn-host mc-observability-maria --conn-schema mc_observability --conn-login mc-agent --conn-password mc-agent --conn-port 3306 mcmp_db
+        # Server error watch: the RCA worker searches Tempo before running an analysis
+        airflow connections add --conn-type http --conn-host mc-observability-tempo --conn-schema http --conn-port 3200 tempo_url
+        # Bound how many scheduled RCA analyses run at once; each one is long and LLM-backed
+        airflow pools set rca_analysis 4 'Concurrent scheduled RCA analyses'
+
         # Reload & Run dags
         airflow dags reserialize
         airflow dags unpause anomaly_detection
         airflow dags unpause down_sampling
+        airflow dags unpause rca_schedule_dispatcher
+        airflow dags unpause rca_schedule_worker
 
         # Start airflow
         airflow scheduler & airflow webserver -p 9002
@@ -1782,7 +1794,7 @@ services:
       - mc-observability-network
 
   mc-observability-mcp-maria:
-    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.6.1
+    image: cloudbaristaorg/mc-observability-mcp-mariadb:0.6.2
     container_name: mc-observability-mcp-maria
     restart: always
     networks:
@@ -1806,7 +1818,7 @@ services:
       - OPENAI_API_KEY=${MC_OBSERVABILITY_OPENAI_API_KEY:-}
 
   mc-observability-mcp-influx:
-    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.6.1
+    image: cloudbaristaorg/mc-observability-mcp-influxdb:0.6.2
     container_name: mc-observability-mcp-influx
     restart: always
     ports:
@@ -1819,6 +1831,8 @@ services:
     environment:
       - TZ=Asia/Seoul
       - INFLUXDB_URL=http://mc-observability-influx:8086
+      # Infra and node metrics can reside on either server; the MCP queries both.
+      - INFLUXDB_URLS=http://mc-observability-influx:8086,http://mc-observability-influx-2:8086
       - INFLUXDB_USER=mc-agent
       - INFLUXDB_PASSWORD=mc-agent
       - INFLUXDB_DATABASE=mc-observability
