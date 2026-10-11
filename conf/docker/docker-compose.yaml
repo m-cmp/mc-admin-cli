@@ -970,7 +970,7 @@ services:
       <<: *default-health-check
 
   mc-application-manager:
-    image: cloudbaristaorg/mc-application-manager:0.7.0
+    image: cloudbaristaorg/mc-application-manager:0.7.1
     pull_policy: always
     container_name: mc-application-manager
     restart: unless-stopped
@@ -1050,7 +1050,7 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:0.7.0
+    image: cloudbaristaorg/mc-workflow-manager:0.7.1
     pull_policy: always
     container_name: mc-workflow-manager
     platform: linux/amd64
