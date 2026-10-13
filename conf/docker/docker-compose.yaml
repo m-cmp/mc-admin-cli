@@ -1090,7 +1090,7 @@ services:
       - mc-data-manager-network
 
   mc-data-manager:
-    image: cloudbaristaorg/mc-data-manager:0.7.2
+    image: cloudbaristaorg/mc-data-manager:0.7.3
     container_name: mc-data-manager
     depends_on:
       mc-data-manager-init-volumes:
@@ -1117,7 +1117,7 @@ services:
       - mc-web-console-network
       - mc-infra-manager-network
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:3300/readyZ"]
+      test: ["CMD", "curl", "-f", "http://localhost:3300/readyz"]
       interval: 30s
       timeout: 10s
       retries: 3
