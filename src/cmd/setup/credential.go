@@ -10,7 +10,8 @@
 //		- 응답 값중 아래 둘 중 하나의 형태로 입력
 //		    - Credential : cb-spider 형식
 //			- CredentialCSP : CSP 형식
-//  [최종] curl -sX GET http://localhost:1024/spider/cloudos/metainfo/aws -H 'Content-Type: application/json' | jq '.Credential'
+//  [최종] curl -sX GET http://localhost:1024/spider/cloudos/metainfo/aws -H 'Content-Type: application/json' | jq '.CredentialCSP'
+//         mc-infra-manager(cb-tumblebug)는 CredentialCSP 형식의 키만 허용함 (예: aws_access_key_id / aws_secret_access_key)
 //         curl -sX POST http://localhost:1323/tumblebug/forward/cloudos/metainfo/aws -u default:default  -d '{}'
 //		   curl -sX GET http://localhost:1323/tumblebug/credential/publicKey -u default:default
 
@@ -297,12 +298,8 @@ func getCredentialsMeta(csp string) ([]string, error) {
 	fmt.Printf("Retrieving credential input format for %s\n", csp)
 
 	// curl -sX POST http://localhost:1323/tumblebug/forward/cloudos/metainfo/aws -u default:default  -d '{}'
-	/*
-		credentials := map[string]string{
-			"ClientId":     "your-client-id",
-			"ClientSecret": "your-client-secret",
-		}
-	*/
+	// mc-infra-manager는 CSP 형식의 키(CredentialCSP)만 허용하므로 cb-spider 형식(Credential)이 아닌 CredentialCSP를 사용
+	//   예) AWS : Credential = ClientId / ClientSecret, CredentialCSP = aws_access_key_id / aws_secret_access_key
 
 	url := serviceInfo.BaseURL + GET_CSP_CREDENTIAL_META_URL + csp
 	if isVerbose {
@@ -321,14 +318,19 @@ func getCredentialsMeta(csp string) ([]string, error) {
 		fmt.Println(string(resp.Body()))
 	}
 
-	// JSON 결과 값에서 "Credential" 값을 추출
+	// 인증 실패 등 오류 응답은 원인을 그대로 노출
+	if resp.IsError() {
+		return nil, fmt.Errorf("failed to retrieve credential meta (HTTP %d): %s", resp.StatusCode(), strings.TrimSpace(string(resp.Body())))
+	}
+
+	// JSON 결과 값에서 "CredentialCSP" 값을 추출
 	var result map[string]interface{}
 	err = json.Unmarshal(resp.Body(), &result)
 	if err != nil {
 		return nil, fmt.Errorf("Error parsing JSON: %v", err)
 	}
 
-	if credential, ok := result["Credential"].([]interface{}); ok {
+	if credential, ok := result["CredentialCSP"].([]interface{}); ok {
 		fmt.Printf("Successfully retrieved credential meta information for %s\n", csp)
 
 		// Credential 값을 문자열 배열로 변환
@@ -339,13 +341,13 @@ func getCredentialsMeta(csp string) ([]string, error) {
 
 		return credentialArray, nil
 	} else {
-		return nil, fmt.Errorf("Credential key not found in response")
+		return nil, fmt.Errorf("CredentialCSP key not found in response")
 	}
 
 }
 
 // CSP의 인증 정보를 암호화 처리 함.
-func processCspCredentialEncrypt() {
+func processCspCredentialEncrypt() error {
 	//fmt.Println("Processing CSP Credential Encryption : ", csp)
 	selectedCsp := ""
 
@@ -357,8 +359,7 @@ func processCspCredentialEncrypt() {
 		// 사용자로부터 콘솔에서 CSP를 선택받음
 		selectedCsp, err = selectCspFromCLI()
 		if err != nil {
-			fmt.Println("Error:", err)
-			return
+			return err
 		}
 	}
 
@@ -371,8 +372,7 @@ func processCspCredentialEncrypt() {
 	// CSP에 맞는 Credential 메타 정보를 가져옴
 	credentialMeta, err := getCredentialsMeta(selectedCsp)
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+		return err
 	}
 
 	// 상세 모드에서는 입력 받아야할 Credential 키 값 출력
@@ -388,15 +388,13 @@ func processCspCredentialEncrypt() {
 	// 사용자로부터 Credential 값을 입력받음
 	credentials, err := inputCredentialsFromCli(credentialMeta)
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+		return err
 	}
 
 	// PublicKey와 PublicKeyTokenId를 가져옴
 	publicKeyResponse, err := getPublicKey()
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+		return err
 	}
 
 	if isVerbose {
@@ -408,8 +406,7 @@ func processCspCredentialEncrypt() {
 	// Credential 정보를 PublicKey로 암호화 처리
 	encryptedCredentials, encryptedAesKey, err := encryptCredentialsWithPublicKey(publicKeyResponse.PublicKey, credentials)
 	if err != nil {
-		fmt.Println("Error:", err)
-		return
+		return err
 	}
 
 	if isVerbose {
@@ -441,10 +438,12 @@ func processCspCredentialEncrypt() {
 
 	result, err := sendCredentials(payload)
 	if err != nil {
-		fmt.Println("Error:", err)
-	} else {
-		fmt.Println("Result:", result)
+		return err
 	}
+
+	fmt.Println("Result:", result)
+	fmt.Println("CSP Credential registration completed successfully")
+	return nil
 }
 
 // 사용자로부터 콘솔에서 CSP의 인증 정보를 입력받아 map 형태로 반환
@@ -647,7 +646,7 @@ func sendCredentials(payload map[string]interface{}) (map[string]interface{}, er
 	reqBody, _ := json.Marshal(payload)
 	httpReq, err := http.NewRequest("POST", url, bytes.NewBuffer(reqBody))
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("Error creating request: %v", err)
 	}
 
 	httpReq.Header.Set("Content-Type", "application/json")
@@ -655,14 +654,29 @@ func sendCredentials(payload map[string]interface{}) (map[string]interface{}, er
 
 	resp, err := httpClient.Do(httpReq)
 	if err != nil {
-		panic(err)
+		return nil, fmt.Errorf("Error sending request: %v", err)
 	}
 	defer resp.Body.Close()
 
-	body, _ := io.ReadAll(resp.Body)
-	fmt.Println(string(body))
+	body, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("Error reading response: %v", err)
+	}
+	if isVerbose {
+		fmt.Println(string(body))
+	}
 
-	return nil, nil
+	// 서버가 등록을 거부한 경우(키 이름 불일치 등) 실패로 처리
+	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
+		return nil, fmt.Errorf("credential registration failed (HTTP %d): %s", resp.StatusCode, strings.TrimSpace(string(body)))
+	}
+
+	var result map[string]interface{}
+	if err := json.Unmarshal(body, &result); err != nil {
+		return nil, fmt.Errorf("Error parsing JSON: %v", err)
+	}
+
+	return result, nil
 	/*
 		if isVerbose {
 			fmt.Println("Request payload")
@@ -767,9 +781,12 @@ var credentialCmd = &cobra.Command{
 		//fmt.Println("Loaded configurations:", viper.AllSettings())
 	},
 
-	Run: func(cmd *cobra.Command, args []string) {
+	// 등록 실패 시 0이 아닌 종료 코드로 끝나도록 RunE로 에러를 반환
+	SilenceUsage:  true,
+	SilenceErrors: true,
+	RunE: func(cmd *cobra.Command, args []string) error {
 		if !isInit {
-			return
+			return nil
 		}
 
 		// publicKeyResponse, err := getPublicKey()
@@ -785,7 +802,7 @@ var credentialCmd = &cobra.Command{
 		// }
 
 		// CSP의 인증 정보를 암호화 처리
-		processCspCredentialEncrypt()
+		return processCspCredentialEncrypt()
 	},
 }
 
