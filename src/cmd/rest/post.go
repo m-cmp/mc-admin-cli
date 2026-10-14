@@ -30,7 +30,7 @@ var restPostCmd = &cobra.Command{
 		}
 
 		url := args[0]
-		resp, err := req.Get(url)
+		resp, err := req.Post(url)
 		if err != nil {
 			fmt.Println("Error:", err)
 			return
