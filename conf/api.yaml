@@ -36,17 +36,17 @@ services:
     auth:
 
   mc-application-manager:
-    version: 0.7.1
+    version: 0.7.2
     baseurl: http://mc-application-manager:18084
     auth:
 
   mc-workflow-manager:
-    version: 0.7.1
+    version: 0.7.2
     baseurl: http://mc-workflow-manager:18083
     auth:
 
   mc-cost-optimizer:
-    version: 0.6.5
+    version: 0.7.0
     baseurl: http://mc-cost-optimizer-be:9090
     auth:
 
@@ -56,12 +56,12 @@ services:
     auth:
 
   mc-cost-optimizer-fe:
-    version: 0.6.5
+    version: 0.7.0
     baseurl: http://mc-cost-optimizer-fe:7780
     auth:
 
   mc-workflow-manager-fe:
-    version: 0.7.1
+    version: 0.7.2
     baseurl: http://mc-workflow-manager:18083
     auth:
 
@@ -71,7 +71,7 @@ services:
     auth:
 
   mc-application-manager-fe:
-    version: 0.7.1
+    version: 0.7.2
     baseurl: http://mc-application-manager:18084
     auth:
 
