@@ -104,6 +104,8 @@ go build -o ../bin/mcc main.go
 ../bin/mcc infra update -s "서브시스템명"
 ```
 
+update는 이미지를 받은 뒤 컨테이너를 detach 모드로 재기동하고 종료합니다. 서비스 상태는 `../bin/mcc infra info` 또는 `docker logs <컨테이너명>`으로 확인합니다.
+
 
 ## M-CMP 중지
 ```bash
