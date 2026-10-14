@@ -229,7 +229,7 @@ export const API_ROUTES = {
   // Swagger: https://15.164.139.37:3300/swagger/index.html
   data: {
     // Health
-    healthcheck:            `${DATA_MANAGER}/readyZ`,
+    healthcheck:            `${DATA_MANAGER}/readyz`,
     // Task lists (read-only, no auth)
     allTasks:               `${DATA_MANAGER}/tasks`,
     generateList:           `${DATA_MANAGER}/generate`,
