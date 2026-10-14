@@ -218,11 +218,11 @@ Or run individual steps manually using `conf/docker/conf/mc-iam-manager/1_setup_
 **(e) iframe HTTPS proxy endpoints (used by the web console for embedded views):**
 ```shell
 curl -kI https://<DOMAIN>:33002    # Grafana dashboard proxy
-curl -kI https://<DOMAIN>:7781     # Cost Optimizer FE proxy
+curl -kI https://<DOMAIN>:7780     # Cost Optimizer FE proxy
 curl -k  https://<DOMAIN>:9090/api/costopti/be/readyz    # Cost Optimizer BE proxy
 curl -k  https://<DOMAIN>:9000/actuator/health 2>/dev/null || true  # Cost Optimizer alarm proxy
 ```
-Expected: `:33002` and `:7781` return `HTTP/2 200`; `:9090/readyz` returns `Application is ready`.
+Expected: `:33002` and `:7780` return `HTTP/2 200`; `:9090/readyz` returns `Application is ready`.
 
 ## Step 6. Initialize CB-Tumblebug & Access the Web Console
 
@@ -361,12 +361,12 @@ The following ports should be registered in the firewall if needed:
 | mc-iam-manager-nginx | 80, 443 | TCP | Nginx (HTTP redirect + HTTPS) |
 | mc-iam-manager-nginx | 3001 | TCP | Web Console Frontend (HTTPS proxy) |
 | mc-iam-manager-nginx | 33002 | TCP | Grafana (iframe-safe HTTPS reverse proxy) |
-| mc-iam-manager-nginx | 7781 | TCP | Cost Optimizer FE (iframe-safe HTTPS reverse proxy) |
+| mc-iam-manager-nginx | 7780 | TCP | Cost Optimizer FE (iframe-safe HTTPS reverse proxy) |
 
 ### **MC-COST-OPTIMIZER**
 | Service | Port | Protocol | Description |
 |---------|------|----------|-------------|
-| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend (internal, accessed via :7781 HTTPS proxy) |
+| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend (internal, accessed via :7780 HTTPS proxy) |
 | mc-cost-optimizer-be | 9090 | TCP | Cost Optimizer Backend (internal, accessed via IAM nginx :9090 HTTPS proxy) |
 | mc-cost-optimizer-cost-collector | 8881 | TCP | Cost Collector |
 | mc-cost-optimizer-cost-processor | 18082 | TCP | Cost Processor |
@@ -430,7 +430,7 @@ The following ports must be registered in the firewall:
 | mc-iam-manager-nginx | 80, 443 | TCP | Nginx entry point (HTTP redirect + HTTPS web console) |
 | mc-iam-manager-nginx | 3001 | TCP | Web Console Frontend (HTTPS) |
 | mc-iam-manager-nginx | 33002 | TCP | Grafana iframe proxy (HTTPS) |
-| mc-iam-manager-nginx | 7781 | TCP | Cost Optimizer FE iframe proxy (HTTPS) |
+| mc-iam-manager-nginx | 7780 | TCP | Cost Optimizer FE iframe proxy (HTTPS) |
 | mc-iam-manager-nginx | 9090 | TCP | Cost Optimizer BE HTTPS proxy (required for iframe API calls) |
 | mc-iam-manager-nginx | 9000 | TCP | Cost Optimizer alarm HTTPS proxy (required for iframe API calls) |
 | mc-web-console-api | 3000 | TCP | Web Console API |

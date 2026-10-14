@@ -195,11 +195,11 @@ docker logs mc-iam-manager-post-initial | tail -5
 **(e) iframe HTTPS 프록시 엔드포인트 확인 (웹 콘솔 임베드 뷰 사용):**
 ```shell
 curl -kI https://<DOMAIN>:33002    # Grafana 대시보드 프록시
-curl -kI https://<DOMAIN>:7781     # Cost Optimizer FE 프록시
+curl -kI https://<DOMAIN>:7780     # Cost Optimizer FE 프록시
 curl -k  https://<DOMAIN>:9090/api/costopti/be/readyz    # Cost Optimizer BE 프록시
 curl -k  https://<DOMAIN>:9000/actuator/health 2>/dev/null || true  # Cost Optimizer alarm 프록시
 ```
-기대 응답: `:33002` 및 `:7781`은 `HTTP/2 200`; `:9090/readyz`는 `Application is ready`.
+기대 응답: `:33002` 및 `:7780`은 `HTTP/2 200`; `:9090/readyz`는 `Application is ready`.
 
 ## Step 6. CB-Tumblebug 초기화 및 웹 콘솔 접속
 
@@ -333,12 +333,12 @@ sudo certbot renew --dry-run
 | mc-iam-manager-nginx | 80, 443 | TCP | Nginx (HTTP 리다이렉트 + HTTPS) |
 | mc-iam-manager-nginx | 3001 | TCP | 웹 콘솔 프론트엔드 (HTTPS 프록시) |
 | mc-iam-manager-nginx | 33002 | TCP | Grafana (iframe 전용 HTTPS 역방향 프록시) |
-| mc-iam-manager-nginx | 7781 | TCP | Cost Optimizer FE (iframe 전용 HTTPS 역방향 프록시) |
+| mc-iam-manager-nginx | 7780 | TCP | Cost Optimizer FE (iframe 전용 HTTPS 역방향 프록시) |
 
 ### **MC-COST-OPTIMIZER**
 | 서비스 | 포트 | 프로토콜 | 설명 |
 |---------|------|----------|-------------|
-| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend (내부 전용, :7781 HTTPS 프록시로 접근) |
+| mc-cost-optimizer-fe | 7780 | TCP | Cost Optimizer Frontend (내부 전용, :7780 HTTPS 프록시로 접근) |
 | mc-cost-optimizer-be | 9090 | TCP | Cost Optimizer Backend (내부 전용, IAM nginx :9090 HTTPS 프록시로 접근) |
 | mc-cost-optimizer-cost-collector | 8881 | TCP | Cost Collector |
 | mc-cost-optimizer-cost-processor | 18082 | TCP | Cost Processor |
@@ -399,7 +399,7 @@ sudo certbot renew --dry-run
 | mc-iam-manager-nginx | 80, 443 | TCP | Nginx 진입점 (HTTP 리다이렉트 + HTTPS 웹 콘솔) |
 | mc-iam-manager-nginx | 3001 | TCP | 웹 콘솔 프론트엔드 (HTTPS) |
 | mc-iam-manager-nginx | 33002 | TCP | Grafana iframe 프록시 (HTTPS) |
-| mc-iam-manager-nginx | 7781 | TCP | Cost Optimizer FE iframe 프록시 (HTTPS) |
+| mc-iam-manager-nginx | 7780 | TCP | Cost Optimizer FE iframe 프록시 (HTTPS) |
 | mc-iam-manager-nginx | 9090 | TCP | Cost Optimizer BE HTTPS 프록시 (iframe API 호출에 필요) |
 | mc-iam-manager-nginx | 9000 | TCP | Cost Optimizer alarm HTTPS 프록시 (iframe API 호출에 필요) |
 | mc-web-console-api | 3000 | TCP | Web Console API |
