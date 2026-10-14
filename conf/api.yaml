@@ -3,7 +3,7 @@
 
 services:
   mc-infra-connector:
-    version: 0.13.2
+    version: 0.13.17
     baseurl: http://mc-infra-connector:1024/spider
     auth:
       type: basic
@@ -17,7 +17,7 @@ services:
       type: bearer
 
   mc-infra-manager:
-    version: 0.13.2
+    version: 0.13.6
     baseurl: http://mc-infra-manager:1323/tumblebug
     auth:
       type: basic
