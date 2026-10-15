@@ -1263,6 +1263,10 @@ services:
       - mc-infra-manager-network
       - mc-infra-connector-network
       - mc-web-console-network
+    ports:
+      - target: 18080
+        published: ${MC_OBSERVABILITY_MANAGER_PORT}
+        protocol: tcp
     depends_on:
       mc-observability-grafana:
         condition: service_healthy
