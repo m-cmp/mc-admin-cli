@@ -236,6 +236,35 @@ Access the web console with the default credentials:
 - Username: `mcmp`
 - Password: `mcmp_password`
 
+## Step 6-1. Accept the Nexus Community Edition EULA (required for Application Manager)
+
+`mc-application-manager` stores imported packages in Nexus (`mc-application-manager-sonatype-nexus`).
+Since Nexus Repository 3.77, the free edition (Community Edition) keeps the Docker registry and other features locked
+until an administrator accepts the End User License Agreement. A fresh install starts with `accepted: false`, and
+image pushes to the Docker registry fail with `403 You must accept the End User License Agreement`
+(e.g. SW Catalogs > Register > Public Registry > Import & Create).
+
+Review the EULA (https://links.sonatype.com/products/nxrm/ce-eula), then accept it once after the platform is up:
+```shell
+cd mc-admin-cli/conf/docker
+NEXUS_PW=$(grep -E '^MC_APPLICATION_MANAGER_NEXUS_INITIAL_PASSWORD=' .env | cut -d= -f2-)
+NEXUS_PORT=$(grep -E '^MC_APPLICATION_MANAGER_NEXUS_PORT=' .env | cut -d= -f2-)
+EULA_URL="http://localhost:${NEXUS_PORT}/service/rest/v1/system/eula"
+
+# Check the current state (accepted: false on a fresh install)
+curl -s -u "admin:${NEXUS_PW}" "$EULA_URL"
+
+# Accept — the request must echo back the disclaimer text returned above
+curl -s -u "admin:${NEXUS_PW}" "$EULA_URL" \
+  | python3 -c 'import json,sys; d=json.load(sys.stdin); d["accepted"]=True; print(json.dumps(d))' \
+  | curl -s -o /dev/null -w '%{http_code}\n' -u "admin:${NEXUS_PW}" -X POST \
+      -H 'Content-Type: application/json' -d @- "$EULA_URL"
+# Expected: 204, and a re-check shows "accepted" : true
+```
+You can also accept it in the Nexus UI (`http://<host>:${MC_APPLICATION_MANAGER_NEXUS_PORT}`, sign in as `admin`).
+The acceptance is stored in the Nexus data volume, so it is required again after `cleanAll.sh` or any reset of
+`conf/docker/container-volume/mc-application-manager/nexus`.
+
 ## Step 7. Clean Up
 
 If you want to completely reset the environment (removes all Docker containers, images, and volumes):   
