@@ -25,7 +25,6 @@ var password string
 var isShowHeaders bool
 var sendData string
 var inputFileData string
-var fileData string
 
 var isVerbose bool
 var authToken string
@@ -48,7 +47,10 @@ var restCmd = &cobra.Command{
 			SetAuthToken() // Authorization: <auth-scheme> <auth-token-value>  // default auth-scheme : Bearer
 			SetBasicAuth() // Authorization: Basic <base64-encoded-value>
 			SetHeaders()
-			SetReqData()
+			if err := SetReqData(); err != nil {
+				fmt.Println(err)
+				os.Exit(1)
+			}
 
 			if isVerbose {
 				fmt.Println("==============================")
@@ -221,7 +223,7 @@ func init() {
 
 	// Add flag for post data
 	restCmd.PersistentFlags().StringVarP(&sendData, "data", "d", "", "Data to send to the server")
-	restCmd.PersistentFlags().StringVarP(&fileData, "file", "f", "", "Data to send to the server from file")
+	restCmd.PersistentFlags().StringVarP(&inputFileData, "file", "f", "", "Data to send to the server from file")
 
 	restCmd.PersistentFlags().BoolVarP(&isVerbose, "verbose", "v", false, "Show more detail information")
 
