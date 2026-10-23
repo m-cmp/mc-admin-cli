@@ -120,6 +120,14 @@ menus:
     priority: 4
     menunumber: 1205
 
+  - id: cspdefinitions
+    parentid: cloudsps
+    displayname: CSP Definitions
+    restype: menu
+    isaction: true
+    priority: 6
+    menunumber: 1207
+
   - id: cspaccounts
     parentid: cloudsps
     displayname: CSP Accounts
