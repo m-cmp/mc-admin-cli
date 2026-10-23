@@ -467,6 +467,12 @@ case $IAM_MODE in
                 echo "✓ Certificate generation completed."
                 # Reclaim ownership of volume directories created by the certbot container (runs as root)
                 sudo chown -R "$USER:$USER" ../conf/docker/container-volume
+                # Register automatic renewal (the certificate is valid for 90 days)
+                if sudo ../conf/docker/scripts/renew-cert.sh --install-cron; then
+                    echo "✓ Certificate auto-renewal registered (/etc/cron.d/mcmp-cert-renew)."
+                else
+                    echo "⚠ Failed to register certificate auto-renewal. Run manually: sudo ../conf/docker/scripts/renew-cert.sh --install-cron"
+                fi
             else
                 echo "❌ Error occurred during certificate generation."
                 exit 1
