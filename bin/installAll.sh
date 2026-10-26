@@ -223,6 +223,23 @@ check_post_initial() {
     fi
 }
 
+# This is optional post-install setup: declining or failing the EULA check must
+# never change the service startup result, stop containers, or roll back data.
+check_nexus_eula() {
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "[WARN] python3 is unavailable; Nexus EULA setup was skipped."
+        echo "       Other services are unaffected. Accept later in the Nexus admin UI"
+        echo "       or follow README Step 6-1."
+        return 0
+    fi
+    if ! python3 "$ORIGINAL_DIR/nexus_eula.py" \
+        --compose-file "$PROJECT_ROOT_ABS/docker-compose.yaml" \
+        --env-file "$PROJECT_ROOT_ABS/.env"; then
+        echo "[WARN] Nexus EULA setup needs attention; the platform startup result is unchanged."
+    fi
+    return 0
+}
+
 # =============================================================================
 
 # Save current directory at script start
@@ -574,6 +591,7 @@ case $RUN_MODE in
 
         run_startup_waves
         check_post_initial
+        check_nexus_eula
 
         # Attach to the whole stack only after every wave is up (Ctrl+C to detach;
         # containers keep running)
@@ -738,6 +756,7 @@ case $RUN_MODE in
         monitor_containers
         monitor_exit=$?
         check_post_initial
+        check_nexus_eula
         exit $monitor_exit
         ;;
     skip)
