@@ -324,43 +324,38 @@ When you switch from Mode A (self-signed cert) to Mode B (Let's Encrypt) using t
 
 ## TLS Certificate Auto-Renewal (Mode B)
 
-When running in Mode B (Let's Encrypt), certbot renews the certificate automatically via `systemd certbot.timer` (twice daily). The certificate is renewed 30 days before expiry.
+Let's Encrypt certificates are valid for 90 days. The certificate is stored in the container volume `conf/docker/container-volume/mc-iam-manager/certs` (mounted into `mc-iam-manager-nginx`), **not** in the host's `/etc/letsencrypt`, so a host certbot or `certbot.timer` does not renew it.
 
-### Webroot setup (required once after installation)
+`conf/docker/scripts/renew-cert.sh` renews it with the certbot container:
+- `mc-iam-manager-nginx` running → **webroot** (nginx keeps serving `/.well-known/acme-challenge/`, no downtime), then `nginx -s reload`
+- `mc-iam-manager-nginx` not running → **standalone** (certbot binds port 80)
 
-Mode B uses the **webroot** authenticator so nginx keeps running during renewal. If your installation used the `standalone` authenticator (older setup), switch it once:
+Port 80 must be reachable from the internet for the HTTP-01 challenge.
 
-```shell
-sudo certbot certonly \
-  --webroot \
-  -w <mc-admin-cli-path>/conf/docker/container-volume/certbot/www \
-  -d <your-domain> \
-  --force-renewal
-```
+### Automatic renewal (cron)
 
-Verify the renewal config was updated:
+`installAll.sh -m prod` registers `/etc/cron.d/mcmp-cert-renew` (twice daily; certbot renews only within 30 days of expiry). Log: `/var/log/mcmp-cert-renew.log`.
+
+For installations made before this was added, register it once:
 
 ```shell
-sudo grep "authenticator" /etc/letsencrypt/renewal/<your-domain>.conf
-# Expected: authenticator = webroot
+sudo conf/docker/scripts/renew-cert.sh --install-cron
 ```
 
-### Deploy hook — nginx reload after renewal
-
-After renewal, the new certificate must be loaded into the running nginx container. Install the deploy hook once:
+### Manual renewal / verification
 
 ```shell
-sudo cp conf/docker/scripts/certbot-deploy-hook.sh \
-     /etc/letsencrypt/renewal-hooks/deploy/reload-nginx-docker.sh
-sudo chmod +x /etc/letsencrypt/renewal-hooks/deploy/reload-nginx-docker.sh
+sudo conf/docker/scripts/renew-cert.sh --dry-run        # Expected: "all simulated renewals succeeded"
+sudo conf/docker/scripts/renew-cert.sh --force-renewal  # renew now (e.g. certificate already expired)
 ```
 
-### Verify auto-renewal
+Check the served certificate:
 
 ```shell
-sudo certbot renew --dry-run
-# Expected: "all simulated renewals succeeded"
+echo | openssl s_client -connect <your-domain>:443 -servername <your-domain> 2>/dev/null | openssl x509 -noout -dates
 ```
+
+> If you previously installed `certbot-deploy-hook.sh` or a host `certbot` for this domain, remove them — they do not touch the certificate nginx uses.
 
 ---
 

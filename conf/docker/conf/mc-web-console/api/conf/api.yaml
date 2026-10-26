@@ -11,7 +11,7 @@ services:
       password:
 
   mc-iam-manager:
-    version: 0.7.1
+    version: 0.7.2
     baseurl: http://mc-iam-manager:5000
     auth:
       type: bearer
@@ -25,7 +25,7 @@ services:
       password: default
 
   mc-web-console:
-    version: 0.7.1
+    version: 0.7.2
     baseurl: http://mc-web-console-api:3000
     auth:
       type: bearer
@@ -946,6 +946,10 @@ serviceActions:
       method: get
       resourcePath: /api/auth/temp-credential-csps
       description: 임시 자격 증명을 지원하는 CSP 목록 조회
+    GetTemporaryCredentials:
+      method: post
+      resourcePath: /api/workspaces/temporary-credentials
+      description: "로그인 사용자의 워크스페이스 역할에 매핑된 CSP Role로 CSP 임시 자격 증명 발급. body: {workspaceId, cspType, region, authMethod?}"
     Appendresourcepermissionpolicesbyoperationid:
       method: put
       resourcePath: /api/permission/framewrok/{framework}/operationid/{operationid}/append
@@ -1118,6 +1122,10 @@ serviceActions:
       method: put
       resourcePath: /api/users/me/password
       description: 사용자 본인 비밀번호 변경
+    GetMyWorkspaceRoles:
+      method: get
+      resourcePath: /api/users/me/workspace-roles
+      description: 로그인 사용자 본인의 워크스페이스별 역할 목록
     Createorganization:
       method: post
       resourcePath: /api/organizations

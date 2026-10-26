@@ -1,7 +1,8 @@
 services:
 
-  # Certbot (for certificate issuance and renewal)
-  # This container is run once on demand.
+  # Certbot (initial certificate issuance)
+  # Run once by installAll.sh -m prod before the stack starts, so it uses standalone mode.
+  # Renewal is handled by scripts/renew-cert.sh (cron), which switches to webroot while nginx is running.
   mcmp-certbot:
     image: certbot/certbot:latest
     container_name: mcmp-certbot
@@ -10,6 +11,8 @@ services:
     volumes:
       # Stores Certbot config and issued certificates (read/write access required)
       - ./container-volume/mc-iam-manager/certs:/etc/letsencrypt
+      # Same webroot that mc-iam-manager-nginx serves for /.well-known/acme-challenge/
+      - ./container-volume/certbot/www:/var/www/certbot
     environment:
       MC_IAM_MANAGER_PUBLIC_DOMAIN: ${MC_IAM_MANAGER_PUBLIC_DOMAIN}
       MC_IAM_MANAGER_CERT_EMAIL: ${MC_IAM_MANAGER_CERT_EMAIL}
