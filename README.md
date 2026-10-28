@@ -244,7 +244,22 @@ until an administrator accepts the End User License Agreement. A fresh install s
 image pushes to the Docker registry fail with `403 You must accept the End User License Agreement`
 (e.g. SW Catalogs > Register > Public Registry > Import & Create).
 
-Review the EULA (https://links.sonatype.com/products/nxrm/ce-eula), then accept it once after the platform is up:
+After services start, `installAll.sh` checks the EULA state and skips the question if already accepted.
+Otherwise, it asks `[y/N]`; only `y` / `yes` submits approval and verifies the result.
+Declining, non-interactive input, or EULA errors do not stop other services or change the installation result;
+Nexus uploads/downloads remain restricted until approval. `--run skip` skips this step too.
+
+This requires `python3` and Docker Compose and uses the existing Nexus port and initial administrator password.
+To accept later without reinstalling or restarting services:
+
+```shell
+cd mc-admin-cli/bin
+python3 nexus_eula.py
+```
+
+If administrator credentials have changed, set `NEXUS_EULA_PASSWORD` (and optionally `NEXUS_EULA_USERNAME`).
+
+Alternatively, review the EULA (https://links.sonatype.com/products/nxrm/ce-eula), then use the API manually:
 ```shell
 cd mc-admin-cli/conf/docker
 NEXUS_PW=$(grep -E '^MC_APPLICATION_MANAGER_NEXUS_INITIAL_PASSWORD=' .env | cut -d= -f2-)
