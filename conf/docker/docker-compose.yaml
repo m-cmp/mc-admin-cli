@@ -1057,7 +1057,7 @@ services:
 
 
   mc-workflow-manager:
-    image: cloudbaristaorg/mc-workflow-manager:0.7.4
+    image: cloudbaristaorg/mc-workflow-manager:0.7.5
     pull_policy: always
     container_name: mc-workflow-manager
     platform: linux/amd64
