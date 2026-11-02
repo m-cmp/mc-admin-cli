@@ -24,6 +24,9 @@ usage() {
     echo "                              log:        Run with real-time logs"
     echo "                              background: Run in background with status monitoring"
     echo "                              skip:       Configure only, do not start services"
+    echo "  -c, --change-defaults <y|n> Change default credentials still identical to .env.setup"
+    echo "                              y: prompt for each value   n: keep defaults (no prompt)"
+    echo "                              Omitted: ask interactively (dev: keep by default, prod: change by default)"
     echo "  -h, --help                  Display this help message"
     echo ""
     echo "Examples:"
@@ -31,6 +34,7 @@ usage() {
     echo "  $0 -m dev -d mciam.local -r background     # Scenario 1: Local PC, named domain, plain HTTP"
     echo "  $0 -m dev -d 1.2.3.4 -r background         # Scenario 2: Remote VM, public IP, self-signed HTTPS"
     echo "  $0 -m prod -d iam.example.com -r background # Scenario 3: Remote VM, domain, Let's Encrypt HTTPS"
+    echo "  $0 -m dev -r background -c n               # Keep default credentials without asking"
     echo "  $0                                         # Interactive mode"
     exit 1
 }
@@ -41,6 +45,7 @@ usage() {
 IAM_MODE=""
 IAM_DOMAIN=""
 RUN_MODE=""
+CHANGE_DEFAULTS=""
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -54,6 +59,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -r|--run)
             RUN_MODE="$2"
+            shift 2
+            ;;
+        -c|--change-defaults)
+            CHANGE_DEFAULTS="$2"
             shift 2
             ;;
         -h|--help)
@@ -74,6 +83,11 @@ fi
 
 if [ -n "$RUN_MODE" ] && [ "$RUN_MODE" != "log" ] && [ "$RUN_MODE" != "background" ] && [ "$RUN_MODE" != "skip" ]; then
     echo "Error: Invalid run mode. Please use 'log', 'background', or 'skip'."
+    usage
+fi
+
+if [ -n "$CHANGE_DEFAULTS" ] && [ "$CHANGE_DEFAULTS" != "y" ] && [ "$CHANGE_DEFAULTS" != "n" ]; then
+    echo "Error: Invalid change-defaults value. Please use 'y' or 'n'."
     usage
 fi
 
@@ -347,6 +361,261 @@ ensure_env_file "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env.setup"        "$PROJ
 
 sync_missing_env_vars "$PROJECT_ROOT_ABS/.env.setup"                      "$PROJECT_ROOT_ABS/.env"
 sync_missing_env_vars "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env.setup"  "$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env"
+
+# =============================================================================
+# Default Credential Customization
+# =============================================================================
+# Which keys are offered is decided by .env.setup itself, not by this script:
+#   - keys named *_PASSWORD / *_PW are always offered
+#   - "# @ask" on the line(s) right above a key offers it too (name/id etc.)
+#   - "# @noask" right above a key excludes it (even a password)
+#   - "# @sync=<file under conf/docker>:<KEY>" right above a key copies its new
+#     value into that file's KEY as well (repeatable); for a .yaml/.yml file,
+#     KEY is a dotted path such as services.mc-infra-manager.auth.password
+# Annotations sit on their own comment line because the IAM preset scripts read
+# .env line by line and would keep an inline comment as part of the value.
+# Keys with an empty default or a ${...} reference are never offered.
+# Only keys whose .env value still equals the .env.setup default are offered.
+
+# Prints the value part of KEY=VALUE without a trailing " # comment".
+env_line_value() {
+    local value="${1#*=}"
+    value="${value%%[[:space:]]#*}"
+    value="${value%"${value##*[![:space:]]}"}"
+    printf '%s' "$value"
+}
+
+# Prints the current value of a key in an env file (empty if missing).
+read_env_value() {
+    local env_file="$1"
+    local key="$2"
+    local line
+    line=$(grep -m1 -E "^${key}=" "$env_file" 2>/dev/null) || return 0
+    env_line_value "$line"
+}
+
+# Replaces KEY's value in an env file, keeping any trailing " # comment".
+# No-op when the file or the key does not exist.
+set_env_value() {
+    local env_file="$1"
+    local key="$2"
+    local value="$3"
+    [ -f "$env_file" ] || return 0
+    grep -qE "^${key}=" "$env_file" || return 0
+
+    local tmpfile
+    tmpfile=$(mktemp)
+    awk -v key="$key" -v value="$value" '
+        index($0, key "=") == 1 {
+            rest = substr($0, length(key) + 2)
+            comment = ""
+            if (match(rest, /[ \t]+#/)) comment = substr(rest, RSTART)
+            print key "=" value comment
+            next
+        }
+        { print }
+    ' "$env_file" > "$tmpfile" && cat "$tmpfile" > "$env_file"
+    rm -f "$tmpfile"
+    echo "  ✓ ${key} updated in ${env_file##*/conf/docker/}"
+}
+
+# Replaces the scalar at a dotted path (e.g. services.mc-infra-manager.auth.password)
+# in a YAML file, single-quoted. No-op when the file or the path does not exist.
+set_yaml_value() {
+    local yaml_file="$1"
+    local path="$2"
+    local value="$3"
+    [ -f "$yaml_file" ] || return 0
+
+    local tmpfile
+    tmpfile=$(mktemp)
+    if awk -v path="$path" -v value="$value" '
+        BEGIN { depth = 0; done = 0 }
+        !done && match($0, /^ *[A-Za-z0-9_.-]+:/) {
+            keyend = RLENGTH
+            indent = match($0, /[^ ]/) - 1
+            key = substr($0, indent + 1, keyend - indent - 1)
+            while (depth > 0 && indents[depth] >= indent) depth--
+            depth++; indents[depth] = indent; keys[depth] = key
+            joined = keys[1]
+            for (i = 2; i <= depth; i++) joined = joined "." keys[i]
+            if (joined == path) {
+                printf "%" indent "s%s: '\''%s'\''\n", "", key, value
+                done = 1
+                next
+            }
+        }
+        { print }
+        END { exit done ? 0 : 1 }
+    ' "$yaml_file" > "$tmpfile"; then
+        cat "$tmpfile" > "$yaml_file"
+        echo "  ✓ ${path} updated in ${yaml_file##*/conf/docker/}"
+    fi
+    rm -f "$tmpfile"
+}
+
+CUSTOM_KEYS=()
+CUSTOM_DEFAULTS=()
+CUSTOM_SYNCS=()
+
+# Fills CUSTOM_KEYS / CUSTOM_DEFAULTS / CUSTOM_SYNCS from the annotated .env.setup.
+collect_customizable_keys() {
+    local setup_file="$1"
+    local env_file="$2"
+    local line key default ask noask syncs
+
+    ask=false; noask=false; syncs=""
+    while IFS= read -r line || [ -n "$line" ]; do
+        if [[ "$line" =~ ^[[:space:]]*#[[:space:]]*@noask ]]; then
+            noask=true; continue
+        elif [[ "$line" =~ ^[[:space:]]*#[[:space:]]*@ask ]]; then
+            ask=true; continue
+        elif [[ "$line" =~ ^[[:space:]]*#[[:space:]]*@sync=([^[:space:]]+) ]]; then
+            syncs="${syncs} ${BASH_REMATCH[1]}"; continue
+        elif [[ "$line" =~ ^[[:space:]]*# ]]; then
+            continue
+        elif [[ ! "$line" =~ ^([A-Z_][A-Z0-9_]*)= ]]; then
+            ask=false; noask=false; syncs=""
+            continue
+        fi
+
+        key="${BASH_REMATCH[1]}"
+        default=$(env_line_value "$line")
+        if ! $noask && [ -n "$default" ] && [[ "$default" != *'${'* ]] \
+            && { $ask || [[ "$key" =~ _(PASSWORD|PW)$ ]]; } \
+            && [ "$(read_env_value "$env_file" "$key")" = "$default" ]; then
+            CUSTOM_KEYS+=("$key")
+            CUSTOM_DEFAULTS+=("$default")
+            CUSTOM_SYNCS+=("$syncs")
+        fi
+        ask=false; noask=false; syncs=""
+    done < "$setup_file"
+}
+
+is_secret_key() {
+    [[ "$1" =~ _(PASSWORD|PW)$ ]]
+}
+
+# Characters that would break compose interpolation, sed/awk or comment parsing.
+is_valid_env_value() {
+    [ -n "$1" ] && [[ ! "$1" =~ [[:space:]\$\`\'\"\|#\\] ]]
+}
+
+# Reads a new value for one key into PROMPT_RESULT (empty = keep default).
+prompt_env_value() {
+    local key="$1"
+    local default="$2"
+    local value confirm
+
+    while true; do
+        if is_secret_key "$key"; then
+            read -rs -p "${key} [keep default]: " value; echo ""
+            if [ -n "$value" ]; then
+                read -rs -p "${key} (confirm): " confirm; echo ""
+                if [ "$value" != "$confirm" ]; then
+                    echo "  Values do not match. Try again."
+                    continue
+                fi
+            fi
+        else
+            read -r -p "${key} [${default}]: " value
+        fi
+
+        if [ -z "$value" ] || [ "$value" = "$default" ]; then
+            PROMPT_RESULT=""
+            return 0
+        fi
+        if is_valid_env_value "$value"; then
+            PROMPT_RESULT="$value"
+            return 0
+        fi
+        echo "  Not allowed: spaces and \$ \` ' \" | # \\. Try again."
+    done
+}
+
+customize_default_values() {
+    local setup_file="$PROJECT_ROOT_ABS/.env.setup"
+    local root_env="$PROJECT_ROOT_ABS/.env"
+    local iam_env="$PROJECT_ROOT_ABS/conf/mc-iam-manager/.env"
+
+    collect_customizable_keys "$setup_file" "$root_env"
+    [ ${#CUSTOM_KEYS[@]} -eq 0 ] && return 0
+
+    echo ""
+    echo "=========================================="
+    echo "Default Values"
+    echo "=========================================="
+    echo "These keys still use the defaults from .env.setup:"
+    local key
+    for key in "${CUSTOM_KEYS[@]}"; do
+        echo "  - $key"
+    done
+
+    local default_answer="y"
+    if [ "$IAM_MODE" = "prod" ]; then
+        default_answer="n"
+        echo ""
+        echo "⚠️  Production mode: default passwords are public. Changing them is strongly recommended."
+    fi
+    if [ -d "$PROJECT_ROOT_ABS/container-volume" ] \
+        && [ -n "$(ls -A "$PROJECT_ROOT_ABS/container-volume" 2>/dev/null)" ]; then
+        echo ""
+        echo "⚠️  container-volume already has data. New values do not apply to databases that are"
+        echo "   already initialized — run ./cleanAll.sh first if you change them."
+    fi
+
+    local keep
+    if [ "$CHANGE_DEFAULTS" = "y" ]; then
+        keep="n"
+    elif [ "$CHANGE_DEFAULTS" = "n" ]; then
+        keep="y"
+    elif [ ! -t 0 ]; then
+        keep="y"
+        echo "Non-interactive input — keeping default values (use -c y to change them)."
+    else
+        local hint="Y/n"
+        [ "$default_answer" = "n" ] && hint="y/N"
+        while true; do
+            echo ""
+            read -r -p "Keep all default values? (${hint}): " keep
+            keep="${keep:-$default_answer}"
+            case "$keep" in
+                y|Y) keep="y"; break ;;
+                n|N) keep="n"; break ;;
+                *) echo "Please enter y or n." ;;
+            esac
+        done
+    fi
+
+    if [ "$keep" = "y" ]; then
+        echo "✓ Keeping default values."
+        return 0
+    fi
+
+    echo ""
+    echo "Enter a new value for each key (press Enter to keep the default)."
+    local i sync file target changed=0
+    for i in "${!CUSTOM_KEYS[@]}"; do
+        key="${CUSTOM_KEYS[$i]}"
+        prompt_env_value "$key" "${CUSTOM_DEFAULTS[$i]}"
+        [ -z "$PROMPT_RESULT" ] && continue
+
+        set_env_value "$root_env" "$key" "$PROMPT_RESULT"
+        set_env_value "$iam_env"  "$key" "$PROMPT_RESULT"
+        for sync in ${CUSTOM_SYNCS[$i]}; do
+            file="${sync%%:*}"
+            target="${sync#*:}"
+            case "$file" in
+                *.yaml|*.yml) set_yaml_value "$PROJECT_ROOT_ABS/$file" "$target" "$PROMPT_RESULT" ;;
+                *)            set_env_value  "$PROJECT_ROOT_ABS/$file" "$target" "$PROMPT_RESULT" ;;
+            esac
+        done
+        changed=$((changed + 1))
+    done
+    echo "✓ ${changed} value(s) changed."
+}
+
+customize_default_values
 
 # =============================================================================
 # Domain Configuration

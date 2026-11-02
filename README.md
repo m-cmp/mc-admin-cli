@@ -148,8 +148,22 @@ Decide which mode fits your environment. `installAll.sh` will prompt you interac
 `installAll.sh` automatically:
 1. Creates `.env` files from `.env.setup` templates if they do not exist
 2. Prompts for Mode (A/B) and domain — or accepts them as CLI flags
-3. Injects the domain into the environment files
-4. Generates TLS certificates (Mode A: self-signed, Mode B: Let's Encrypt) and nginx config
+3. Asks whether to keep the default credentials still unchanged from `.env.setup` (see below)
+4. Injects the domain into the environment files
+5. Generates TLS certificates (Mode A: self-signed, Mode B: Let's Encrypt) and nginx config
+
+**Default credentials** — If any target key in `conf/docker/.env` still has its `.env.setup` default, `installAll.sh` asks `Keep all default values?`. Answering `n` prompts for each key (Enter keeps the default; passwords are hidden and confirmed). The default answer is `y` in dev mode and `n` in prod mode. Use `-c y|n` to skip the question; without a terminal, defaults are kept.
+
+Target keys are defined in `conf/docker/.env.setup` — no script change is needed to add or remove one:
+
+| Rule in `.env.setup` | Effect |
+|---|---|
+| Key name ends with `_PASSWORD` or `_PW` | Always a target |
+| `# @ask` on the line above a key | Adds the key (e.g. IDs, names) |
+| `# @noask` on the line above a key | Excludes the key, even a password |
+| `# @sync=<file>:<KEY>` on the line above a key | Also writes the new value to `<KEY>` in `<file>` (relative to `conf/docker`); for a `.yaml` file, `<KEY>` is a dotted path such as `services.mc-infra-manager.auth.password` |
+
+Keys with an empty default or a `${...}` reference are never targets. New values are written to `conf/docker/.env`, to `conf/docker/conf/mc-iam-manager/.env` when it has the same key, and to any `@sync` target. Databases that are already initialized keep their old credentials, so run `cleanAll.sh` before changing values on an existing setup.
 
 ```shell
 # Interactive mode — prompts for mode, domain, and run mode
@@ -166,6 +180,9 @@ Decide which mode fits your environment. `installAll.sh` will prompt you interac
 
 # Generate config files only, skip container start
 ./installAll.sh --mode dev --run skip
+
+# Skip the keep/change question and go straight to per-key credential prompts
+./installAll.sh --mode dev --run background --change-defaults y
 ```
 
 ## Step 4. Start the Platform
