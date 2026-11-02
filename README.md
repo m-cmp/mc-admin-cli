@@ -354,6 +354,27 @@ When you switch from Mode A (self-signed cert) to Mode B (Let's Encrypt) using t
    - **Firefox**: use a new browser profile or delete `SiteSecurityServiceState.txt` from your profile folder
 
 
+### Web Console 504 on long infra operations (nginx read timeout)
+
+Some infra operations are synchronous in mc-infra-manager (CB-Tumblebug): the response comes back only after the CSP finishes. Measured on stage: GCP node delete 62 seconds, AWS EKS NodeGroup create 99 seconds. If that is longer than the nginx `proxy_read_timeout` of the Web Console location, the browser gets **504** (and a failure toast) even though the operation completes successfully afterwards.
+
+The Web Console location (`:3001`) in `conf/docker/conf/mc-iam-manager/nginx.template.conf` (and `nginx.template.local.conf`) uses `proxy_read_timeout 120s` (default was 60s).
+
+**If 504 still occurs**, raise it further. Keep it as short as practical — a longer value only makes the browser wait longer.
+
+```bash
+# 1. Edit the Web Console location in the template
+#    proxy_read_timeout 120s;  →  e.g. proxy_read_timeout 180s;
+vi conf/docker/conf/mc-iam-manager/nginx.template.conf
+
+# 2. Apply to a running installation (generated file)
+sed -i '/upstream_console/,/^        }/ s/proxy_read_timeout 120s;/proxy_read_timeout 180s;/' \
+  conf/docker/container-volume/mc-iam-manager/nginx/nginx.conf
+docker exec mc-iam-manager-nginx nginx -t && docker exec mc-iam-manager-nginx nginx -s reload
+```
+
+To confirm the cause, look for `upstream timed out ... while reading response header from upstream` in `docker logs mc-iam-manager-nginx` at the time of the 504.
+
 ## TLS Certificate Auto-Renewal (Mode B)
 
 Let's Encrypt certificates are valid for 90 days. The certificate is stored in the container volume `conf/docker/container-volume/mc-iam-manager/certs` (mounted into `mc-iam-manager-nginx`), **not** in the host's `/etc/letsencrypt`, so a host certbot or `certbot.timer` does not renew it.
