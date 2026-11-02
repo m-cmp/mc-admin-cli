@@ -356,19 +356,19 @@ When you switch from Mode A (self-signed cert) to Mode B (Let's Encrypt) using t
 
 ### Web Console 504 on long infra operations (nginx read timeout)
 
-Some infra operations — node delete, node power control — are synchronous in mc-infra-manager (CB-Tumblebug): the response comes back only after the CSP finishes. On GCP a node delete took about 62 seconds. If that is longer than the nginx `proxy_read_timeout` of the Web Console location, the browser gets **504** even though the operation completes successfully afterwards.
+Some infra operations are synchronous in mc-infra-manager (CB-Tumblebug): the response comes back only after the CSP finishes. Measured on stage: GCP node delete 62 seconds, AWS EKS NodeGroup create 99 seconds. If that is longer than the nginx `proxy_read_timeout` of the Web Console location, the browser gets **504** (and a failure toast) even though the operation completes successfully afterwards.
 
-The Web Console location (`:3001`) in `conf/docker/conf/mc-iam-manager/nginx.template.conf` (and `nginx.template.local.conf`) uses `proxy_read_timeout 90s`.
+The Web Console location (`:3001`) in `conf/docker/conf/mc-iam-manager/nginx.template.conf` (and `nginx.template.local.conf`) uses `proxy_read_timeout 120s` (default was 60s).
 
-**If 504 still occurs**, raise it to `120s`. Keep it as short as practical — a longer value only makes the browser wait longer.
+**If 504 still occurs**, raise it further. Keep it as short as practical — a longer value only makes the browser wait longer.
 
 ```bash
 # 1. Edit the Web Console location in the template
-#    proxy_read_timeout 90s;  →  proxy_read_timeout 120s;
+#    proxy_read_timeout 120s;  →  e.g. proxy_read_timeout 180s;
 vi conf/docker/conf/mc-iam-manager/nginx.template.conf
 
 # 2. Apply to a running installation (generated file)
-sed -i '/upstream_console/,/^        }/ s/proxy_read_timeout 90s;/proxy_read_timeout 120s;/' \
+sed -i '/upstream_console/,/^        }/ s/proxy_read_timeout 120s;/proxy_read_timeout 180s;/' \
   conf/docker/container-volume/mc-iam-manager/nginx/nginx.conf
 docker exec mc-iam-manager-nginx nginx -t && docker exec mc-iam-manager-nginx nginx -s reload
 ```
