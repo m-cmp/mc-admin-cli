@@ -25,7 +25,7 @@ services:
       password: default
 
   mc-web-console:
-    version: 0.7.2
+    version: 0.7.3
     baseurl: http://mc-web-console-api:3000
     auth:
       type: bearer
