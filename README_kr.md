@@ -279,10 +279,18 @@ Mode A(자체 서명 인증서) → Mode B(Let's Encrypt)로 같은 도메인을
 vi conf/docker/conf/mc-iam-manager/nginx.template.conf
 
 # 2. 기동 중인 설치에 반영(생성된 파일)
-sed -i '/upstream_console/,/^        }/ s/proxy_read_timeout 120s;/proxy_read_timeout 180s;/' \
-  conf/docker/container-volume/mc-iam-manager/nginx/nginx.conf
+#    수정본을 `cat >` 로 덮어써서 파일 inode 를 유지(아래 참고)
+NGINX_CONF=conf/docker/container-volume/mc-iam-manager/nginx/nginx.conf
+sed '/upstream_console/,/^        }/ s/proxy_read_timeout 120s;/proxy_read_timeout 180s;/' \
+  "$NGINX_CONF" > /tmp/nginx.conf.new
+cat /tmp/nginx.conf.new > "$NGINX_CONF" && rm /tmp/nginx.conf.new
 docker exec mc-iam-manager-nginx nginx -t && docker exec mc-iam-manager-nginx nginx -s reload
+
+# 3. nginx 가 실제로 쓰는 값 확인
+docker exec mc-iam-manager-nginx nginx -T 2>/dev/null | grep proxy_read_timeout
 ```
+
+> **참고:** `nginx.conf` 는 컨테이너에 단일 파일(`/etc/nginx/nginx.conf`)로 bind mount 됩니다. `sed -i`(및 파일을 새로 만들어 교체하는 방식으로 저장하는 편집기)는 inode 가 바뀐 새 파일을 만들기 때문에, 컨테이너는 옛 내용을 계속 보고 `nginx -s reload` 해도 반영되지 않습니다. 이미 그렇게 수정했다면 reload 대신 `docker restart mc-iam-manager-nginx` 를 실행합니다.
 
 원인 확인: 504 발생 시각의 `docker logs mc-iam-manager-nginx` 에 `upstream timed out ... while reading response header from upstream` 이 있는지 봅니다.
 

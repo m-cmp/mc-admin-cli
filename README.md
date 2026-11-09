@@ -368,10 +368,18 @@ The Web Console location (`:3001`) in `conf/docker/conf/mc-iam-manager/nginx.tem
 vi conf/docker/conf/mc-iam-manager/nginx.template.conf
 
 # 2. Apply to a running installation (generated file)
-sed -i '/upstream_console/,/^        }/ s/proxy_read_timeout 120s;/proxy_read_timeout 180s;/' \
-  conf/docker/container-volume/mc-iam-manager/nginx/nginx.conf
+#    Write the edited copy back with `cat >` so the file keeps its inode (see note below)
+NGINX_CONF=conf/docker/container-volume/mc-iam-manager/nginx/nginx.conf
+sed '/upstream_console/,/^        }/ s/proxy_read_timeout 120s;/proxy_read_timeout 180s;/' \
+  "$NGINX_CONF" > /tmp/nginx.conf.new
+cat /tmp/nginx.conf.new > "$NGINX_CONF" && rm /tmp/nginx.conf.new
 docker exec mc-iam-manager-nginx nginx -t && docker exec mc-iam-manager-nginx nginx -s reload
+
+# 3. Check the value nginx is actually using
+docker exec mc-iam-manager-nginx nginx -T 2>/dev/null | grep proxy_read_timeout
 ```
+
+> **Note:** `nginx.conf` is bind-mounted into the container as a single file (`/etc/nginx/nginx.conf`). `sed -i` (and editors that save by replacing the file) creates a new file with a new inode, so the container keeps seeing the old content and `nginx -s reload` has no effect. If you already edited it that way, run `docker restart mc-iam-manager-nginx` instead of reload.
 
 To confirm the cause, look for `upstream timed out ... while reading response header from upstream` in `docker logs mc-iam-manager-nginx` at the time of the 504.
 
