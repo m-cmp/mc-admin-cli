@@ -265,6 +265,27 @@ Mode A(자체 서명 인증서) → Mode B(Let's Encrypt)로 같은 도메인을
    - **Firefox**: 새 브라우저 프로파일 사용 또는 프로파일 폴더의 `SiteSecurityServiceState.txt` 삭제
 
 
+### Web Console 장시간 Infra 작업 504 (nginx 응답 대기 시간)
+
+일부 Infra 작업은 mc-infra-manager(CB-Tumblebug)에서 동기로 처리되어, CSP 작업이 끝난 뒤에야 응답합니다. stage 실측: GCP 노드 삭제 62초, AWS EKS NodeGroup 생성 99초. 이 시간이 Web Console location 의 nginx `proxy_read_timeout` 보다 길면, 작업은 이후 정상 완료되는데도 브라우저는 **504**(와 실패 토스트)를 받습니다.
+
+`conf/docker/conf/mc-iam-manager/nginx.template.conf`(및 `nginx.template.local.conf`)의 Web Console location(`:3001`)은 `proxy_read_timeout 120s` 를 사용합니다(기존 기본값 60s).
+
+**504 가 계속 발생하면** 값을 더 늘립니다. 값을 늘리면 브라우저가 그만큼 오래 기다리게 되므로 필요한 만큼만 늘립니다.
+
+```bash
+# 1. 템플릿의 Web Console location 수정
+#    proxy_read_timeout 120s;  →  예: proxy_read_timeout 180s;
+vi conf/docker/conf/mc-iam-manager/nginx.template.conf
+
+# 2. 기동 중인 설치에 반영(생성된 파일)
+sed -i '/upstream_console/,/^        }/ s/proxy_read_timeout 120s;/proxy_read_timeout 180s;/' \
+  conf/docker/container-volume/mc-iam-manager/nginx/nginx.conf
+docker exec mc-iam-manager-nginx nginx -t && docker exec mc-iam-manager-nginx nginx -s reload
+```
+
+원인 확인: 504 발생 시각의 `docker logs mc-iam-manager-nginx` 에 `upstream timed out ... while reading response header from upstream` 이 있는지 봅니다.
+
 ## TLS 인증서 자동갱신 (Mode B)
 
 Let's Encrypt 인증서의 유효기간은 90일입니다. 인증서는 호스트의 `/etc/letsencrypt`가 **아니라** 컨테이너 볼륨 `conf/docker/container-volume/mc-iam-manager/certs`(`mc-iam-manager-nginx`에 마운트)에 저장되므로, 호스트 certbot이나 `certbot.timer`로는 갱신되지 않습니다.
