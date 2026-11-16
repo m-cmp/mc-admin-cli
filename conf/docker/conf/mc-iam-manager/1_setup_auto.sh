@@ -779,10 +779,20 @@ init_aws_csp_config() {
     local DOMAIN="${MC_IAM_MANAGER_PUBLIC_DOMAIN:-}"
     local REALM="${MC_IAM_MANAGER_KEYCLOAK_REALM:-mciam}"
     local PREFIX="${MC_IAM_MANAGER_CSP_ROLE_PREFIX:-mciam}"
+    local AUDIENCE="${MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_NAME:-}"
 
     # MC_IAM_MANAGER_AWS_ACCOUNT_ID 미설정 또는 placeholder이면 skip
     if [ -z "$ACCOUNT_ID" ] || [ "$ACCOUNT_ID" = "notyet" ]; then
         echo "  ⓘ MC_IAM_MANAGER_AWS_ACCOUNT_ID not configured — skipping AWS CSP setup"
+        return 0
+    fi
+    # 값이 틀리면 잘못된 계정·Config 를 만들지 않고 skip (.env 는 최초 설정용, 이후 변경은 API)
+    if ! [[ "$ACCOUNT_ID" =~ ^[0-9]{12}$ ]]; then
+        echo "  ⚠️  skip: MC_IAM_MANAGER_AWS_ACCOUNT_ID ('$ACCOUNT_ID') is not a 12-digit AWS account ID — check .env"
+        return 0
+    fi
+    if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "localhost" ] || [[ "$DOMAIN" != *.* ]]; then
+        echo "  ⚠️  skip: MC_IAM_MANAGER_PUBLIC_DOMAIN ('$DOMAIN') is empty or an internal host name — check .env"
         return 0
     fi
 
@@ -796,12 +806,14 @@ init_aws_csp_config() {
 
     # --- Step 1: mcmp_csp_accounts 생성 --- POST /api/csp-accounts
     # list-first 패턴: 기존 항목이 있으면 ID를 가져오고, 없으면 생성
-    local ACCOUNT_DB_ID http_code
-    ACCOUNT_DB_ID=$(curl -s -X POST \
+    # (list 의 name 필터는 부분 일치라 이름이 정확히 같은 항목만 고른다. 기존 값은 갱신하지 않고 다르면 경고만)
+    local ACCOUNT_DB_ID ACCOUNT_JSON http_code
+    ACCOUNT_JSON=$(curl -s -X POST \
         -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         -H "Content-Type: application/json" \
         "$MC_IAM_MANAGER_HOST/api/csp-accounts/list" \
-        -d "{\"name\":\"aws-default\"}" | jq -r '.[0].id // empty' 2>/dev/null)
+        -d "{\"name\":\"aws-default\",\"csp_type\":\"aws\"}" | jq -c 'if type == "array" then ([.[] | select(.name == "aws-default")][0] // empty) else empty end' 2>/dev/null)
+    ACCOUNT_DB_ID=$(echo "$ACCOUNT_JSON" | jq -r '.id // empty' 2>/dev/null)
 
     if [ -z "$ACCOUNT_DB_ID" ]; then
         local account_resp account_body
@@ -821,41 +833,62 @@ init_aws_csp_config() {
         fi
     else
         echo "  ✓ CspAccount already exists (id=${ACCOUNT_DB_ID})"
+        local existing_account_id
+        existing_account_id=$(echo "$ACCOUNT_JSON" | jq -r '.account_info.account_id // empty' 2>/dev/null)
+        if [ "$existing_account_id" != "$ACCOUNT_ID" ]; then
+            echo "  ⚠️  CspAccount account_id ('$existing_account_id') differs from .env ('$ACCOUNT_ID') — not changed (update via API)"
+        fi
     fi
     [ -z "$ACCOUNT_DB_ID" ] && { echo "  ✗ CspAccount ID not found"; return 1; }
 
     # --- Step 2: mcmp_csp_idp_configs 생성 (OIDC) --- POST /api/csp-idp-configs
-    # list-first 패턴
-    local IDP_EXISTS
-    IDP_EXISTS=$(curl -s -X POST \
+    # list-first 패턴 (이름 정확히 일치, 기존 값은 갱신하지 않고 다르면 경고만)
+    local IDP_CONFIG_ID IDP_JSON
+    IDP_JSON=$(curl -s -X POST \
         -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         -H "Content-Type: application/json" \
         "$MC_IAM_MANAGER_HOST/api/csp-idp-configs/list" \
-        -d "{\"name\":\"aws-oidc\",\"csp_account_id\":${ACCOUNT_DB_ID}}" | jq -r '.[0].id // empty' 2>/dev/null)
+        -d "{\"name\":\"aws-oidc\",\"csp_account_id\":${ACCOUNT_DB_ID}}" | jq -c 'if type == "array" then ([.[] | select(.name == "aws-oidc")][0] // empty) else empty end' 2>/dev/null)
+    IDP_CONFIG_ID=$(echo "$IDP_JSON" | jq -r '.id // empty' 2>/dev/null)
 
-    if [ -z "$IDP_EXISTS" ]; then
-        http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+    if [ -z "$IDP_CONFIG_ID" ]; then
+        local idp_body idp_resp
+        idp_body=$(jq -n --argjson acc "$ACCOUNT_DB_ID" --arg role "$ROLE_ARN" --arg provider "$OIDC_PROVIDER_ARN" --arg aud "$AUDIENCE" \
+            '{name: "aws-oidc", csp_account_id: $acc, auth_method: "OIDC",
+              config: ({role_arn: $role, oidc_provider_arn: $provider} + (if $aud != "" then {audience: $aud} else {} end))}')
+        idp_resp=$(curl -s -w "\n%{http_code}" -X POST \
             -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
             -H "Content-Type: application/json" \
             "$MC_IAM_MANAGER_HOST/api/csp-idp-configs" \
-            -d "{\"name\":\"aws-oidc\",\"csp_account_id\":${ACCOUNT_DB_ID},\"auth_method\":\"OIDC\",\"config\":{\"role_arn\":\"${ROLE_ARN}\",\"oidc_provider_arn\":\"${OIDC_PROVIDER_ARN}\"}}")
+            -d "$idp_body")
+        http_code=$(echo "$idp_resp" | tail -1)
         if [ "$http_code" = "201" ] || [ "$http_code" = "200" ]; then
             echo "  ✓ CspIdpConfig (OIDC) created"
+            IDP_CONFIG_ID=$(echo "$idp_resp" | sed '$d' | jq -r '.id // empty' 2>/dev/null)
         else
-            echo "  ✗ CspIdpConfig failed (HTTP $http_code)"
+            echo "  ✗ CspIdpConfig failed (HTTP $http_code): $(echo "$idp_resp" | sed '$d')"
             return 1
         fi
     else
-        echo "  ✓ CspIdpConfig already exists"
+        echo "  ✓ CspIdpConfig already exists (id=${IDP_CONFIG_ID})"
+        local existing_role existing_provider
+        existing_role=$(echo "$IDP_JSON" | jq -r '.config.role_arn // empty' 2>/dev/null)
+        existing_provider=$(echo "$IDP_JSON" | jq -r '.config.oidc_provider_arn // empty' 2>/dev/null)
+        if [ "$existing_role" != "$ROLE_ARN" ] || [ "$existing_provider" != "$OIDC_PROVIDER_ARN" ]; then
+            echo "  ⚠️  CspIdpConfig role_arn/oidc_provider_arn differ from .env — not changed (update via API)"
+            echo "      existing: role_arn=$existing_role oidc_provider_arn=$existing_provider"
+        fi
     fi
+    [ -z "$IDP_CONFIG_ID" ] && { echo "  ✗ CspIdpConfig ID not found"; return 1; }
 
     # --- Step 3: mcmp_role_csp_roles 등록 — POST /api/roles/csp ---
+    # 소속 IdP Config 를 넘기면 IAM 이 계정과 idp_identifier(Config 의 Provider ARN)를 채운다
     local csp_role_resp
     csp_role_resp=$(curl -s -w "\n%{http_code}" -X POST \
         -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         -H "Content-Type: application/json" \
         "$MC_IAM_MANAGER_HOST/api/roles/csp" \
-        -d "{\"cspRoleName\":\"${CSP_ROLE_NAME}\",\"cspType\":\"aws\",\"authMethod\":\"OIDC\"}")
+        -d "{\"cspRoleName\":\"${CSP_ROLE_NAME}\",\"cspType\":\"aws\",\"authMethod\":\"OIDC\",\"cspIdpConfigId\":${IDP_CONFIG_ID}}")
     http_code=$(echo "$csp_role_resp" | tail -1)
     local csp_role_body
     csp_role_body=$(echo "$csp_role_resp" | sed '$d')
