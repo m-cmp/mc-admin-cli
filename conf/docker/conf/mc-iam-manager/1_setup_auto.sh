@@ -79,6 +79,15 @@ auto_setup() {
     fi
     echo "✓ Projects synced successfully"
     
+    # 6-1. Ensure the OIDC client for CSP temporary credentials (create if missing + audience mapper)
+    echo "Step 6-1: Ensuring Keycloak OIDC client..."
+    ensure_oidc_client
+    if [ $? -ne 0 ]; then
+        echo "WARNING: Keycloak OIDC client ensure failed (non-fatal) — CSP temporary credentials will fail with invalid_client"
+    else
+        echo "✓ Keycloak OIDC client ensured"
+    fi
+
     # 7. Keycloak client redirect URI configuration
     echo "Step 7: Configuring Keycloak client redirect URIs..."
     configure_keycloak_client_uris
@@ -770,10 +779,20 @@ init_aws_csp_config() {
     local DOMAIN="${MC_IAM_MANAGER_PUBLIC_DOMAIN:-}"
     local REALM="${MC_IAM_MANAGER_KEYCLOAK_REALM:-mciam}"
     local PREFIX="${MC_IAM_MANAGER_CSP_ROLE_PREFIX:-mciam}"
+    local AUDIENCE="${MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_NAME:-}"
 
     # MC_IAM_MANAGER_AWS_ACCOUNT_ID 미설정 또는 placeholder이면 skip
     if [ -z "$ACCOUNT_ID" ] || [ "$ACCOUNT_ID" = "notyet" ]; then
         echo "  ⓘ MC_IAM_MANAGER_AWS_ACCOUNT_ID not configured — skipping AWS CSP setup"
+        return 0
+    fi
+    # 값이 틀리면 잘못된 계정·Config 를 만들지 않고 skip (.env 는 최초 설정용, 이후 변경은 API)
+    if ! [[ "$ACCOUNT_ID" =~ ^[0-9]{12}$ ]]; then
+        echo "  ⚠️  skip: MC_IAM_MANAGER_AWS_ACCOUNT_ID ('$ACCOUNT_ID') is not a 12-digit AWS account ID — check .env"
+        return 0
+    fi
+    if [ -z "$DOMAIN" ] || [ "$DOMAIN" = "localhost" ] || [[ "$DOMAIN" != *.* ]]; then
+        echo "  ⚠️  skip: MC_IAM_MANAGER_PUBLIC_DOMAIN ('$DOMAIN') is empty or an internal host name — check .env"
         return 0
     fi
 
@@ -787,12 +806,14 @@ init_aws_csp_config() {
 
     # --- Step 1: mcmp_csp_accounts 생성 --- POST /api/csp-accounts
     # list-first 패턴: 기존 항목이 있으면 ID를 가져오고, 없으면 생성
-    local ACCOUNT_DB_ID http_code
-    ACCOUNT_DB_ID=$(curl -s -X POST \
+    # (list 의 name 필터는 부분 일치라 이름이 정확히 같은 항목만 고른다. 기존 값은 갱신하지 않고 다르면 경고만)
+    local ACCOUNT_DB_ID ACCOUNT_JSON http_code
+    ACCOUNT_JSON=$(curl -s -X POST \
         -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         -H "Content-Type: application/json" \
         "$MC_IAM_MANAGER_HOST/api/csp-accounts/list" \
-        -d "{\"name\":\"aws-default\"}" | jq -r '.[0].id // empty' 2>/dev/null)
+        -d "{\"name\":\"aws-default\",\"csp_type\":\"aws\"}" | jq -c 'if type == "array" then ([.[] | select(.name == "aws-default")][0] // empty) else empty end' 2>/dev/null)
+    ACCOUNT_DB_ID=$(echo "$ACCOUNT_JSON" | jq -r '.id // empty' 2>/dev/null)
 
     if [ -z "$ACCOUNT_DB_ID" ]; then
         local account_resp account_body
@@ -812,41 +833,62 @@ init_aws_csp_config() {
         fi
     else
         echo "  ✓ CspAccount already exists (id=${ACCOUNT_DB_ID})"
+        local existing_account_id
+        existing_account_id=$(echo "$ACCOUNT_JSON" | jq -r '.account_info.account_id // empty' 2>/dev/null)
+        if [ "$existing_account_id" != "$ACCOUNT_ID" ]; then
+            echo "  ⚠️  CspAccount account_id ('$existing_account_id') differs from .env ('$ACCOUNT_ID') — not changed (update via API)"
+        fi
     fi
     [ -z "$ACCOUNT_DB_ID" ] && { echo "  ✗ CspAccount ID not found"; return 1; }
 
     # --- Step 2: mcmp_csp_idp_configs 생성 (OIDC) --- POST /api/csp-idp-configs
-    # list-first 패턴
-    local IDP_EXISTS
-    IDP_EXISTS=$(curl -s -X POST \
+    # list-first 패턴 (이름 정확히 일치, 기존 값은 갱신하지 않고 다르면 경고만)
+    local IDP_CONFIG_ID IDP_JSON
+    IDP_JSON=$(curl -s -X POST \
         -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         -H "Content-Type: application/json" \
         "$MC_IAM_MANAGER_HOST/api/csp-idp-configs/list" \
-        -d "{\"name\":\"aws-oidc\",\"csp_account_id\":${ACCOUNT_DB_ID}}" | jq -r '.[0].id // empty' 2>/dev/null)
+        -d "{\"name\":\"aws-oidc\",\"csp_account_id\":${ACCOUNT_DB_ID}}" | jq -c 'if type == "array" then ([.[] | select(.name == "aws-oidc")][0] // empty) else empty end' 2>/dev/null)
+    IDP_CONFIG_ID=$(echo "$IDP_JSON" | jq -r '.id // empty' 2>/dev/null)
 
-    if [ -z "$IDP_EXISTS" ]; then
-        http_code=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+    if [ -z "$IDP_CONFIG_ID" ]; then
+        local idp_body idp_resp
+        idp_body=$(jq -n --argjson acc "$ACCOUNT_DB_ID" --arg role "$ROLE_ARN" --arg provider "$OIDC_PROVIDER_ARN" --arg aud "$AUDIENCE" \
+            '{name: "aws-oidc", csp_account_id: $acc, auth_method: "OIDC",
+              config: ({role_arn: $role, oidc_provider_arn: $provider} + (if $aud != "" then {audience: $aud} else {} end))}')
+        idp_resp=$(curl -s -w "\n%{http_code}" -X POST \
             -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
             -H "Content-Type: application/json" \
             "$MC_IAM_MANAGER_HOST/api/csp-idp-configs" \
-            -d "{\"name\":\"aws-oidc\",\"csp_account_id\":${ACCOUNT_DB_ID},\"auth_method\":\"OIDC\",\"config\":{\"role_arn\":\"${ROLE_ARN}\",\"oidc_provider_arn\":\"${OIDC_PROVIDER_ARN}\"}}")
+            -d "$idp_body")
+        http_code=$(echo "$idp_resp" | tail -1)
         if [ "$http_code" = "201" ] || [ "$http_code" = "200" ]; then
             echo "  ✓ CspIdpConfig (OIDC) created"
+            IDP_CONFIG_ID=$(echo "$idp_resp" | sed '$d' | jq -r '.id // empty' 2>/dev/null)
         else
-            echo "  ✗ CspIdpConfig failed (HTTP $http_code)"
+            echo "  ✗ CspIdpConfig failed (HTTP $http_code): $(echo "$idp_resp" | sed '$d')"
             return 1
         fi
     else
-        echo "  ✓ CspIdpConfig already exists"
+        echo "  ✓ CspIdpConfig already exists (id=${IDP_CONFIG_ID})"
+        local existing_role existing_provider
+        existing_role=$(echo "$IDP_JSON" | jq -r '.config.role_arn // empty' 2>/dev/null)
+        existing_provider=$(echo "$IDP_JSON" | jq -r '.config.oidc_provider_arn // empty' 2>/dev/null)
+        if [ "$existing_role" != "$ROLE_ARN" ] || [ "$existing_provider" != "$OIDC_PROVIDER_ARN" ]; then
+            echo "  ⚠️  CspIdpConfig role_arn/oidc_provider_arn differ from .env — not changed (update via API)"
+            echo "      existing: role_arn=$existing_role oidc_provider_arn=$existing_provider"
+        fi
     fi
+    [ -z "$IDP_CONFIG_ID" ] && { echo "  ✗ CspIdpConfig ID not found"; return 1; }
 
     # --- Step 3: mcmp_role_csp_roles 등록 — POST /api/roles/csp ---
+    # 소속 IdP Config 를 넘기면 IAM 이 계정과 idp_identifier(Config 의 Provider ARN)를 채운다
     local csp_role_resp
     csp_role_resp=$(curl -s -w "\n%{http_code}" -X POST \
         -H "Authorization: Bearer $MC_IAM_MANAGER_PLATFORMADMIN_ACCESSTOKEN" \
         -H "Content-Type: application/json" \
         "$MC_IAM_MANAGER_HOST/api/roles/csp" \
-        -d "{\"cspRoleName\":\"${CSP_ROLE_NAME}\",\"cspType\":\"aws\",\"authMethod\":\"OIDC\"}")
+        -d "{\"cspRoleName\":\"${CSP_ROLE_NAME}\",\"cspType\":\"aws\",\"authMethod\":\"OIDC\",\"cspIdpConfigId\":${IDP_CONFIG_ID}}")
     http_code=$(echo "$csp_role_resp" | tail -1)
     local csp_role_body
     csp_role_body=$(echo "$csp_role_resp" | sed '$d')
@@ -971,6 +1013,92 @@ sync_projects() {
     echo "✓ Project sync completed successfully"
     echo "Response details:"
     echo "$response_body" | jq .
+    return 0
+}
+
+# Ensure the OIDC client used for CSP temporary credential issuance (MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_NAME).
+# mc-iam-manager creates it in /api/initial-admin; this is also checked here for older images and existing installs.
+# - Create if missing: confidential, Service accounts ON, Direct access grants ON, Standard flow OFF,
+#   secret=MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_SECRET
+# - Add an audience mapper (client itself in access token aud) if missing, to match the AWS OIDC Provider audience
+# - Other settings of an existing client are left untouched. Idempotent.
+ensure_oidc_client() {
+    echo "=== Ensuring Keycloak OIDC Client ==="
+
+    OIDC_CLIENT="$MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_NAME"
+    if [ -z "$OIDC_CLIENT" ] || [ -z "$MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_SECRET" ]; then
+        echo "ERROR: MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_NAME / MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_SECRET is not set"
+        return 1
+    fi
+
+    KC_ADMIN_TOKEN=$(curl -s -X POST \
+        "${MC_IAM_MANAGER_KEYCLOAK_HOST}/realms/master/protocol/openid-connect/token" \
+        -H "Content-Type: application/x-www-form-urlencoded" \
+        -d "grant_type=password" \
+        -d "client_id=admin-cli" \
+        --data-urlencode "username=${MC_IAM_MANAGER_KEYCLOAK_ADMIN}" \
+        --data-urlencode "password=${MC_IAM_MANAGER_KEYCLOAK_ADMIN_PASSWORD}" \
+        | jq -r '.access_token' 2>/dev/null)
+
+    if [ -z "$KC_ADMIN_TOKEN" ] || [ "$KC_ADMIN_TOKEN" = "null" ]; then
+        echo "ERROR: Failed to obtain Keycloak admin token"
+        return 1
+    fi
+
+    KC_ADMIN_URL="${MC_IAM_MANAGER_KEYCLOAK_HOST}/admin/realms/${MC_IAM_MANAGER_KEYCLOAK_REALM}"
+
+    AUD_MAPPER=$(jq -n --arg c "$OIDC_CLIENT" '{
+        name: "aud-mciam-oidc-Client",
+        protocol: "openid-connect",
+        protocolMapper: "oidc-audience-mapper",
+        config: {"included.client.audience": $c, "id.token.claim": "false", "access.token.claim": "true"}
+    }')
+
+    CLIENT_JSON=$(curl -s "${KC_ADMIN_URL}/clients?clientId=${OIDC_CLIENT}" \
+        -H "Authorization: Bearer ${KC_ADMIN_TOKEN}")
+    CLIENT_ID=$(echo "$CLIENT_JSON" | jq -r '.[0].id // empty' 2>/dev/null)
+
+    if [ -z "$CLIENT_ID" ]; then
+        BODY=$(jq -n --arg c "$OIDC_CLIENT" --arg s "$MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_SECRET" --argjson m "$AUD_MAPPER" '{
+            clientId: $c, name: $c, protocol: "openid-connect", enabled: true,
+            publicClient: false, clientAuthenticatorType: "client-secret", secret: $s,
+            serviceAccountsEnabled: true, directAccessGrantsEnabled: true,
+            standardFlowEnabled: false, implicitFlowEnabled: false,
+            protocolMappers: [$m]
+        }')
+        HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST "${KC_ADMIN_URL}/clients" \
+            -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$BODY")
+        if [ "$HTTP" = "201" ]; then
+            echo "  ✓ Created: $OIDC_CLIENT (confidential, service accounts, direct access grants, audience mapper)"
+            return 0
+        fi
+        echo "  ✗ Failed to create $OIDC_CLIENT (HTTP $HTTP)"
+        return 1
+    fi
+
+    echo "  ✓ Exists: $OIDC_CLIENT"
+    HAS_MAPPER=$(echo "$CLIENT_JSON" | jq --arg c "$OIDC_CLIENT" '[.[0].protocolMappers[]? | select(.protocolMapper == "oidc-audience-mapper" and .config["included.client.audience"] == $c and .config["access.token.claim"] == "true")] | length')
+    if [ "$HAS_MAPPER" = "0" ]; then
+        HTTP=$(curl -s -o /dev/null -w "%{http_code}" -X POST \
+            "${KC_ADMIN_URL}/clients/${CLIENT_ID}/protocol-mappers/models" \
+            -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" \
+            -H "Content-Type: application/json" \
+            -d "$AUD_MAPPER")
+        if [ "$HTTP" = "201" ]; then
+            echo "  ✓ Added audience mapper to $OIDC_CLIENT"
+        else
+            echo "  ✗ Failed to add audience mapper to $OIDC_CLIENT (HTTP $HTTP)"
+            return 1
+        fi
+    fi
+
+    CURRENT_SECRET=$(curl -s "${KC_ADMIN_URL}/clients/${CLIENT_ID}/client-secret" \
+        -H "Authorization: Bearer ${KC_ADMIN_TOKEN}" | jq -r '.value // empty')
+    if [ "$CURRENT_SECRET" != "$MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_SECRET" ]; then
+        echo "  ⚠️  $OIDC_CLIENT secret differs from MC_IAM_MANAGER_KEYCLOAK_OIDC_CLIENT_SECRET (not changed)"
+    fi
     return 0
 }
 

@@ -305,7 +305,7 @@ menus:
     menunumber: 2109
     viewtype: iframe
     frameworkservice: mc-workflow-manager-fe
-    path: /web/workflow/list
+    path: /web/workflows/workflow/list
 
   - id: mceventlistener
     parentid: workflows
